@@ -1,24 +1,40 @@
 /* ==========================================================================
-   BASKET STATS PRO — Design Tokens (tema chiaro, alto contrasto)
+   BASKET STATS PRO — Design Tokens (Light Mode, stile Investing.com)
    Unica fonte di verità per colori, spazi, raggi, ombre, tipografia.
    ========================================================================== */
 :root {
-  /* ---------- Superfici (sfondo chiaro, confini marcati) ---------- */
-  --color-bg: #FFFFFF;
-  --color-surface: #EDEFF3;
-  --color-surface-raised: #FFFFFF;
-  --color-border: #B7BCC7;
-  --color-border-strong: #8A909E;
+  /* ---------- Superfici ---------- */
+  --color-bg: #F4F5F7;              /* sfondo pagina/app */
+  --color-surface: #EAECEF;         /* elementi secondari / pill inattivi */
+  --color-surface-raised: #FFFFFF;  /* card / superfici */
+  --color-border: #E5E7EB;          /* bordi sottili 1px */
+  --color-border-strong: #D1D5DB;
 
-  /* ---------- Testo (scurito per leggibilità) ---------- */
-  --color-text-primary: #0B0C10;
-  --color-text-secondary: #2E323B;
-  --color-text-muted: #565C68;
+  /* alias semantici */
+  --bg-app: var(--color-bg);
+  --bg-main: var(--color-bg);
+  --bg-surface: var(--color-surface-raised);
+  --bg-card: var(--color-surface-raised);
+  --bg-secondary: var(--color-surface);
+  --bg-subtle: #F0F2F5;
+  --border-color: var(--color-border);
+
+  /* ---------- Testo ---------- */
+  --color-text-primary: #000000;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9099A6;
   --color-text-on-brand: #FFFFFF;
 
-  /* ---------- Accenti funzionali (versione scura + fondo tenue) ---------- */
-  --color-brand: #0B3FD1;
-  --color-brand-soft: #E4ECFF;
+  --text-primary: var(--color-text-primary);
+  --text-secondary: var(--color-text-secondary);
+
+  /* ---------- Accenti funzionali ---------- */
+  --color-brand: #FF6B00;           /* arancione Investing */
+  --color-brand-soft: #FFEEDF;
+  --color-accent: var(--color-brand);
+  --color-primary: var(--color-brand);
+  --color-active: #000000;
+
   --color-state-positive: #0A7A50;
   --color-state-positive-soft: #DEF4EA;
   --color-state-negative: #C22730;
@@ -36,19 +52,21 @@
   /* ---------- Raggi ---------- */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 18px;
+  --radius-lg: 16px;
   --radius-pill: 999px;
+  --radius-card: var(--radius-lg);
 
   /* ---------- Ombre ---------- */
-  --shadow-card: 0 1px 2px rgba(11, 12, 16, 0.10), 0 0 0 1px rgba(11, 12, 16, 0.02);
-  --shadow-raised: 0 8px 28px rgba(11, 12, 16, 0.22);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-raised: 0 8px 28px rgba(0, 0, 0, 0.12);
 
   /* ---------- Tipografia ---------- */
-  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   --font-num: "SF Mono", "Roboto Mono", ui-monospace, monospace;
 
   /* ---------- Layout / interazione ---------- */
   --tabbar-height: 58px;
   --tap-target: 44px;
-  --focus-ring: 0 0 0 3px rgba(11, 63, 209, 0.35);
+  --focus-ring: 0 0 0 3px rgba(255, 107, 0, 0.35);
 }
