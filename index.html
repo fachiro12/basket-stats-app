@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFFFFF">
 <title>Basket Stats Pro</title>
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/base.css">
@@ -11,9 +12,68 @@
 </head>
 <body>
 
+<!-- ===================== SPRITE ICONE (vettoriali, tratto singolo) ===================== -->
+<svg class="sprite-icone" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <symbol id="i-ball" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M12 2v20M2 12h20M4.5 4.5C8 8 8 16 4.5 19.5M19.5 4.5C16 8 16 16 19.5 19.5"/>
+  </symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24">
+    <line x1="3" y1="20" x2="21" y2="20"/>
+    <rect x="5" y="11" width="3" height="6"/>
+    <rect x="11" y="6" width="3" height="11"/>
+    <rect x="17" y="13" width="3" height="4"/>
+  </symbol>
+  <symbol id="i-calc" viewBox="0 0 24 24">
+    <rect x="5" y="2" width="14" height="20" rx="2"/>
+    <line x1="8" y1="6" x2="16" y2="6"/>
+    <line x1="8" y1="11" x2="8" y2="11.01"/><line x1="12" y1="11" x2="12" y2="11.01"/><line x1="16" y1="11" x2="16" y2="11.01"/>
+    <line x1="8" y1="15" x2="8" y2="15.01"/><line x1="12" y1="15" x2="12" y2="15.01"/><line x1="16" y1="15" x2="16" y2="18"/>
+  </symbol>
+  <symbol id="i-users" viewBox="0 0 24 24">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+  </symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24">
+    <rect x="3" y="4" width="18" height="18" rx="2"/>
+    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+  </symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M4 9h11a6 6 0 0 1 0 12h-3"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24">
+    <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+    <polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+  </symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24">
+    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12" y2="17.01"/>
+  </symbol>
+  <symbol id="i-whistle" viewBox="0 0 24 24">
+    <path d="M3 12.5a5.5 5.5 0 0 0 11 0V11H4a1 1 0 0 0-1 1z"/>
+    <path d="M14 11l7-3M10 7V4H6"/>
+  </symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24">
+    <rect x="8" y="2" width="8" height="4" rx="1"/>
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+  </symbol>
+  <symbol id="i-trending-up" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+    <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24">
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+    <line x1="4" y1="22" x2="4" y2="15"/>
+  </symbol>
+</svg>
+
 <!-- ===================== PIN GATE ===================== -->
 <div id="pin-gate">
-  <div class="logo">🏀</div>
+  <div class="logo"><svg class="ico" aria-hidden="true"><use href="#i-ball"></use></svg></div>
   <h1>Basket Stats Pro</h1>
   <p>Inserisci il PIN di accesso</p>
   <input id="pin-input" type="tel" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••">
@@ -48,23 +108,23 @@
         </div>
 
         <div class="riga-controlli-timer">
-          <button class="btn-timer" id="btn-timer">▶️ START</button>
-          <button class="btn-icona-piccolo" id="btn-quarto">Q+1</button>
-          <button class="btn-icona-piccolo" id="btn-undo">↩️ UNDO</button>
-          <button class="btn-icona-piccolo" id="btn-recap">📊 RECAP</button>
+          <button class="btn-timer" id="btn-timer"><svg class="ico" aria-hidden="true"><use href="#i-play"></use></svg> START</button>
+          <button class="btn-icona-piccolo" id="btn-quarto">Q +1</button>
+          <button class="btn-icona-piccolo" id="btn-undo"><svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg> UNDO</button>
+          <button class="btn-icona-piccolo" id="btn-recap"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg> RECAP</button>
         </div>
 
-        <div class="banner-tempo-fermo" id="banner-tempo-fermo">⏸️ CRONOMETRO FERMO</div>
+        <div class="banner-tempo-fermo" id="banner-tempo-fermo"><svg class="ico" aria-hidden="true"><use href="#i-pause"></use></svg> CRONOMETRO FERMO</div>
         <div class="quick-feed" id="quick-feed">Pronto per iniziare.</div>
-        <span class="badge-offline" id="badge-offline">⚠️ EVENTI IN CODA</span>
+        <span class="badge-offline" id="badge-offline"><svg class="ico" aria-hidden="true"><use href="#i-alert"></use></svg> EVENTI IN CODA</span>
       </header>
 
       <main class="corpo-partita">
         <section class="pannello pannello-sinistro">
           <div class="titolo-pannello">ROSTER MIA</div>
           <div id="lista-giocatori"></div>
-          <button class="btn-opp" id="btn-opp">⚠️ AVVERSARI (OPP)</button>
-          <button class="btn-cambi" id="btn-cambi">🔄 CAMBI</button>
+          <button class="btn-opp" id="btn-opp"><svg class="ico" aria-hidden="true"><use href="#i-alert"></use></svg> AVVERSARI (OPP)</button>
+          <button class="btn-cambi" id="btn-cambi"><svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg> CAMBI</button>
         </section>
 
         <section class="pannello pannello-destro">
@@ -79,15 +139,15 @@
           <div class="separatore-mini"></div>
           <div class="titolo-pannello">PALLA</div>
           <div class="griglia-azioni">
-            <button class="btn-azione btn-rec" id="btn-rec">⚡ REC<span class="sub">recuperata</span></button>
-            <button class="btn-azione btn-pp" id="btn-pp">⚠️ PP<span class="sub">persa</span></button>
+            <button class="btn-azione btn-rec" id="btn-rec"><svg class="ico" aria-hidden="true"><use href="#i-zap"></use></svg> REC<span class="sub">recuperata</span></button>
+            <button class="btn-azione btn-pp" id="btn-pp"><svg class="ico" aria-hidden="true"><use href="#i-alert"></use></svg> PP<span class="sub">persa</span></button>
           </div>
 
           <div class="separatore-mini"></div>
           <div class="titolo-pannello">FALLI</div>
           <div class="griglia-azioni">
-            <button class="btn-azione btn-fallo-subito" id="btn-fallo-subito">🟢 FALLO<span class="sub">subito</span></button>
-            <button class="btn-azione btn-fallo-fatto" id="btn-fallo-fatto">🔴 FALLO<span class="sub">fatto</span></button>
+            <button class="btn-azione btn-fallo-subito" id="btn-fallo-subito"><svg class="ico" aria-hidden="true"><use href="#i-whistle"></use></svg> FALLO<span class="sub">subito</span></button>
+            <button class="btn-azione btn-fallo-fatto" id="btn-fallo-fatto"><svg class="ico" aria-hidden="true"><use href="#i-whistle"></use></svg> FALLO<span class="sub">fatto</span></button>
           </div>
         </section>
       </main>
@@ -97,24 +157,24 @@
     <!-- ============ VIEW: STATS ============ -->
     <div class="view" id="view-stats">
       <div class="header-pagina">
-        <h1>📊 Statistiche</h1>
+        <h1><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg> Statistiche</h1>
         <p>Box score e andamento partita</p>
       </div>
       <div class="contenuto-pagina">
         <div class="card-placeholder">
-          <div class="icona-grande">📋</div>
+          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-clipboard"></use></svg></div>
           <h3>Box Score</h3>
           <p>Punti, rimbalzi, assist e percentuali tiro per ogni giocatore in tempo reale.</p>
           <span class="badge-in-arrivo">In arrivo</span>
         </div>
         <div class="card-placeholder">
-          <div class="icona-grande">📈</div>
+          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-trending-up"></use></svg></div>
           <h3>Andamento punteggio</h3>
           <p>Grafico quarto per quarto con run e parziali per ogni periodo.</p>
           <span class="badge-in-arrivo">In arrivo</span>
         </div>
         <div class="card-placeholder">
-          <div class="icona-grande">🎯</div>
+          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-target"></use></svg></div>
           <h3>Percentuali tiro</h3>
           <p>FG%, 3P%, FT% per giocatore con dettaglio zona (quando disponibile).</p>
           <span class="badge-in-arrivo">In arrivo</span>
@@ -125,24 +185,24 @@
     <!-- ============ VIEW: ADV STATS ============ -->
     <div class="view" id="view-adv">
       <div class="header-pagina">
-        <h1>🧮 Advanced Stats</h1>
+        <h1><svg class="ico" aria-hidden="true"><use href="#i-calc"></use></svg> Advanced Stats</h1>
         <p>Metriche avanzate da database SQLite</p>
       </div>
       <div class="contenuto-pagina">
         <div class="card-placeholder">
-          <div class="icona-grande">⚡</div>
+          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-zap"></use></svg></div>
           <h3>Efficienza Offensiva / Difensiva</h3>
           <p>Offensive Rating, Defensive Rating e Net Rating per lineup e per giocatore.</p>
           <span class="badge-in-arrivo">In arrivo</span>
         </div>
         <div class="card-placeholder">
-          <div class="icona-grande">🔄</div>
+          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg></div>
           <h3>Plus/Minus per lineup</h3>
           <p>Parziali con i 5 in campo, per identificare i quintetti più efficaci.</p>
           <span class="badge-in-arrivo">In arrivo</span>
         </div>
         <div class="card-placeholder">
-          <div class="icona-grande">🏀</div>
+          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-ball"></use></svg></div>
           <h3>Possessi e Pace</h3>
           <p>Stima possessi per quarto, Pace e True Shooting % calcolati offline su SQLite.</p>
           <span class="badge-in-arrivo">In arrivo</span>
@@ -153,7 +213,7 @@
     <!-- ============ VIEW: SQUADRA ============ -->
     <div class="view" id="view-squadra">
       <div class="header-pagina">
-        <h1>👥 Squadra</h1>
+        <h1><svg class="ico" aria-hidden="true"><use href="#i-users"></use></svg> Squadra</h1>
         <p>Roster, ruoli e impostazioni</p>
       </div>
       <div class="contenuto-pagina">
@@ -196,7 +256,7 @@
         </div>
 
         <div class="card-placeholder">
-          <div class="icona-grande">✏️</div>
+          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-edit"></use></svg></div>
           <h3>Modifica Roster</h3>
           <p>Aggiungi, modifica o rimuovi giocatori. Salvataggio su localStorage e sincronizzazione futura con Google Sheet.</p>
           <span class="badge-in-arrivo">In arrivo</span>
@@ -207,7 +267,7 @@
     <!-- ============ VIEW: CALENDARIO ============ -->
     <div class="view" id="view-calendario">
       <div class="header-pagina">
-        <h1>📅 Calendario</h1>
+        <h1><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg> Calendario</h1>
         <p>Partite della stagione</p>
       </div>
       <div class="contenuto-pagina">
@@ -219,7 +279,7 @@
               <div class="titolo-riga">MIA vs LAL</div>
               <div class="sottotitolo-riga">Sab 6 Set 2026 · 20:30 · PalaSport A</div>
             </div>
-            <span class="chip" style="background:var(--color-brand-soft);color:var(--color-brand);border-color:var(--color-brand);">Casa</span>
+            <span class="chip chip-casa">Casa</span>
           </div>
           <div class="riga-lista">
             <div>
@@ -233,7 +293,7 @@
               <div class="titolo-riga">MIA vs CHI</div>
               <div class="sottotitolo-riga">Dom 14 Set 2026 · 18:00 · PalaSport A</div>
             </div>
-            <span class="chip" style="background:var(--color-brand-soft);color:var(--color-brand);border-color:var(--color-brand);">Casa</span>
+            <span class="chip chip-casa">Casa</span>
           </div>
         </div>
 
@@ -241,29 +301,29 @@
         <div class="card-lista">
           <div class="riga-lista">
             <div>
-              <div class="titolo-riga">MIA vs ORL <span style="color:var(--color-state-positive);font-weight:800;">W 87–74</span></div>
+              <div class="titolo-riga">MIA vs ORL <span class="esito-w">W 87–74</span></div>
               <div class="sottotitolo-riga">Mar 2 Set 2026 · PalaSport A</div>
             </div>
-            <span class="chip">📊</span>
+            <span class="chip"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg></span>
           </div>
           <div class="riga-lista">
             <div>
-              <div class="titolo-riga">NYK vs MIA <span style="color:var(--color-state-negative);font-weight:800;">L 65–71</span></div>
+              <div class="titolo-riga">NYK vs MIA <span class="esito-l">L 65–71</span></div>
               <div class="sottotitolo-riga">Ven 29 Ago 2026 · Madison</div>
             </div>
-            <span class="chip">📊</span>
+            <span class="chip"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg></span>
           </div>
           <div class="riga-lista">
             <div>
-              <div class="titolo-riga">MIA vs PHI <span style="color:var(--color-state-positive);font-weight:800;">W 91–88</span></div>
+              <div class="titolo-riga">MIA vs PHI <span class="esito-w">W 91–88</span></div>
               <div class="sottotitolo-riga">Mar 25 Ago 2026 · PalaSport A</div>
             </div>
-            <span class="chip">📊</span>
+            <span class="chip"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg></span>
           </div>
         </div>
 
         <div class="card-placeholder">
-          <div class="icona-grande">🗓️</div>
+          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg></div>
           <h3>Calendario completo</h3>
           <p>Import da file CSV o da Google Sheet condiviso. Tap su una partita per avviare la rilevazione statistiche.</p>
           <span class="badge-in-arrivo">In arrivo</span>
@@ -277,19 +337,19 @@
   <!-- ============ TAB BAR ============ -->
   <nav class="tab-bar">
     <button class="tab-btn" data-view="partita">
-      <span class="icona">🏀</span>Partita
+      <span class="icona"><svg class="ico" aria-hidden="true"><use href="#i-ball"></use></svg></span>Partita
     </button>
     <button class="tab-btn" data-view="stats">
-      <span class="icona">📊</span>Stats
+      <span class="icona"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg></span>Stats
     </button>
     <button class="tab-btn" data-view="adv">
-      <span class="icona">🧮</span>Adv
+      <span class="icona"><svg class="ico" aria-hidden="true"><use href="#i-calc"></use></svg></span>Adv
     </button>
     <button class="tab-btn" data-view="squadra">
-      <span class="icona">👥</span>Squadra
+      <span class="icona"><svg class="ico" aria-hidden="true"><use href="#i-users"></use></svg></span>Squadra
     </button>
     <button class="tab-btn" data-view="calendario">
-      <span class="icona">📅</span>Calendario
+      <span class="icona"><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg></span>Calendario
     </button>
   </nav>
 
@@ -300,19 +360,19 @@
 <!-- Fallo Subito -->
 <div class="overlay" id="overlay-fallo-subito">
   <div class="modale">
-    <h2>Fallo subito — <span id="fs-contesto"></span></h2>
-    <button class="opzione-modale" data-opz="RIMESSA">RIMESSA <span style="opacity:.55;font-weight:500;">— nessun tiro libero</span></button>
+    <h2><svg class="ico" aria-hidden="true"><use href="#i-whistle"></use></svg> Fallo subito — <span id="fs-contesto"></span></h2>
+    <button class="opzione-modale" data-opz="RIMESSA">RIMESSA <span style="opacity:.6;font-weight:500;">— nessun tiro libero</span></button>
     <button class="opzione-modale" data-opz="1TL">1 TIRO LIBERO</button>
     <button class="opzione-modale" data-opz="2TL">2 TIRI LIBERI</button>
     <button class="opzione-modale" data-opz="3TL">3 TIRI LIBERI</button>
     <div id="fs-righe-tl"></div>
     <div class="separatore-mini"></div>
     <div class="riga-toggle-speciale">
-      <span>🟨 Tecnico</span>
+      <span><svg class="ico" aria-hidden="true"><use href="#i-flag"></use></svg> Tecnico</span>
       <label class="switch"><input type="checkbox" id="fs-tecnico"><span class="switch-slider"></span></label>
     </div>
     <div class="riga-toggle-speciale">
-      <span>🟥 Antisportivo</span>
+      <span><svg class="ico" aria-hidden="true"><use href="#i-flag"></use></svg> Antisportivo</span>
       <label class="switch"><input type="checkbox" id="fs-antisportivo"><span class="switch-slider"></span></label>
     </div>
     <button class="btn-conferma" id="fs-conferma" disabled>CONFERMA E REGISTRA</button>
@@ -323,7 +383,7 @@
 <!-- Cambi -->
 <div class="overlay" id="overlay-cambi">
   <div class="modale">
-    <h2>Cambi — 5 in campo</h2>
+    <h2><svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg> Cambi — 5 in campo</h2>
     <div id="cambi-slots"></div>
     <button class="btn-conferma" id="cambi-conferma">CONFERMA CAMBI</button>
     <button class="btn-annulla-modale" id="cambi-chiudi">Annulla</button>
@@ -333,7 +393,7 @@
 <!-- Recap -->
 <div class="overlay" id="overlay-recap">
   <div class="modale">
-    <h2>📊 Recap partita</h2>
+    <h2><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg> Recap partita</h2>
     <table class="recap-tabella" id="recap-tabella"></table>
     <button class="btn-annulla-modale" id="recap-chiudi">Chiudi</button>
   </div>

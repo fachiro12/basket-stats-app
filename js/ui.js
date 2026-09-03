@@ -2,6 +2,11 @@
    ui.js — Render vista partita, modali cambi/recap, toast, badge offline
    ========================================================================== */
 
+/* ---------- ICONE (riuso dello sprite SVG in index.html) ---------- */
+function ico(nome) {
+  return '<svg class="ico" aria-hidden="true"><use href="#i-' + nome + '"></use></svg>';
+}
+
 /* ---------- TOAST ---------- */
 let toastTimeout = null;
 function mostraToast(testo) {
@@ -17,7 +22,7 @@ function aggiornaBadgeOffline() {
   const badge = document.getElementById("badge-offline");
   if (codaInvio.length > 0) {
     badge.classList.add("visibile");
-    badge.textContent = "⚠️ " + codaInvio.length + " EVENTI IN CODA";
+    badge.innerHTML = ico("alert") + " " + codaInvio.length + " EVENTI IN CODA";
   } else {
     badge.classList.remove("visibile");
   }
@@ -39,7 +44,7 @@ function renderPartita() {
 
   // Timer
   const btnTimer = document.getElementById("btn-timer");
-  btnTimer.textContent = state.timerAttivo ? "⏸️ STOP" : "▶️ START";
+  btnTimer.innerHTML = state.timerAttivo ? ico("pause") + " STOP" : ico("play") + " START";
   btnTimer.classList.toggle("in-corso", state.timerAttivo);
   document.getElementById("banner-tempo-fermo").classList.toggle("visibile", !state.timerAttivo);
 
@@ -83,7 +88,7 @@ function apriCambi() {
     const div = document.createElement("div");
     div.className = "slot-cambio";
     div.innerHTML =
-      `<span>#${num}</span><span class="freccia">→</span>` +
+      `<span>#${num}</span><span class="freccia" aria-hidden="true">→</span>` +
       `<input type="tel" inputmode="numeric" maxlength="2" data-idx="${idx}" placeholder="${num}">`;
     container.appendChild(div);
   });
@@ -103,7 +108,7 @@ function confermaCambi() {
   salvaStato();
   chiudiCambi();
   renderPartita();
-  mostraToast("Cambi applicati ✔");
+  mostraToast("Cambi applicati");
 }
 
 function chiudiCambi() {

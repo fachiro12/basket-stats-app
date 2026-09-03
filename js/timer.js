@@ -23,7 +23,7 @@ function avviaIntervallo() {
       fermaIntervallo();
       salvaStato();
       renderPartita();
-      mostraToast("Fine quarto ⏱️");
+      mostraToast("Fine quarto");
     }
   }, 1000);
 }

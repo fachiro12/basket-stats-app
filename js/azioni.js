@@ -51,7 +51,7 @@ function registraTiro(tipo, esito) {
   state.punteggio[sq] += punti;
   const inverti = () => { state.punteggio[sq] -= punti; };
 
-  const label = (num ? "#" + num + " " : "") + sq + " " + tipo + " " + (esito === "SEGNATO" ? "✅" : "❌");
+  const label = (num ? "#" + num + " " : "") + sq + " " + tipo + " " + (esito === "SEGNATO" ? "segnato" : "errato");
   registraEvento({
     squadra: sq,
     giocatore_num: num ? String(num) : "",
@@ -67,7 +67,7 @@ function registraRecupero() {
   registraEvento({
     squadra: sq, giocatore_num: num ? String(num) : "",
     tipo_evento: "RECUPERO", dettaglio: "REC", punti_segnati: 0
-  }, () => {}, (num ? "#" + num + " " : "") + sq + " ⚡ Recupero");
+  }, () => {}, (num ? "#" + num + " " : "") + sq + " Recupero");
 }
 
 function registraPallaPersa() {
@@ -76,7 +76,7 @@ function registraPallaPersa() {
   registraEvento({
     squadra: sq, giocatore_num: num ? String(num) : "",
     tipo_evento: "PALLA_PERSA", dettaglio: "PP", punti_segnati: 0
-  }, () => {}, (num ? "#" + num + " " : "") + sq + " ⚠️ Palla persa");
+  }, () => {}, (num ? "#" + num + " " : "") + sq + " Palla persa");
 }
 
 function registraFalloFatto() {
@@ -95,7 +95,7 @@ function registraFalloFatto() {
   registraEvento({
     squadra: sq, giocatore_num: num ? String(num) : "",
     tipo_evento: "FALLO_FATTO", dettaglio: "PERSONALE", punti_segnati: 0
-  }, inverti, (num ? "#" + num + " " : "") + sq + " 🔴 Fallo fatto");
+  }, inverti, (num ? "#" + num + " " : "") + sq + " Fallo fatto");
 }
 
 function annullaUltimoEvento() {
@@ -120,7 +120,7 @@ function annullaUltimoEvento() {
   };
   inviaEvento(eventoAnnulla);
 
-  state.ultimoTestoFeed = "↩️ Annullato: " + (ultimo.evento.tipo_evento || "");
+  state.ultimoTestoFeed = "Annullato: " + (ultimo.evento.tipo_evento || "");
   salvaStato();
   renderPartita();
   mostraToast("Ultimo evento annullato");

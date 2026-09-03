@@ -103,7 +103,7 @@ function confermaFalloSubito() {
     punti_segnati: puntiTl,
     esito_tl: fsEsitiTl.slice(),
     fallo_speciale: falloSpeciale
-  }, inverti, "#" + num + " MIA 🟢 Fallo subito (" + dettaglio + ")");
+  }, inverti, "#" + num + " MIA Fallo subito (" + dettaglio + ")");
 
   chiudiFalloSubito();
 }

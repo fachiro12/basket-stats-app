@@ -136,6 +136,16 @@
   border: 1px solid var(--color-border-strong);
   white-space: nowrap;
 }
+.chip .ico { font-size: 13px; }
+.chip-casa {
+  background: var(--color-brand-soft);
+  color: var(--color-brand);
+  border-color: var(--color-brand);
+}
+
+/* Esiti partita nel calendario */
+.esito-w { color: var(--color-state-positive); font-weight: 800; }
+.esito-l { color: var(--color-state-negative); font-weight: 800; }
 
 /* ==========================================================================
    RESPONSIVE — smartphone piccoli / schermi ampi
