@@ -1,0 +1,52 @@
+/* ==========================================================================
+   app.js — Entry point: collega tutti i listener DOM e avvia l'app
+   ========================================================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  /* -------- PARTITA -------- */
+  document.getElementById("btn-timer").addEventListener("click", toggleTimer);
+  document.getElementById("btn-quarto").addEventListener("click", avanzaQuarto);
+  document.getElementById("btn-undo").addEventListener("click", annullaUltimoEvento);
+  document.getElementById("btn-recap").addEventListener("click", apriRecap);
+  document.getElementById("btn-opp").addEventListener("click", selezionaOpp);
+  document.getElementById("btn-cambi").addEventListener("click", apriCambi);
+  document.getElementById("btn-rec").addEventListener("click", registraRecupero);
+  document.getElementById("btn-pp").addEventListener("click", registraPallaPersa);
+  document.getElementById("btn-fallo-subito").addEventListener("click", apriFalloSubito);
+  document.getElementById("btn-fallo-fatto").addEventListener("click", registraFalloFatto);
+
+  document.querySelectorAll("[data-tiro]").forEach(btn => {
+    btn.addEventListener("click", () => registraTiro(btn.dataset.tiro, btn.dataset.esito));
+  });
+
+  /* -------- MODALINA FALLO SUBITO -------- */
+  document.querySelectorAll("#overlay-fallo-subito .opzione-modale").forEach(btn => {
+    btn.addEventListener("click", () => selezionaOpzioneFs(btn.dataset.opz));
+  });
+  document.getElementById("fs-righe-tl").addEventListener("click", e => {
+    const b = e.target.closest("button[data-idx]");
+    if (!b) return;
+    impostaEsitoTl(parseInt(b.dataset.idx, 10), b.classList.contains("si") ? "SI" : "NO");
+  });
+  document.getElementById("fs-conferma").addEventListener("click", confermaFalloSubito);
+  document.getElementById("fs-chiudi").addEventListener("click", chiudiFalloSubito);
+
+  /* -------- CAMBI -------- */
+  document.getElementById("cambi-conferma").addEventListener("click", confermaCambi);
+  document.getElementById("cambi-chiudi").addEventListener("click", chiudiCambi);
+
+  /* -------- RECAP -------- */
+  document.getElementById("recap-chiudi").addEventListener("click", chiudiRecap);
+
+  /* -------- TAB BAR -------- */
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => navigaA(btn.dataset.view));
+  });
+
+  /* -------- AVVIO -------- */
+  navigaA("partita");          // vista di default
+  inizializzaPinGate();        // mostra pin gate o app direttamente
+  if (state.timerAttivo) avviaIntervallo();  // ripristino dopo refresh
+  processaCoda();              // tentativo invio eventi in coda
+});

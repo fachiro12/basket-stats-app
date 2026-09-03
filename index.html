@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Basket Stats Pro</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/shell.css">
+<link rel="stylesheet" href="css/partita.css">
+</head>
+<body>
+
+<!-- ===================== PIN GATE ===================== -->
+<div id="pin-gate">
+  <div class="logo">🏀</div>
+  <h1>Basket Stats Pro</h1>
+  <p>Inserisci il PIN di accesso</p>
+  <input id="pin-input" type="tel" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••">
+  <div id="pin-errore"></div>
+  <button id="pin-submit">SBLOCCA</button>
+</div>
+
+<!-- ===================== APP SHELL ===================== -->
+<div id="app-shell">
+
+  <div id="view-container">
+
+    <!-- ============ VIEW: PARTITA ============ -->
+    <div class="view" id="view-partita">
+
+      <header class="hud">
+        <div class="riga-punteggio">
+          <div class="blocco-squadra mia">
+            <div class="nome" id="nome-mia">MIA</div>
+            <div class="punti" id="punti-mia">0</div>
+          </div>
+          <div class="centro-hud">
+            <div class="quarto-badge" id="quarto-badge">Q1</div>
+            <span class="bonus-badge" id="bonus-mia">BONUS MIA</span>
+            <span class="bonus-badge" id="bonus-opp">BONUS OPP</span>
+            <div class="timer" id="timer-display">10:00</div>
+          </div>
+          <div class="blocco-squadra opp">
+            <div class="nome" id="nome-opp">OPP</div>
+            <div class="punti" id="punti-opp">0</div>
+          </div>
+        </div>
+
+        <div class="riga-controlli-timer">
+          <button class="btn-timer" id="btn-timer">▶️ START</button>
+          <button class="btn-icona-piccolo" id="btn-quarto">Q+1</button>
+          <button class="btn-icona-piccolo" id="btn-undo">↩️ UNDO</button>
+          <button class="btn-icona-piccolo" id="btn-recap">📊 RECAP</button>
+        </div>
+
+        <div class="banner-tempo-fermo" id="banner-tempo-fermo">⏸️ CRONOMETRO FERMO</div>
+        <div class="quick-feed" id="quick-feed">Pronto per iniziare.</div>
+        <span class="badge-offline" id="badge-offline">⚠️ EVENTI IN CODA</span>
+      </header>
+
+      <main class="corpo-partita">
+        <section class="pannello pannello-sinistro">
+          <div class="titolo-pannello">ROSTER MIA</div>
+          <div id="lista-giocatori"></div>
+          <button class="btn-opp" id="btn-opp">⚠️ AVVERSARI (OPP)</button>
+          <button class="btn-cambi" id="btn-cambi">🔄 CAMBI</button>
+        </section>
+
+        <section class="pannello pannello-destro">
+          <div class="titolo-pannello">TIRI</div>
+          <div class="griglia-azioni">
+            <button class="btn-azione btn-2p-piu" data-tiro="2P" data-esito="SEGNATO">2P +<span class="sub">canestro</span></button>
+            <button class="btn-azione btn-2p-meno" data-tiro="2P" data-esito="ERRATO">2P −<span class="sub">errore</span></button>
+            <button class="btn-azione btn-3p-piu" data-tiro="3P" data-esito="SEGNATO">3P +<span class="sub">canestro</span></button>
+            <button class="btn-azione btn-3p-meno" data-tiro="3P" data-esito="ERRATO">3P −<span class="sub">errore</span></button>
+          </div>
+
+          <div class="separatore-mini"></div>
+          <div class="titolo-pannello">PALLA</div>
+          <div class="griglia-azioni">
+            <button class="btn-azione btn-rec" id="btn-rec">⚡ REC<span class="sub">recuperata</span></button>
+            <button class="btn-azione btn-pp" id="btn-pp">⚠️ PP<span class="sub">persa</span></button>
+          </div>
+
+          <div class="separatore-mini"></div>
+          <div class="titolo-pannello">FALLI</div>
+          <div class="griglia-azioni">
+            <button class="btn-azione btn-fallo-subito" id="btn-fallo-subito">🟢 FALLO<span class="sub">subito</span></button>
+            <button class="btn-azione btn-fallo-fatto" id="btn-fallo-fatto">🔴 FALLO<span class="sub">fatto</span></button>
+          </div>
+        </section>
+      </main>
+
+    </div><!-- /view-partita -->
+
+    <!-- ============ VIEW: STATS ============ -->
+    <div class="view" id="view-stats">
+      <div class="header-pagina">
+        <h1>📊 Statistiche</h1>
+        <p>Box score e andamento partita</p>
+      </div>
+      <div class="contenuto-pagina">
+        <div class="card-placeholder">
+          <div class="icona-grande">📋</div>
+          <h3>Box Score</h3>
+          <p>Punti, rimbalzi, assist e percentuali tiro per ogni giocatore in tempo reale.</p>
+          <span class="badge-in-arrivo">In arrivo</span>
+        </div>
+        <div class="card-placeholder">
+          <div class="icona-grande">📈</div>
+          <h3>Andamento punteggio</h3>
+          <p>Grafico quarto per quarto con run e parziali per ogni periodo.</p>
+          <span class="badge-in-arrivo">In arrivo</span>
+        </div>
+        <div class="card-placeholder">
+          <div class="icona-grande">🎯</div>
+          <h3>Percentuali tiro</h3>
+          <p>FG%, 3P%, FT% per giocatore con dettaglio zona (quando disponibile).</p>
+          <span class="badge-in-arrivo">In arrivo</span>
+        </div>
+      </div>
+    </div><!-- /view-stats -->
+
+    <!-- ============ VIEW: ADV STATS ============ -->
+    <div class="view" id="view-adv">
+      <div class="header-pagina">
+        <h1>🧮 Advanced Stats</h1>
+        <p>Metriche avanzate da database SQLite</p>
+      </div>
+      <div class="contenuto-pagina">
+        <div class="card-placeholder">
+          <div class="icona-grande">⚡</div>
+          <h3>Efficienza Offensiva / Difensiva</h3>
+          <p>Offensive Rating, Defensive Rating e Net Rating per lineup e per giocatore.</p>
+          <span class="badge-in-arrivo">In arrivo</span>
+        </div>
+        <div class="card-placeholder">
+          <div class="icona-grande">🔄</div>
+          <h3>Plus/Minus per lineup</h3>
+          <p>Parziali con i 5 in campo, per identificare i quintetti più efficaci.</p>
+          <span class="badge-in-arrivo">In arrivo</span>
+        </div>
+        <div class="card-placeholder">
+          <div class="icona-grande">🏀</div>
+          <h3>Possessi e Pace</h3>
+          <p>Stima possessi per quarto, Pace e True Shooting % calcolati offline su SQLite.</p>
+          <span class="badge-in-arrivo">In arrivo</span>
+        </div>
+      </div>
+    </div><!-- /view-adv -->
+
+    <!-- ============ VIEW: SQUADRA ============ -->
+    <div class="view" id="view-squadra">
+      <div class="header-pagina">
+        <h1>👥 Squadra</h1>
+        <p>Roster, ruoli e impostazioni</p>
+      </div>
+      <div class="contenuto-pagina">
+        <div class="card-lista">
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">#8 — Giocatore A</div>
+              <div class="sottotitolo-riga">Guardia · Titolare</div>
+            </div>
+            <span class="chip">PG</span>
+          </div>
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">#12 — Giocatore B</div>
+              <div class="sottotitolo-riga">Guardia · Titolare</div>
+            </div>
+            <span class="chip">SG</span>
+          </div>
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">#5 — Giocatore C</div>
+              <div class="sottotitolo-riga">Ala · Titolare</div>
+            </div>
+            <span class="chip">SF</span>
+          </div>
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">#23 — Giocatore D</div>
+              <div class="sottotitolo-riga">Ala Grande · Titolare</div>
+            </div>
+            <span class="chip">PF</span>
+          </div>
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">#33 — Giocatore E</div>
+              <div class="sottotitolo-riga">Centro · Titolare</div>
+            </div>
+            <span class="chip">C</span>
+          </div>
+        </div>
+
+        <div class="card-placeholder">
+          <div class="icona-grande">✏️</div>
+          <h3>Modifica Roster</h3>
+          <p>Aggiungi, modifica o rimuovi giocatori. Salvataggio su localStorage e sincronizzazione futura con Google Sheet.</p>
+          <span class="badge-in-arrivo">In arrivo</span>
+        </div>
+      </div>
+    </div><!-- /view-squadra -->
+
+    <!-- ============ VIEW: CALENDARIO ============ -->
+    <div class="view" id="view-calendario">
+      <div class="header-pagina">
+        <h1>📅 Calendario</h1>
+        <p>Partite della stagione</p>
+      </div>
+      <div class="contenuto-pagina">
+
+        <div class="titolo-pannello" style="margin-left:2px;">PROSSIME PARTITE</div>
+        <div class="card-lista">
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">MIA vs LAL</div>
+              <div class="sottotitolo-riga">Sab 6 Set 2026 · 20:30 · PalaSport A</div>
+            </div>
+            <span class="chip" style="background:var(--color-brand-soft);color:var(--color-brand);border-color:var(--color-brand);">Casa</span>
+          </div>
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">BOS vs MIA</div>
+              <div class="sottotitolo-riga">Mer 10 Set 2026 · 19:00 · TD Garden</div>
+            </div>
+            <span class="chip">Fuori</span>
+          </div>
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">MIA vs CHI</div>
+              <div class="sottotitolo-riga">Dom 14 Set 2026 · 18:00 · PalaSport A</div>
+            </div>
+            <span class="chip" style="background:var(--color-brand-soft);color:var(--color-brand);border-color:var(--color-brand);">Casa</span>
+          </div>
+        </div>
+
+        <div class="titolo-pannello" style="margin-left:2px; margin-top:4px;">ULTIME PARTITE</div>
+        <div class="card-lista">
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">MIA vs ORL <span style="color:var(--color-state-positive);font-weight:800;">W 87–74</span></div>
+              <div class="sottotitolo-riga">Mar 2 Set 2026 · PalaSport A</div>
+            </div>
+            <span class="chip">📊</span>
+          </div>
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">NYK vs MIA <span style="color:var(--color-state-negative);font-weight:800;">L 65–71</span></div>
+              <div class="sottotitolo-riga">Ven 29 Ago 2026 · Madison</div>
+            </div>
+            <span class="chip">📊</span>
+          </div>
+          <div class="riga-lista">
+            <div>
+              <div class="titolo-riga">MIA vs PHI <span style="color:var(--color-state-positive);font-weight:800;">W 91–88</span></div>
+              <div class="sottotitolo-riga">Mar 25 Ago 2026 · PalaSport A</div>
+            </div>
+            <span class="chip">📊</span>
+          </div>
+        </div>
+
+        <div class="card-placeholder">
+          <div class="icona-grande">🗓️</div>
+          <h3>Calendario completo</h3>
+          <p>Import da file CSV o da Google Sheet condiviso. Tap su una partita per avviare la rilevazione statistiche.</p>
+          <span class="badge-in-arrivo">In arrivo</span>
+        </div>
+
+      </div>
+    </div><!-- /view-calendario -->
+
+  </div><!-- /view-container -->
+
+  <!-- ============ TAB BAR ============ -->
+  <nav class="tab-bar">
+    <button class="tab-btn" data-view="partita">
+      <span class="icona">🏀</span>Partita
+    </button>
+    <button class="tab-btn" data-view="stats">
+      <span class="icona">📊</span>Stats
+    </button>
+    <button class="tab-btn" data-view="adv">
+      <span class="icona">🧮</span>Adv
+    </button>
+    <button class="tab-btn" data-view="squadra">
+      <span class="icona">👥</span>Squadra
+    </button>
+    <button class="tab-btn" data-view="calendario">
+      <span class="icona">📅</span>Calendario
+    </button>
+  </nav>
+
+</div><!-- /app-shell -->
+
+<!-- ===================== MODALI OVERLAY ===================== -->
+
+<!-- Fallo Subito -->
+<div class="overlay" id="overlay-fallo-subito">
+  <div class="modale">
+    <h2>Fallo subito — <span id="fs-contesto"></span></h2>
+    <button class="opzione-modale" data-opz="RIMESSA">RIMESSA <span style="opacity:.55;font-weight:500;">— nessun tiro libero</span></button>
+    <button class="opzione-modale" data-opz="1TL">1 TIRO LIBERO</button>
+    <button class="opzione-modale" data-opz="2TL">2 TIRI LIBERI</button>
+    <button class="opzione-modale" data-opz="3TL">3 TIRI LIBERI</button>
+    <div id="fs-righe-tl"></div>
+    <div class="separatore-mini"></div>
+    <div class="riga-toggle-speciale">
+      <span>🟨 Tecnico</span>
+      <label class="switch"><input type="checkbox" id="fs-tecnico"><span class="switch-slider"></span></label>
+    </div>
+    <div class="riga-toggle-speciale">
+      <span>🟥 Antisportivo</span>
+      <label class="switch"><input type="checkbox" id="fs-antisportivo"><span class="switch-slider"></span></label>
+    </div>
+    <button class="btn-conferma" id="fs-conferma" disabled>CONFERMA E REGISTRA</button>
+    <button class="btn-annulla-modale" id="fs-chiudi">Annulla</button>
+  </div>
+</div>
+
+<!-- Cambi -->
+<div class="overlay" id="overlay-cambi">
+  <div class="modale">
+    <h2>Cambi — 5 in campo</h2>
+    <div id="cambi-slots"></div>
+    <button class="btn-conferma" id="cambi-conferma">CONFERMA CAMBI</button>
+    <button class="btn-annulla-modale" id="cambi-chiudi">Annulla</button>
+  </div>
+</div>
+
+<!-- Recap -->
+<div class="overlay" id="overlay-recap">
+  <div class="modale">
+    <h2>📊 Recap partita</h2>
+    <table class="recap-tabella" id="recap-tabella"></table>
+    <button class="btn-annulla-modale" id="recap-chiudi">Chiudi</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ===================== SCRIPTS ===================== -->
+<script src="js/state.js"></script>
+<script src="js/api.js"></script>
+<script src="js/timer.js"></script>
+<script src="js/azioni.js"></script>
+<script src="js/fallo-subito.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/pin.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
