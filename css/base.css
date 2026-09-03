@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BASE — reset, tipografia, elementi trasversali (pin gate, toast)
+   BASE — reset, tipografia, icone, elementi trasversali (pin gate, toast)
    ========================================================================== */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -9,7 +9,10 @@ html, body {
   background: var(--color-bg);
   color: var(--color-text-primary);
   font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.4;
   height: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -17,8 +20,12 @@ body {
   overscroll-behavior-y: contain;
 }
 
+h1, h2, h3, p { margin: 0; }
+
+/* ---------- BOTTONI ---------- */
 button {
   font-family: inherit;
+  font-size: 100%;
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
@@ -28,9 +35,28 @@ button {
   background: none;
 }
 button:active { transform: scale(0.97); }
-button:disabled { opacity: 0.35; }
+button:disabled { opacity: 0.4; cursor: default; }
 
-h1, h2, h3, p { margin: 0; }
+/* ---------- FOCUS VISIBILE (accessibilità / contrasto) ---------- */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ---------- ICONE VETTORIALI (tratto singolo, colore ereditato) ---------- */
+.ico {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: -0.14em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sprite-icone { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 /* ---------- PIN GATE ---------- */
 #pin-gate {
@@ -40,25 +66,28 @@ h1, h2, h3, p { margin: 0; }
   text-align: center;
 }
 #pin-gate.nascosto { display: none; }
-#pin-gate .logo { font-size: 40px; }
-#pin-gate h1 { font-size: 20px; }
-#pin-gate p { color: var(--color-text-muted); font-size: 13px; margin-bottom: var(--space-2); }
+#pin-gate .logo { font-size: 44px; color: var(--color-brand); line-height: 1; }
+#pin-gate h1 { font-size: 22px; font-weight: 800; }
+#pin-gate p { color: var(--color-text-secondary); font-size: 14px; margin-bottom: var(--space-2); }
+
 #pin-input {
-  width: 200px;
+  width: min(240px, 80vw);
   font-size: 26px;
   text-align: center;
   letter-spacing: 8px;
   background: var(--color-surface);
-  border: 2px solid var(--color-border);
+  border: 2px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
-  padding: 12px;
+  padding: 14px;
 }
-#pin-input:focus { outline: none; border-color: var(--color-brand); }
-#pin-errore { color: var(--color-state-negative); font-size: 13px; min-height: 18px; }
+#pin-input:focus { outline: none; border-color: var(--color-brand); box-shadow: var(--focus-ring); }
+#pin-errore { color: var(--color-state-negative); font-size: 13px; font-weight: 600; min-height: 18px; }
+
 #pin-submit {
-  background: var(--color-brand); color: var(--color-text-on-brand); padding: 13px 40px;
-  border-radius: var(--radius-md); font-weight: 700; font-size: 15px;
+  background: var(--color-brand); color: var(--color-text-on-brand);
+  padding: 14px 40px; min-height: var(--tap-target);
+  border-radius: var(--radius-md); font-weight: 800; font-size: 15px;
 }
 
 /* ---------- TOAST ---------- */
@@ -67,16 +96,18 @@ h1, h2, h3, p { margin: 0; }
   bottom: calc(var(--tabbar-height) + 14px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%) translateY(20px);
+  max-width: calc(100vw - 32px);
   background: var(--color-text-primary);
   color: #fff;
-  padding: 10px 18px;
+  padding: 11px 18px;
   border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 600;
+  text-align: center;
   z-index: 200;
   opacity: 0;
   pointer-events: none;
-  transition: 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
   box-shadow: var(--shadow-raised);
 }
 #toast.visibile { opacity: 1; transform: translateX(-50%) translateY(0); }

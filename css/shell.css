@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SHELL — contenitore viste + tab bar inferiore
+   SHELL — contenitore viste + tab bar inferiore + card generiche
    ========================================================================== */
 #app-shell {
   display: none;
@@ -19,6 +19,7 @@
   display: none;
   height: 100%;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   flex-direction: column;
 }
 .view.attiva { display: flex; }
@@ -29,35 +30,41 @@
   height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--color-surface-raised);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-strong);
   display: flex;
   align-items: stretch;
 }
 
 .tab-btn {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  color: var(--color-text-muted);
+  gap: 3px;
+  color: var(--color-text-secondary);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.2px;
 }
-.tab-btn .icona { font-size: 20px; line-height: 1; filter: grayscale(1) opacity(0.55); }
+.tab-btn .icona { font-size: 22px; line-height: 1; }
 .tab-btn.attivo { color: var(--color-brand); }
-.tab-btn.attivo .icona { filter: none; }
 
-/* ---------- Header di sezione generico (usato dalle pagine stub) ---------- */
+/* ---------- Header di sezione generico ---------- */
 .header-pagina {
   padding: var(--space-4) var(--space-4) var(--space-3);
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface-raised);
   flex-shrink: 0;
 }
-.header-pagina h1 { font-size: 20px; font-weight: 700; }
+.header-pagina h1 {
+  font-size: 20px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
 .header-pagina p { color: var(--color-text-muted); font-size: 13px; margin-top: 2px; }
 
 .contenuto-pagina {
@@ -68,17 +75,29 @@
   flex: 1;
 }
 
-/* ---------- Card placeholder "in arrivo" ---------- */
-.card-placeholder {
+/* ---------- Card generiche ---------- */
+.card-placeholder,
+.card-lista {
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+.card-placeholder {
   border-radius: var(--radius-lg);
   padding: var(--space-5) var(--space-4);
   text-align: center;
-  box-shadow: var(--shadow-card);
 }
-.card-placeholder .icona-grande { font-size: 34px; margin-bottom: var(--space-2); }
-.card-placeholder h3 { font-size: 16px; margin-bottom: var(--space-1); }
+.card-lista {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.card-placeholder .icona-grande {
+  font-size: 32px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+.card-placeholder h3 { font-size: 16px; font-weight: 800; margin-bottom: var(--space-1); }
 .card-placeholder p { color: var(--color-text-muted); font-size: 13px; line-height: 1.5; }
 
 .badge-in-arrivo {
@@ -86,24 +105,17 @@
   background: var(--color-brand-soft);
   color: var(--color-brand);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   padding: 3px 10px;
   border-radius: var(--radius-pill);
   margin-top: var(--space-2);
 }
 
-/* ---------- Card lista generica (roster preview, calendario) ---------- */
-.card-lista {
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
-}
 .riga-lista {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-border);
 }
@@ -112,11 +124,28 @@
 .riga-lista .sottotitolo-riga { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
 
 .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   padding: 3px 9px;
   border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   RESPONSIVE — smartphone piccoli / schermi ampi
+   ========================================================================== */
+@media (max-width: 360px) {
+  .tab-btn { font-size: 9px; }
+  .tab-btn .icona { font-size: 20px; }
+  .contenuto-pagina { padding: var(--space-3); }
+}
+
+@media (min-width: 560px) {
+  .contenuto-pagina { max-width: 560px; margin: 0 auto; width: 100%; }
 }
