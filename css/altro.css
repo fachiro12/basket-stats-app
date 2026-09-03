@@ -1,0 +1,97 @@
+/* ==========================================================================
+   ALTRO — pagina hub (griglia accesso rapido + liste per macro-categorie)
+   Stile Investing.com (light, alto contrasto)
+   ========================================================================== */
+
+/* ---------- Intestazioni di sezione ---------- */
+.titolo-sezione-altro {
+  text-transform: uppercase;
+  color: #6B7280;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  margin-top: 16px;
+}
+.titolo-sezione-altro:first-child { margin-top: 0; }
+
+/* ---------- Griglia accesso rapido (2 colonne) ---------- */
+.griglia-accesso-rapido {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.card-rapida {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 4px 8px;
+  min-height: 78px;
+  padding: 14px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.card-rapida:active { background: #F8F9FA; }
+
+.card-rapida .ico-rapida {
+  grid-column: 1;
+  font-size: 20px;
+  color: #000000;
+}
+.card-rapida .freccia-rapida {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 14px;
+  color: #9CA3AF;
+}
+.card-rapida .label-rapida {
+  grid-column: 1 / -1;
+  align-self: end;
+  margin-top: 6px;
+  color: #000000;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------- Liste per macro-categorie ---------- */
+.lista-altro {
+  margin-top: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.riga-altro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-bottom: 1px solid #F0F2F5;
+  cursor: pointer;
+}
+.riga-altro:last-child { border-bottom: none; }
+.riga-altro:active { background: #F8F9FA; }
+
+.riga-altro .ico-riga {
+  font-size: 18px;
+  color: #000000;
+  flex-shrink: 0;
+}
+.riga-altro .titolo-altro {
+  flex: 1;
+  min-width: 0;
+  color: #000000;
+  font-size: 14px;
+  font-weight: 600;
+}
+.riga-altro .freccia-riga {
+  font-size: 14px;
+  color: #9CA3AF;
+  flex-shrink: 0;
+}

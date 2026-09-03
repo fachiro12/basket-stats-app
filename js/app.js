@@ -44,6 +44,11 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", () => navigaA(btn.dataset.view));
   });
 
+  /* -------- Accesso rapido pagina "Altro" -------- */
+  document.querySelectorAll("[data-goto]").forEach(el => {
+    el.addEventListener("click", () => navigaA(el.dataset.goto));
+  });
+
   /* -------- AVVIO -------- */
   navigaA("partita");          // vista di default
   inizializzaPinGate();        // mostra pin gate o app direttamente
