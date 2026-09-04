@@ -57,10 +57,63 @@ function sincronizzaGiocatore(rec, elimina) {
   });
 }
 
+/* ---------- Sync cloud -> client (JSONP, no CORS) ---------- */
+function scaricaGiocatori(cb) {
+  const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
+  if (!base || base.indexOf("INCOLLA_QUI") === 0) { if (cb) cb(false); return; }
+
+  const nomeCb = "bspGiocatoriCb_" + Date.now();
+  const script = document.createElement("script");
+  let concluso = false;
+
+  const pulisci = () => {
+    delete window[nomeCb];
+    if (script.parentNode) script.parentNode.removeChild(script);
+  };
+
+  window[nomeCb] = function (risposta) {
+    concluso = true;
+    if (risposta && risposta.ok && Array.isArray(risposta.giocatori)) {
+      mergeGiocatoriCloud(risposta.giocatori);
+      if (cb) cb(true);
+    } else if (cb) { cb(false); }
+    pulisci();
+  };
+
+  script.src = base + (base.indexOf("?") > -1 ? "&" : "?") +
+    "action=getGiocatori&callback=" + nomeCb;
+  script.onerror = () => { if (!concluso && cb) cb(false); pulisci(); };
+  document.body.appendChild(script);
+}
+
+function mergeGiocatoriCloud(cloud) {
+  const perId = {};
+  caricaGiocatori().forEach(g => { if (g.id) perId[g.id] = g; });
+
+  cloud.forEach(c => {
+    const id = String(c.id_giocatore || "").trim();
+    if (!id) return;
+    const n = parseInt(c.numero_maglia, 10);
+    perId[id] = {
+      id: id,
+      nome: (c.nome || "").toString().trim(),
+      cognome: (c.cognome || "").toString().trim(),
+      ruolo: RUOLI.indexOf(c.ruolo) > -1 ? c.ruolo : (c.ruolo || ""),
+      numero_maglia: isNaN(n) ? "" : n,
+      team: (c.team || TEAM_DEFAULT).toString().trim()
+    };
+  });
+
+  salvaGiocatori(Object.keys(perId).map(k => perId[k]));
+  const ov = document.getElementById("overlay-roster");
+  if (ov && ov.classList.contains("visibile")) renderRoster();
+}
+
 /* ---------- UI: anagrafica (sezione "Altro") ---------- */
 function apriRoster() {
   renderRoster();
   document.getElementById("overlay-roster").classList.add("visibile");
+  scaricaGiocatori(ok => { if (ok) renderRoster(); });
 }
 function chiudiRoster() {
   document.getElementById("overlay-roster").classList.remove("visibile");

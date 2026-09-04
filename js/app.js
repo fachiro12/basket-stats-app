@@ -80,6 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* -------- AVVIO -------- */
   navigaA("partita");          // vista di default
   if (typeof renderCalendario === "function") renderCalendario();  // popola la lista partite
+  if (typeof scaricaGiocatori === "function") scaricaGiocatori();  // sync anagrafica cloud -> client
   inizializzaPinGate();        // mostra pin gate o app direttamente
   processaCoda();              // tentativo invio eventi in coda
 });
