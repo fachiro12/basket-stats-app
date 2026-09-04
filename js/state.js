@@ -3,7 +3,7 @@
    ========================================================================== */
 
 const CONFIG = {
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwxOH1lT_9ShZMLjkG3aE4q3oP7g3BLC5VOUUX3CVnEUUfb5nTGh8NUoCKVV2A1VLd8Mw/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyMkSG5NW3mEFa_NPE6U1T9zz9q046-5-bRY7M9DYDnzu0nPdQQHcKgRFlMjeiZlXNV4Q/exec",
   ID_PARTITA_DEFAULT: "MATCH_001",
   TEMPO_PARTITA_DEFAULT: "10:00",
   NOME_SQUADRA_MIA: "MIA",

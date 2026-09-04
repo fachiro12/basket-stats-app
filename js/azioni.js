@@ -4,15 +4,21 @@
 
 function registraEvento(campi, delta, testoFeed) {
   const evento = Object.assign({
-    id_evento: uuid(),
     id_partita: state.id_partita,
+    id_evento: uuid(),
     timestamp: new Date().toISOString(),
     quarto: nomeQuarto(),
     tempo_partita: state.tempoPartita,
-    quintetto_mia: (state.inCampo || state.roster).join(","),
+    squadra: "",
+    giocatore_num: "",
+    tipo_evento: "",
+    dettaglio: "",
+    punti_segnati: 0,
     punteggio_progressivo: state.punteggio.MIA + "-" + state.punteggio.OPP,
+    quintetto_mia: (state.inCampo || state.roster).slice(),
     fallo_speciale: "NESSUNO",
-    esito_tl: []
+    esito_tl: [],
+    id_evento_target: ""
   }, campi);
 
   state.eventLog.push({ evento, delta });
@@ -201,21 +207,21 @@ function annullaUltimoEvento() {
   if (typeof ultimo.delta === "function") ultimo.delta();
 
   const eventoAnnulla = {
-    id_evento: uuid(),
     id_partita: state.id_partita,
+    id_evento: uuid(),
     timestamp: new Date().toISOString(),
     quarto: nomeQuarto(),
     tempo_partita: state.tempoPartita,
-    quintetto_mia: (state.inCampo || state.roster).join(","),
     squadra: ultimo.evento.squadra,
     giocatore_num: ultimo.evento.giocatore_num,
     tipo_evento: "ANNULLA",
-    id_evento_target: ultimo.evento.id_evento,
     dettaglio: "UNDO di " + ultimo.evento.tipo_evento,
     punti_segnati: 0,
-    esito_tl: [],
+    punteggio_progressivo: state.punteggio.MIA + "-" + state.punteggio.OPP,
+    quintetto_mia: (state.inCampo || state.roster).slice(),
     fallo_speciale: "NESSUNO",
-    punteggio_progressivo: state.punteggio.MIA + "-" + state.punteggio.OPP
+    esito_tl: [],
+    id_evento_target: ultimo.evento.id_evento
   };
   inviaEvento(eventoAnnulla);
 
