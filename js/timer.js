@@ -85,3 +85,12 @@ function terminaPartita() {
   renderPartita();
   mostraToast("Partita terminata: " + state.punteggio.MIA + "-" + state.punteggio.OPP);
 }
+
+function nuovaPartita() {
+  if (!confirm("Sei sicuro? Tutti i dati non salvati andranno persi.")) return;
+  state = statoIniziale();
+  fermaIntervallo();
+  salvaStato();
+  navigaA("partita");
+  renderPartita();
+}

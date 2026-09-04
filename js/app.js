@@ -49,6 +49,12 @@ document.addEventListener("DOMContentLoaded", () => {
     el.addEventListener("click", () => navigaA(el.dataset.goto));
   });
 
+  /* -------- Pannello Fine Partita -------- */
+  document.getElementById("btn-vai-stats").addEventListener("click", () => {
+    document.querySelector('.tab-btn[data-view="stats"]').click();
+  });
+  document.getElementById("btn-nuova-partita").addEventListener("click", nuovaPartita);
+
   /* -------- AVVIO -------- */
   navigaA("partita");          // vista di default
   inizializzaPinGate();        // mostra pin gate o app direttamente

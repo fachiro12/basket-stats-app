@@ -48,6 +48,7 @@ function renderPartita() {
   btnTimer.classList.toggle("in-corso", state.timerAttivo);
   btnTimer.disabled = !!state.partitaFinita;
   document.getElementById("btn-quarto").disabled = !!state.partitaFinita;
+  document.getElementById("end-game-panel").classList.toggle("hidden", !state.partitaFinita);
   document.getElementById("banner-tempo-fermo").classList.toggle(
     "visibile", !state.timerAttivo && !state.partitaFinita
   );
