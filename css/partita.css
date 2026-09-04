@@ -123,6 +123,12 @@ header.hud {
 .btn-timer .ico,
 .btn-icona-piccolo .ico { font-size: 15px; }
 
+.btn-timer:disabled,
+.btn-icona-piccolo:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .banner-tempo-fermo {
   display: none;
   align-items: center;

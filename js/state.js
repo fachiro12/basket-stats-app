@@ -8,6 +8,8 @@ const CONFIG = {
   NOME_SQUADRA_OPP: "OPP",
   ROSTER_INIZIALE: [8, 12, 5, 23, 33],
   DURATA_QUARTO_SEC: 10 * 60,
+  DURATA_OT_SEC: 5 * 60,
+  QUARTI_REGOLAMENTARI: 4,
   FALLI_SQUADRA_PER_BONUS: 5,
   FALLI_PERSONALI_LIMITE: 5,
   RETRY_CODA_MS: 15000
@@ -24,6 +26,7 @@ function statoIniziale() {
   CONFIG.ROSTER_INIZIALE.forEach(n => falliGiocatori[n] = 0);
   return {
     quartoIndice: 0,
+    partitaFinita: false,
     timerSec: CONFIG.DURATA_QUARTO_SEC,
     timerAttivo: false,
     punteggio: { MIA: 0, OPP: 0 },
@@ -58,7 +61,12 @@ function caricaCoda() {
   } catch (e) { return []; }
 }
 
-function nomeQuarto() { return "Q" + (state.quartoIndice + 1); }
+function nomeQuarto() {
+  if (state.partitaFinita) return "FINALE";
+  const reg = CONFIG.QUARTI_REGOLAMENTARI;
+  if (state.quartoIndice < reg) return "Q" + (state.quartoIndice + 1);
+  return "OT" + (state.quartoIndice - reg + 1);
+}
 
 function formatTempo(sec) {
   sec = Math.max(0, sec);

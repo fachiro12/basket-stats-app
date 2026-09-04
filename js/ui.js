@@ -46,7 +46,11 @@ function renderPartita() {
   const btnTimer = document.getElementById("btn-timer");
   btnTimer.innerHTML = state.timerAttivo ? ico("pause") + " STOP" : ico("play") + " START";
   btnTimer.classList.toggle("in-corso", state.timerAttivo);
-  document.getElementById("banner-tempo-fermo").classList.toggle("visibile", !state.timerAttivo);
+  btnTimer.disabled = !!state.partitaFinita;
+  document.getElementById("btn-quarto").disabled = !!state.partitaFinita;
+  document.getElementById("banner-tempo-fermo").classList.toggle(
+    "visibile", !state.timerAttivo && !state.partitaFinita
+  );
 
   // Feed
   document.getElementById("quick-feed").innerHTML = "<b>Ultimo:</b> " + state.ultimoTestoFeed;
