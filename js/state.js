@@ -33,6 +33,12 @@ function statoIniziale() {
     falliSquadraPerQuarto: { MIA: [0, 0, 0, 0], OPP: [0, 0, 0, 0] },
     selezione: null,
     eventLog: [],
+    stints: [],
+    stintCorrente: {
+      quarto: "Q1",
+      inizio: { quarto: "Q1", tempo: "00:00", punteggio: { MIA: 0, OPP: 0 } },
+      quintetto: CONFIG.ROSTER_INIZIALE.slice()
+    },
     ultimoTestoFeed: "Pronto per iniziare."
   };
 }

@@ -76,7 +76,7 @@ function renderPartita() {
   aggiornaBadgeOffline();
 }
 
-/* ---------- MODALE CAMBI ---------- */
+/* ---------- MODALE CAMBI — checkpoint tempo / quintetto / stint ---------- */
 function apriCambi() {
   const container = document.getElementById("cambi-slots");
   container.innerHTML = "";
@@ -88,10 +88,20 @@ function apriCambi() {
       `<input type="tel" inputmode="numeric" maxlength="2" data-idx="${idx}" placeholder="${num}">`;
     container.appendChild(div);
   });
+
+  document.getElementById("cambi-quarto").textContent = nomeQuarto();
+  document.getElementById("cambi-min").value = "";
+  document.getElementById("cambi-sec").value = "";
+  document.getElementById("cambi-punti-mia").value = state.punteggio.MIA;
+  document.getElementById("cambi-punti-opp").value = state.punteggio.OPP;
+
   document.getElementById("overlay-cambi").classList.add("visibile");
 }
 
 function confermaCambi() {
+  if (!Array.isArray(state.stints)) state.stints = [];
+  const quintettoPrec = state.roster.slice();
+
   document.querySelectorAll("#cambi-slots input").forEach(inp => {
     const idx = parseInt(inp.dataset.idx, 10);
     const val = inp.value.trim();
@@ -101,10 +111,64 @@ function confermaCambi() {
       if (!(n in state.falliGiocatori)) state.falliGiocatori[n] = 0;
     }
   });
-  salvaStato();
+
+  const mm = parseInt(document.getElementById("cambi-min").value, 10) || 0;
+  const ss = parseInt(document.getElementById("cambi-sec").value, 10) || 0;
+  const tempo = String(mm).padStart(2, "0") + ":" + String(ss).padStart(2, "0");
+  const pMia = parseInt(document.getElementById("cambi-punti-mia").value, 10);
+  const pOpp = parseInt(document.getElementById("cambi-punti-opp").value, 10);
+  const checkpoint = {
+    quarto: nomeQuarto(),
+    tempo,
+    punteggio: {
+      MIA: isNaN(pMia) ? state.punteggio.MIA : pMia,
+      OPP: isNaN(pOpp) ? state.punteggio.OPP : pOpp
+    }
+  };
+
+  chiudiStint(checkpoint);
+  apriStint(state.roster.slice(), checkpoint);
+
+  const usciti = quintettoPrec.filter(n => !state.roster.includes(n));
+  const entrati = state.roster.filter(n => !quintettoPrec.includes(n));
+  const descr = (usciti.length || entrati.length)
+    ? "Cambio " + tempo + " — OUT " + (usciti.map(n => "#" + n).join(",") || "—") +
+      " / IN " + (entrati.map(n => "#" + n).join(",") || "—")
+    : "Checkpoint " + tempo;
+
+  registraEvento({
+    squadra: "MIA", giocatore_num: "",
+    tipo_evento: "CAMBIO", dettaglio: "STINT", punti_segnati: 0,
+    tempo_rimanente: tempo,
+    quintetto: state.roster.slice(),
+    usciti, entrati,
+    punteggio_checkpoint: checkpoint.punteggio.MIA + "-" + checkpoint.punteggio.OPP
+  }, () => {}, descr);
+
   chiudiCambi();
-  renderPartita();
-  mostraToast("Cambi applicati");
+  mostraToast("Quintetto e checkpoint salvati");
+}
+
+function apriStint(quintetto, checkpoint) {
+  state.stintCorrente = {
+    quarto: checkpoint.quarto,
+    inizio: checkpoint,
+    quintetto: quintetto.slice()
+  };
+}
+
+function chiudiStint(checkpoint) {
+  const s = state.stintCorrente;
+  if (!s) return;
+  const pm = (checkpoint.punteggio.MIA - s.inizio.punteggio.MIA) -
+             (checkpoint.punteggio.OPP - s.inizio.punteggio.OPP);
+  state.stints.push({
+    quarto: s.quarto,
+    quintetto: s.quintetto,
+    inizio: s.inizio,
+    fine: checkpoint,
+    plusMinus: pm
+  });
 }
 
 function chiudiCambi() {

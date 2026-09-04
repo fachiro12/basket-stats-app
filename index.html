@@ -419,7 +419,31 @@
 <!-- Cambi -->
 <div class="overlay" id="overlay-cambi">
   <div class="modale">
-    <h2><svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg> Cambi — 5 in campo</h2>
+    <h2><svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg> Cambi — checkpoint quintetto</h2>
+
+    <div class="cambi-checkpoint">
+      <div class="cc-riga">
+        <span class="cc-label">Periodo</span>
+        <span class="cc-valore" id="cambi-quarto">Q1</span>
+      </div>
+      <div class="cc-riga">
+        <span class="cc-label">Tempo</span>
+        <span class="cc-campi">
+          <input type="tel" inputmode="numeric" maxlength="2" id="cambi-min" placeholder="MM">
+          <span>:</span>
+          <input type="tel" inputmode="numeric" maxlength="2" id="cambi-sec" placeholder="SS">
+        </span>
+      </div>
+      <div class="cc-riga">
+        <span class="cc-label">Punteggio (MIA − OPP)</span>
+        <span class="cc-campi">
+          <input type="tel" inputmode="numeric" maxlength="3" id="cambi-punti-mia">
+          <span>−</span>
+          <input type="tel" inputmode="numeric" maxlength="3" id="cambi-punti-opp">
+        </span>
+      </div>
+    </div>
+
     <div id="cambi-slots"></div>
     <button class="btn-conferma" id="cambi-conferma">CONFERMA CAMBI</button>
     <button class="btn-annulla-modale" id="cambi-chiudi">Annulla</button>
