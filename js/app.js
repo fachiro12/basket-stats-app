@@ -42,6 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("fab-aggiungi-partita").addEventListener("click", apriAggiungiPartita);
   document.getElementById("ap-conferma").addEventListener("click", confermaAggiungiPartita);
   document.getElementById("ap-chiudi").addEventListener("click", chiudiAggiungiPartita);
+  document.querySelector('.tab-btn[data-view="calendario"]')
+    .addEventListener("click", renderCalendario);
 
   /* -------- TAB BAR -------- */
   document.querySelectorAll(".tab-btn").forEach(btn => {
@@ -61,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* -------- AVVIO -------- */
   navigaA("partita");          // vista di default
+  if (typeof renderCalendario === "function") renderCalendario();  // popola la lista partite
   inizializzaPinGate();        // mostra pin gate o app direttamente
   processaCoda();              // tentativo invio eventi in coda
 });
