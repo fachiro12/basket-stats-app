@@ -34,7 +34,6 @@ function renderPartita() {
   document.getElementById("punti-mia").textContent = state.punteggio.MIA;
   document.getElementById("punti-opp").textContent = state.punteggio.OPP;
   document.getElementById("quarto-badge").textContent = nomeQuarto();
-  document.getElementById("timer-display").textContent = formatTempo(state.timerSec);
 
   // Bonus
   const bonusMia = state.falliSquadraPerQuarto.OPP[state.quartoIndice] >= CONFIG.FALLI_SQUADRA_PER_BONUS;
@@ -42,19 +41,12 @@ function renderPartita() {
   document.getElementById("bonus-mia").classList.toggle("attivo", bonusMia);
   document.getElementById("bonus-opp").classList.toggle("attivo", bonusOpp);
 
-  // Timer
-  const btnTimer = document.getElementById("btn-timer");
-  btnTimer.innerHTML = state.timerAttivo ? ico("pause") + " STOP" : ico("play") + " START";
-  btnTimer.classList.toggle("in-corso", state.timerAttivo);
-  btnTimer.disabled = !!state.partitaFinita;
+  // Stato partita
   document.getElementById("btn-quarto").disabled = !!state.partitaFinita;
   document.getElementById("end-game-panel").classList.toggle("hidden", !state.partitaFinita);
-  document.getElementById("banner-tempo-fermo").classList.toggle(
-    "visibile", !state.timerAttivo && !state.partitaFinita
-  );
 
-  // Feed
-  document.getElementById("quick-feed").innerHTML = "<b>Ultimo:</b> " + state.ultimoTestoFeed;
+  // Ultimo evento
+  document.getElementById("ultimo-evento-banner").textContent = state.ultimoTestoFeed;
 
   // Roster
   const listaEl = document.getElementById("lista-giocatori");
@@ -86,7 +78,6 @@ function renderPartita() {
 
 /* ---------- MODALE CAMBI ---------- */
 function apriCambi() {
-  if (state.timerAttivo) { mostraToast("Ferma il cronometro prima dei cambi"); return; }
   const container = document.getElementById("cambi-slots");
   container.innerHTML = "";
   state.roster.forEach((num, idx) => {

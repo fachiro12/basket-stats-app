@@ -5,7 +5,6 @@
 document.addEventListener("DOMContentLoaded", () => {
 
   /* -------- PARTITA -------- */
-  document.getElementById("btn-timer").addEventListener("click", toggleTimer);
   document.getElementById("btn-quarto").addEventListener("click", avanzaQuarto);
   document.getElementById("btn-undo").addEventListener("click", annullaUltimoEvento);
   document.getElementById("btn-recap").addEventListener("click", apriRecap);
@@ -58,6 +57,5 @@ document.addEventListener("DOMContentLoaded", () => {
   /* -------- AVVIO -------- */
   navigaA("partita");          // vista di default
   inizializzaPinGate();        // mostra pin gate o app direttamente
-  if (state.timerAttivo) avviaIntervallo();  // ripristino dopo refresh
   processaCoda();              // tentativo invio eventi in coda
 });

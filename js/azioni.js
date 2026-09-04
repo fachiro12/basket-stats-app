@@ -7,7 +7,7 @@ function registraEvento(campi, delta, testoFeed) {
     id_evento: uuid(),
     timestamp: new Date().toISOString(),
     quarto: nomeQuarto(),
-    tempo_rimanente: formatTempo(state.timerSec),
+    tempo_rimanente: "",
     punteggio_progressivo: state.punteggio.MIA + "-" + state.punteggio.OPP,
     fallo_speciale: "NESSUNO",
     esito_tl: []
@@ -15,6 +15,10 @@ function registraEvento(campi, delta, testoFeed) {
 
   state.eventLog.push({ evento, delta });
   state.ultimoTestoFeed = testoFeed;
+
+  const banner = document.getElementById("ultimo-evento-banner");
+  if (banner) banner.textContent = testoFeed;
+
   salvaStato();
   inviaEvento(evento);
   renderPartita();
@@ -198,7 +202,7 @@ function annullaUltimoEvento() {
     id_evento: uuid(),
     timestamp: new Date().toISOString(),
     quarto: nomeQuarto(),
-    tempo_rimanente: formatTempo(state.timerSec),
+    tempo_rimanente: "",
     squadra: ultimo.evento.squadra,
     giocatore_num: ultimo.evento.giocatore_num,
     tipo_evento: "ANNULLA",

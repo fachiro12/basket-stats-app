@@ -27,8 +27,6 @@ function statoIniziale() {
   return {
     quartoIndice: 0,
     partitaFinita: false,
-    timerSec: CONFIG.DURATA_QUARTO_SEC,
-    timerAttivo: false,
     punteggio: { MIA: 0, OPP: 0 },
     roster: CONFIG.ROSTER_INIZIALE.slice(),
     falliGiocatori,
