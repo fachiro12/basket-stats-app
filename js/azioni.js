@@ -3,6 +3,7 @@
    ========================================================================== */
 
 function registraEvento(campi, delta, testoFeed) {
+  const inCampo = state.inCampo || state.roster;
   const evento = Object.assign({
     id_partita: state.id_partita,
     id_evento: uuid(),
@@ -15,11 +16,14 @@ function registraEvento(campi, delta, testoFeed) {
     dettaglio: "",
     punti_segnati: 0,
     punteggio_progressivo: state.punteggio.MIA + "-" + state.punteggio.OPP,
-    quintetto_mia: (state.inCampo || state.roster).slice(),
+    quintetto_mia: inCampo.join(","),
     fallo_speciale: "NESSUNO",
-    esito_tl: [],
+    esito_tl: "",
+    valido: true,
     id_evento_target: ""
   }, campi);
+
+  if (Array.isArray(evento.esito_tl)) evento.esito_tl = evento.esito_tl.join(",");
 
   state.eventLog.push({ evento, delta });
   state.ultimoTestoFeed = testoFeed;
@@ -218,9 +222,10 @@ function annullaUltimoEvento() {
     dettaglio: "UNDO di " + ultimo.evento.tipo_evento,
     punti_segnati: 0,
     punteggio_progressivo: state.punteggio.MIA + "-" + state.punteggio.OPP,
-    quintetto_mia: (state.inCampo || state.roster).slice(),
+    quintetto_mia: (state.inCampo || state.roster).join(","),
     fallo_speciale: "NESSUNO",
-    esito_tl: [],
+    esito_tl: "",
+    valido: true,
     id_evento_target: ultimo.evento.id_evento
   };
   inviaEvento(eventoAnnulla);

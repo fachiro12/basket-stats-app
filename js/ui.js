@@ -140,11 +140,12 @@ function confermaCambi() {
     : "Checkpoint " + tempo;
 
   registraEvento({
-    squadra: "MIA", giocatore_num: "",
-    tipo_evento: "CAMBIO", dettaglio: "STINT", punti_segnati: 0,
-    quintetto: state.inCampo.slice(),
-    usciti, entrati,
-    punteggio_checkpoint: checkpoint.punteggio.MIA + "-" + checkpoint.punteggio.OPP
+    squadra: "MIA",
+    giocatore_num: [...usciti, ...entrati].join(","),
+    tipo_evento: "CAMBIO",
+    dettaglio: "STINT",
+    punti_segnati: 0,
+    punteggio_progressivo: checkpoint.punteggio.MIA + "-" + checkpoint.punteggio.OPP
   }, () => {}, descr);
 
   chiudiCambi();
