@@ -79,7 +79,7 @@ function renderPartita() {
 
   // Fallo subito disabilitato senza giocatore MIA
   document.getElementById("btn-fallo-subito").disabled =
-    !(state.selezione?.squadra === "MIA");
+    !(state.selezione?.squadra === "MIA" || state.selezione?.squadra === "OPP");
 
   aggiornaBadgeOffline();
 }

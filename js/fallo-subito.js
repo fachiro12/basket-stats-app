@@ -6,10 +6,25 @@ let fsOpzione = null;
 let fsEsitiTl = [];
 
 function apriFalloSubito() {
-  if (!state.selezione || state.selezione.squadra !== "MIA") {
-    mostraToast("FALLO SUBITO richiede un giocatore MIA selezionato");
-    return;
+  if (state.selezione && state.selezione.squadra === "MIA" && state.selezione.num != null) {
+    apriModaleFalloSubito();
+  } else {
+    chiediGiocatoreMiaFallo();
   }
+}
+
+function chiediGiocatoreMiaFallo() {
+  const bottoni = state.roster.map(n => aoBottone("#" + n, () => {
+    state.selezione = { squadra: "MIA", num: n };
+    salvaStato();
+    renderPartita();
+    chiudiActionOverlay();
+    apriModaleFalloSubito();
+  }));
+  mostraActionOverlay("Chi ha subito il fallo?", bottoni, 0);
+}
+
+function apriModaleFalloSubito() {
   fsOpzione = null;
   fsEsitiTl = [];
   document.getElementById("fs-contesto").textContent =
@@ -105,7 +120,13 @@ function confermaFalloSubito() {
     fallo_speciale: falloSpeciale
   }, inverti, "#" + num + " MIA Fallo subito (" + dettaglio + ")");
 
+  const rimbalzoLive = falloSpeciale === "NESSUNO" &&
+    fsOpzione !== "RIMESSA" &&
+    fsEsitiTl.length > 0 &&
+    fsEsitiTl[fsEsitiTl.length - 1] === "NO";
+
   chiudiFalloSubito();
+  if (rimbalzoLive) avviaOverlayRimbalzo();
 }
 
 function chiudiFalloSubito() {

@@ -142,9 +142,18 @@ function registraRimbalzo(tipo, squadra, num) {
   }, () => {}, (num ? "#" + num + " " : "") + squadra + " Rimbalzo " + tipo.toLowerCase());
 }
 
+function richiedeSelezioneSquadra() {
+  if (!state.selezione || (state.selezione.squadra !== "MIA" && state.selezione.squadra !== "OPP")) {
+    mostraToast("Seleziona un giocatore MIA o AVVERSARI");
+    return false;
+  }
+  return true;
+}
+
 function registraRecupero() {
-  if (!richiedeSelezione()) return;
+  if (!richiedeSelezioneSquadra()) return;
   const sq = state.selezione.squadra, num = state.selezione.num;
+  state.selezione = null;
   registraEvento({
     squadra: sq, giocatore_num: num ? String(num) : "",
     tipo_evento: "RECUPERO", dettaglio: "REC", punti_segnati: 0
@@ -152,8 +161,9 @@ function registraRecupero() {
 }
 
 function registraPallaPersa() {
-  if (!richiedeSelezione()) return;
+  if (!richiedeSelezioneSquadra()) return;
   const sq = state.selezione.squadra, num = state.selezione.num;
+  state.selezione = null;
   registraEvento({
     squadra: sq, giocatore_num: num ? String(num) : "",
     tipo_evento: "PALLA_PERSA", dettaglio: "PP", punti_segnati: 0
