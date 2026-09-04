@@ -59,6 +59,87 @@ function registraTiro(tipo, esito) {
     dettaglio: tipo + "_" + esito,
     punti_segnati: punti
   }, inverti, label);
+
+  // Macchina a stati: canestro MIA -> Assist? / errore MIA -> Rimbalzo
+  if (sq === "MIA") {
+    if (esito === "SEGNATO" && num) avviaOverlayAssist(num);
+    else if (esito === "ERRATO") avviaOverlayRimbalzo();
+  }
+}
+
+/* ==========================================================================
+   MACCHINA A STATI — pannello contestuale Assist / Rimbalzo
+   ========================================================================== */
+let aoTimeout = null;
+
+function aoElemento() { return document.getElementById("action-overlay"); }
+
+function chiudiActionOverlay() {
+  clearTimeout(aoTimeout);
+  aoTimeout = null;
+  aoElemento().classList.add("hidden");
+  document.getElementById("ao-griglia").innerHTML = "";
+}
+
+function aoBottone(testo, onTap, neutro) {
+  const b = document.createElement("button");
+  b.className = "ao-btn" + (neutro ? " ao-neutro" : "");
+  b.textContent = testo;
+  b.addEventListener("click", onTap);
+  return b;
+}
+
+function mostraActionOverlay(titolo, bottoni, timeoutMs) {
+  document.getElementById("ao-titolo").textContent = titolo;
+  const g = document.getElementById("ao-griglia");
+  g.innerHTML = "";
+  bottoni.forEach(b => g.appendChild(b));
+  aoElemento().classList.remove("hidden");
+  clearTimeout(aoTimeout);
+  aoTimeout = timeoutMs ? setTimeout(chiudiActionOverlay, timeoutMs) : null;
+}
+
+/* ---- Assist (timeout 4s) ---- */
+function avviaOverlayAssist(autoreNum) {
+  const bottoni = state.roster
+    .filter(n => String(n) !== String(autoreNum))
+    .map(n => aoBottone("#" + n, () => {
+      registraAssist(n, autoreNum);
+      chiudiActionOverlay();
+    }));
+  bottoni.push(aoBottone("Nessun assist", chiudiActionOverlay, true));
+  mostraActionOverlay("Assist?", bottoni, 4000);
+}
+
+function registraAssist(num, autoreNum) {
+  registraEvento({
+    squadra: "MIA", giocatore_num: String(num),
+    tipo_evento: "ASSIST", dettaglio: "AST_A_" + autoreNum, punti_segnati: 0
+  }, () => {}, "#" + num + " MIA Assist (a #" + autoreNum + ")");
+}
+
+/* ---- Rimbalzo (nessun timeout: obbligatorio) ---- */
+function avviaOverlayRimbalzo() {
+  mostraActionOverlay("Rimbalzo", [
+    aoBottone("Offensivo (MIA)", chiediRimbalzistaMIA),
+    aoBottone("Difensivo (OPP)", () => { registraRimbalzo("DIFENSIVO", "OPP", null); chiudiActionOverlay(); }),
+    aoBottone("Di squadra", () => { registraRimbalzo("SQUADRA", "MIA", null); chiudiActionOverlay(); }, true)
+  ], 0);
+}
+
+function chiediRimbalzistaMIA() {
+  const bottoni = state.roster.map(n => aoBottone("#" + n, () => {
+    registraRimbalzo("OFFENSIVO", "MIA", n);
+    chiudiActionOverlay();
+  }));
+  mostraActionOverlay("Rimbalzo offensivo — chi?", bottoni, 0);
+}
+
+function registraRimbalzo(tipo, squadra, num) {
+  registraEvento({
+    squadra: squadra, giocatore_num: num ? String(num) : "",
+    tipo_evento: "RIMBALZO", dettaglio: tipo, punti_segnati: 0
+  }, () => {}, (num ? "#" + num + " " : "") + squadra + " Rimbalzo " + tipo.toLowerCase());
 }
 
 function registraRecupero() {

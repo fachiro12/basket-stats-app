@@ -202,7 +202,53 @@ main.corpo-partita {
   gap: 6px;
 }
 .pannello-sinistro { flex: 0 0 40%; max-width: 44%; }
-.pannello-destro { flex: 1; min-width: 0; }
+.pannello-destro { flex: 1; min-width: 0; position: relative; }
+
+/* ---------- Pannello contestuale Assist / Rimbalzo ---------- */
+.hidden { display: none !important; }
+
+#action-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+.ao-titolo {
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #000000;
+}
+.ao-griglia {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.ao-btn {
+  min-height: 46px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E5E7EB;
+  background: #F8F9FA;
+  color: #000000;
+  font-weight: 800;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ao-btn.ao-neutro { background: #EAECEF; color: #6B7280; grid-column: 1 / -1; }
 
 .titolo-pannello {
   font-size: 12px;
