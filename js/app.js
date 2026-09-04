@@ -38,6 +38,20 @@ document.addEventListener("DOMContentLoaded", () => {
   /* -------- RECAP -------- */
   document.getElementById("recap-chiudi").addEventListener("click", chiudiRecap);
 
+  /* -------- ROSTER / ANAGRAFICA GIOCATORI -------- */
+  document.querySelectorAll('[data-apri="roster"]').forEach(el =>
+    el.addEventListener("click", apriRoster));
+  document.getElementById("roster-nuovo").addEventListener("click", () => apriFormGiocatore());
+  document.getElementById("roster-chiudi").addEventListener("click", chiudiRoster);
+  document.getElementById("gioc-salva").addEventListener("click", confermaFormGiocatore);
+  document.getElementById("gioc-elimina").addEventListener("click", eliminaGiocatoreCorrente);
+  document.getElementById("gioc-chiudi").addEventListener("click", chiudiFormGiocatore);
+
+  /* -------- PRE-PARTITA (convocati) -------- */
+  document.getElementById("pp-conferma").addEventListener("click", confermaPrePartita);
+  document.getElementById("pp-annulla").addEventListener("click", chiudiPrePartita);
+  document.getElementById("pp-lista").addEventListener("change", aggiornaContatorePrePartita);
+
   /* -------- CALENDARIO -------- */
   document.getElementById("cal-aggiungi").addEventListener("click", apriAggiungiPartita);
   document.getElementById("cal-menu").addEventListener("click", () => mostraToast("Menu in arrivo"));

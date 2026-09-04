@@ -36,6 +36,7 @@ function statoIniziale() {
     punteggio: { MIA: 0, OPP: 0 },
     roster: CONFIG.ROSTER_INIZIALE.slice(),
     inCampo: CONFIG.ROSTER_INIZIALE.slice(),
+    convocati: [],
     falliGiocatori,
     falliSquadraPerQuarto: { MIA: [0, 0, 0, 0], OPP: [0, 0, 0, 0] },
     selezione: null,

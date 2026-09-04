@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="css/partita.css">
 <link rel="stylesheet" href="css/altro.css">
 <link rel="stylesheet" href="css/calendario.css">
+<link rel="stylesheet" href="css/roster.css">
 </head>
 <body>
 
@@ -237,7 +238,7 @@
 
         <div class="titolo-sezione-altro">Accesso rapido</div>
         <div class="griglia-accesso-rapido">
-          <button class="card-rapida" data-goto="squadra">
+          <button class="card-rapida" data-apri="roster">
             <svg class="ico ico-rapida" aria-hidden="true"><use href="#i-users"></use></svg>
             <svg class="ico freccia-rapida" aria-hidden="true"><use href="#i-chevron"></use></svg>
             <span class="label-rapida">Roster</span>
@@ -261,7 +262,7 @@
 
         <div class="titolo-sezione-altro">Traccia</div>
         <div class="lista-altro">
-          <div class="riga-altro">
+          <div class="riga-altro" data-apri="roster">
             <svg class="ico ico-riga" aria-hidden="true"><use href="#i-users"></use></svg>
             <span class="titolo-altro">Roster e ruoli</span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
@@ -280,7 +281,7 @@
 
         <div class="titolo-sezione-altro">Configurazione</div>
         <div class="lista-altro">
-          <div class="riga-altro">
+          <div class="riga-altro" data-apri="roster">
             <svg class="ico ico-riga" aria-hidden="true"><use href="#i-edit"></use></svg>
             <span class="titolo-altro">Modifica roster</span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
@@ -405,6 +406,54 @@
   </div>
 </div>
 
+<!-- Anagrafica giocatori -->
+<div class="overlay" id="overlay-roster">
+  <div class="modale">
+    <h2><svg class="ico" aria-hidden="true"><use href="#i-users"></use></svg> Anagrafica giocatori</h2>
+    <div id="roster-lista"></div>
+    <button class="btn-conferma" id="roster-nuovo">+ Nuovo giocatore</button>
+    <button class="btn-annulla-modale" id="roster-chiudi">Chiudi</button>
+  </div>
+</div>
+
+<!-- Scheda giocatore -->
+<div class="overlay" id="overlay-giocatore">
+  <div class="modale">
+    <h2 id="gioc-titolo">Nuovo giocatore</h2>
+    <input type="hidden" id="gioc-id">
+    <label class="ap-campo"><span>Nome</span>
+      <input type="text" id="gioc-nome" autocomplete="off"></label>
+    <label class="ap-campo"><span>Cognome</span>
+      <input type="text" id="gioc-cognome" autocomplete="off"></label>
+    <label class="ap-campo"><span>Ruolo</span>
+      <select id="gioc-ruolo">
+        <option value="Primary Handler">Primary Handler</option>
+        <option value="3&amp;D">3&amp;D</option>
+        <option value="Centro">Centro</option>
+      </select>
+    </label>
+    <label class="ap-campo"><span>Numero maglia (default)</span>
+      <input type="tel" inputmode="numeric" maxlength="2" id="gioc-numero"></label>
+    <label class="ap-campo"><span>Team</span>
+      <input type="text" id="gioc-team" value="DR1" autocomplete="off"></label>
+    <button class="btn-conferma" id="gioc-salva">SALVA</button>
+    <button class="btn-annulla-modale" id="gioc-elimina" hidden>Elimina giocatore</button>
+    <button class="btn-annulla-modale" id="gioc-chiudi">Annulla</button>
+  </div>
+</div>
+
+<!-- Pre-partita: convocati -->
+<div class="overlay" id="overlay-prepartita">
+  <div class="modale">
+    <h2><svg class="ico" aria-hidden="true"><use href="#i-clipboard"></use></svg> Convocati</h2>
+    <div id="pp-contesto" class="pp-contesto"></div>
+    <div id="pp-lista"></div>
+    <div id="pp-contatore" class="pp-contatore"></div>
+    <button class="btn-conferma" id="pp-conferma">INIZIA PARTITA</button>
+    <button class="btn-annulla-modale" id="pp-annulla">Annulla</button>
+  </div>
+</div>
+
 <!-- Aggiungi partita -->
 <div class="overlay" id="overlay-aggiungi-partita">
   <div class="modale">
@@ -453,6 +502,7 @@
 <script src="js/azioni.js"></script>
 <script src="js/fallo-subito.js"></script>
 <script src="js/calendario.js"></script>
+<script src="js/giocatori.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/pin.js"></script>
 <script src="js/app.js"></script>

@@ -116,18 +116,16 @@ function renderCalendario() {
 }
 
 function iniziaPartita(p) {
-  const msg = "Iniziare la rilevazione?\n\n" + p.avversario + " (" + p.luogo + ")\n" +
-    "Gara " + p.id_partita + " · " + formattaDataOra(p.data_ora) +
-    "\n\nI dati della partita corrente verranno azzerati.";
-  if (!confirm(msg)) return;
-
+  // Schermata intermedia: conferma/modifica convocati e maglie prima del via
+  if (typeof apriPrePartita === "function") {
+    apriPrePartita(p);
+    return;
+  }
   state = statoIniziale();
   state.id_partita = String(p.id_partita);
   salvaStato();
-
   salvaStatoPartitaLocale(p.id_partita, "In corso");
   aggiornaStatoPartitaBackend(p.id_partita, "In corso");
-
   renderCalendario();
   navigaA("partita");
   renderPartita();
