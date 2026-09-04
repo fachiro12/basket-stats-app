@@ -84,26 +84,49 @@
   border: 1.5px solid var(--color-border-strong);
 }
 
-/* ---------- FAB ---------- */
-#fab-aggiungi-partita {
-  position: fixed;
-  right: 16px;
-  bottom: calc(var(--tabbar-height) + 30px + env(safe-area-inset-bottom, 0px));
-  z-index: 45;
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-pill);
-  background: var(--color-brand);
-  color: #FFFFFF;
-  border: none;
-  font-size: 28px;
-  font-weight: 400;
-  line-height: 1;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20);
+/* ---------- Top bar calendario (stile mobile app) ---------- */
+.cal-topbar {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px var(--space-4);
+  background: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cal-tb-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: #000000;
   touch-action: manipulation;
 }
-@media (min-width: 460px) {
-  #fab-aggiungi-partita { right: calc(50% - 215px + 16px); }
+.cal-tb-btn .ico { font-size: 20px; }
+
+#cal-stagione {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  text-align-last: center;
+  touch-action: manipulation;
 }
 
 /* ---------- Modale aggiungi partita ---------- */

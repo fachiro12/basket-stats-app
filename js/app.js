@@ -39,7 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("recap-chiudi").addEventListener("click", chiudiRecap);
 
   /* -------- CALENDARIO -------- */
-  document.getElementById("fab-aggiungi-partita").addEventListener("click", apriAggiungiPartita);
+  document.getElementById("cal-aggiungi").addEventListener("click", apriAggiungiPartita);
+  document.getElementById("cal-menu").addEventListener("click", () => mostraToast("Menu in arrivo"));
+  document.getElementById("cal-stagione").addEventListener("change", renderCalendario);
   document.getElementById("ap-conferma").addEventListener("click", confermaAggiungiPartita);
   document.getElementById("ap-chiudi").addEventListener("click", chiudiAggiungiPartita);
   document.querySelector('.tab-btn[data-view="calendario"]')
