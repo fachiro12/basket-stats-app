@@ -14,13 +14,15 @@ const CONFIG = {
   QUARTI_REGOLAMENTARI: 4,
   FALLI_SQUADRA_PER_BONUS: 5,
   FALLI_PERSONALI_LIMITE: 5,
-  RETRY_CODA_MS: 15000
+  RETRY_CODA_MS: 15000,
+  PIN_EMERGENZA: "072327"   // accesso di emergenza se offline / server irraggiungibile
 };
 
 const STORAGE_KEYS = {
   stato: "bsp_stato_partita",
   coda: "bsp_coda_invio",
-  pin: "bsp_pin_ok"
+  pin: "bsp_pin_ok",
+  pinValore: "bsp_pin_valore"
 };
 
 function statoIniziale() {
