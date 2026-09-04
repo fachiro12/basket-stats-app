@@ -126,8 +126,11 @@ function confermaCambi() {
     }
   };
 
+  state.inCampo = state.roster.slice();
+  state.tempoPartita = tempo;
+
   chiudiStint(checkpoint);
-  apriStint(state.roster.slice(), checkpoint);
+  apriStint(state.inCampo.slice(), checkpoint);
 
   const usciti = quintettoPrec.filter(n => !state.roster.includes(n));
   const entrati = state.roster.filter(n => !quintettoPrec.includes(n));
@@ -139,8 +142,7 @@ function confermaCambi() {
   registraEvento({
     squadra: "MIA", giocatore_num: "",
     tipo_evento: "CAMBIO", dettaglio: "STINT", punti_segnati: 0,
-    tempo_rimanente: tempo,
-    quintetto: state.roster.slice(),
+    quintetto: state.inCampo.slice(),
     usciti, entrati,
     punteggio_checkpoint: checkpoint.punteggio.MIA + "-" + checkpoint.punteggio.OPP
   }, () => {}, descr);

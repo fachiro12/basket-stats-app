@@ -29,6 +29,9 @@ function avanzaQuarto() {
 
 function passaAlPeriodo(indice) {
   state.quartoIndice = indice;
+  state.tempoPartita = formatTempo(
+    indice < CONFIG.QUARTI_REGOLAMENTARI ? CONFIG.DURATA_QUARTO_SEC : CONFIG.DURATA_OT_SEC
+  );
   salvaStato();
   renderPartita();
   if (indice < CONFIG.QUARTI_REGOLAMENTARI) mostraToast("Inizia " + nomeQuarto());

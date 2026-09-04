@@ -4,6 +4,8 @@
 
 const CONFIG = {
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwxOH1lT_9ShZMLjkG3aE4q3oP7g3BLC5VOUUX3CVnEUUfb5nTGh8NUoCKVV2A1VLd8Mw/exec",
+  ID_PARTITA_DEFAULT: "MATCH_001",
+  TEMPO_PARTITA_DEFAULT: "10:00",
   NOME_SQUADRA_MIA: "MIA",
   NOME_SQUADRA_OPP: "OPP",
   ROSTER_INIZIALE: [8, 12, 5, 23, 33],
@@ -25,10 +27,13 @@ function statoIniziale() {
   const falliGiocatori = {};
   CONFIG.ROSTER_INIZIALE.forEach(n => falliGiocatori[n] = 0);
   return {
+    id_partita: CONFIG.ID_PARTITA_DEFAULT,
+    tempoPartita: CONFIG.TEMPO_PARTITA_DEFAULT,
     quartoIndice: 0,
     partitaFinita: false,
     punteggio: { MIA: 0, OPP: 0 },
     roster: CONFIG.ROSTER_INIZIALE.slice(),
+    inCampo: CONFIG.ROSTER_INIZIALE.slice(),
     falliGiocatori,
     falliSquadraPerQuarto: { MIA: [0, 0, 0, 0], OPP: [0, 0, 0, 0] },
     selezione: null,

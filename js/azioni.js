@@ -5,9 +5,11 @@
 function registraEvento(campi, delta, testoFeed) {
   const evento = Object.assign({
     id_evento: uuid(),
+    id_partita: state.id_partita,
     timestamp: new Date().toISOString(),
     quarto: nomeQuarto(),
-    tempo_rimanente: "",
+    tempo_partita: state.tempoPartita,
+    quintetto_mia: (state.inCampo || state.roster).join(","),
     punteggio_progressivo: state.punteggio.MIA + "-" + state.punteggio.OPP,
     fallo_speciale: "NESSUNO",
     esito_tl: []
@@ -200,9 +202,11 @@ function annullaUltimoEvento() {
 
   const eventoAnnulla = {
     id_evento: uuid(),
+    id_partita: state.id_partita,
     timestamp: new Date().toISOString(),
     quarto: nomeQuarto(),
-    tempo_rimanente: "",
+    tempo_partita: state.tempoPartita,
+    quintetto_mia: (state.inCampo || state.roster).join(","),
     squadra: ultimo.evento.squadra,
     giocatore_num: ultimo.evento.giocatore_num,
     tipo_evento: "ANNULLA",
