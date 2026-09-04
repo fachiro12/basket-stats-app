@@ -38,6 +38,11 @@ document.addEventListener("DOMContentLoaded", () => {
   /* -------- RECAP -------- */
   document.getElementById("recap-chiudi").addEventListener("click", chiudiRecap);
 
+  /* -------- CALENDARIO -------- */
+  document.getElementById("fab-aggiungi-partita").addEventListener("click", apriAggiungiPartita);
+  document.getElementById("ap-conferma").addEventListener("click", confermaAggiungiPartita);
+  document.getElementById("ap-chiudi").addEventListener("click", chiudiAggiungiPartita);
+
   /* -------- TAB BAR -------- */
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.addEventListener("click", () => navigaA(btn.dataset.view));

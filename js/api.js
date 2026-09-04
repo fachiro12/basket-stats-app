@@ -8,6 +8,16 @@ function inviaEvento(evento) {
   processaCoda();
 }
 
+function inviaAzione(payload) {
+  if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.indexOf("INCOLLA_QUI") === 0) return;
+  fetch(CONFIG.APPS_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+}
+
 function processaCoda() {
   if (codaInvio.length === 0) { aggiornaBadgeOffline(); return; }
   if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.indexOf("INCOLLA_QUI") === 0) {

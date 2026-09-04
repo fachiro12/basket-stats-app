@@ -45,6 +45,10 @@ function aggiungiPeriodoSupplementare() {
 function terminaPartita() {
   state.partitaFinita = true;
   salvaStato();
+  if (typeof salvaStatoPartitaLocale === "function") {
+    salvaStatoPartitaLocale(state.id_partita, "Terminata");
+    aggiornaStatoPartitaBackend(state.id_partita, "Terminata");
+  }
   renderPartita();
   mostraToast("Partita terminata: " + state.punteggio.MIA + "-" + state.punteggio.OPP);
 }

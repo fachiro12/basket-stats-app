@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="css/shell.css">
 <link rel="stylesheet" href="css/partita.css">
 <link rel="stylesheet" href="css/altro.css">
+<link rel="stylesheet" href="css/calendario.css">
 </head>
 <body>
 
@@ -63,6 +64,8 @@
   <symbol id="i-trending-up" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></symbol>
   <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></symbol>
+  <symbol id="i-bus" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="13" rx="2"/><line x1="4" y1="11" x2="20" y2="11"/><circle cx="8" cy="20" r="1.4"/><circle cx="16" cy="20" r="1.4"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24">
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
     <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -304,68 +307,13 @@
     <div class="view" id="view-calendario">
       <div class="header-pagina">
         <h1><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg> Calendario</h1>
-        <p>Partite della stagione</p>
+        <p>Virtus Luino · DR1 Lombardia Girone D · 2026/27</p>
       </div>
       <div class="contenuto-pagina">
-
-        <div class="titolo-pannello" style="margin-left:2px;">PROSSIME PARTITE</div>
-        <div class="card-lista">
-          <div class="riga-lista">
-            <div>
-              <div class="titolo-riga">MIA vs LAL</div>
-              <div class="sottotitolo-riga">Sab 6 Set 2026 · 20:30 · PalaSport A</div>
-            </div>
-            <span class="chip chip-casa">Casa</span>
-          </div>
-          <div class="riga-lista">
-            <div>
-              <div class="titolo-riga">BOS vs MIA</div>
-              <div class="sottotitolo-riga">Mer 10 Set 2026 · 19:00 · TD Garden</div>
-            </div>
-            <span class="chip">Fuori</span>
-          </div>
-          <div class="riga-lista">
-            <div>
-              <div class="titolo-riga">MIA vs CHI</div>
-              <div class="sottotitolo-riga">Dom 14 Set 2026 · 18:00 · PalaSport A</div>
-            </div>
-            <span class="chip chip-casa">Casa</span>
-          </div>
-        </div>
-
-        <div class="titolo-pannello" style="margin-left:2px; margin-top:4px;">ULTIME PARTITE</div>
-        <div class="card-lista">
-          <div class="riga-lista">
-            <div>
-              <div class="titolo-riga">MIA vs ORL <span class="esito-w">W 87–74</span></div>
-              <div class="sottotitolo-riga">Mar 2 Set 2026 · PalaSport A</div>
-            </div>
-            <span class="chip"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg></span>
-          </div>
-          <div class="riga-lista">
-            <div>
-              <div class="titolo-riga">NYK vs MIA <span class="esito-l">L 65–71</span></div>
-              <div class="sottotitolo-riga">Ven 29 Ago 2026 · Madison</div>
-            </div>
-            <span class="chip"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg></span>
-          </div>
-          <div class="riga-lista">
-            <div>
-              <div class="titolo-riga">MIA vs PHI <span class="esito-w">W 91–88</span></div>
-              <div class="sottotitolo-riga">Mar 25 Ago 2026 · PalaSport A</div>
-            </div>
-            <span class="chip"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg></span>
-          </div>
-        </div>
-
-        <div class="card-placeholder">
-          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg></div>
-          <h3>Calendario completo</h3>
-          <p>Import da file CSV o da Google Sheet condiviso. Tap su una partita per avviare la rilevazione statistiche.</p>
-          <span class="badge-in-arrivo">In arrivo</span>
-        </div>
-
+        <div id="calendario-lista"></div>
       </div>
+
+      <button id="fab-aggiungi-partita" aria-label="Aggiungi partita">+</button>
     </div><!-- /view-calendario -->
 
   </div><!-- /view-container -->
@@ -450,6 +398,36 @@
   </div>
 </div>
 
+<!-- Aggiungi partita -->
+<div class="overlay" id="overlay-aggiungi-partita">
+  <div class="modale">
+    <h2><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg> Aggiungi partita</h2>
+    <label class="ap-campo"><span>Tipo</span>
+      <select id="ap-tipo">
+        <option value="Amichevole">Amichevole</option>
+        <option value="Giovanili">Giovanili</option>
+      </select>
+    </label>
+    <label class="ap-campo"><span>Data e ora</span>
+      <input type="datetime-local" id="ap-data">
+    </label>
+    <label class="ap-campo"><span>Avversario</span>
+      <input type="text" id="ap-avversario" placeholder="Nome squadra" autocomplete="off">
+    </label>
+    <label class="ap-campo"><span>Luogo</span>
+      <select id="ap-luogo">
+        <option value="Casa">Casa</option>
+        <option value="Trasferta">Trasferta</option>
+      </select>
+    </label>
+    <label class="ap-campo"><span>Note</span>
+      <input type="text" id="ap-note" placeholder="(facoltative)" autocomplete="off">
+    </label>
+    <button class="btn-conferma" id="ap-conferma">AGGIUNGI</button>
+    <button class="btn-annulla-modale" id="ap-chiudi">Annulla</button>
+  </div>
+</div>
+
 <!-- Recap -->
 <div class="overlay" id="overlay-recap">
   <div class="modale">
@@ -467,6 +445,7 @@
 <script src="js/timer.js"></script>
 <script src="js/azioni.js"></script>
 <script src="js/fallo-subito.js"></script>
+<script src="js/calendario.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/pin.js"></script>
 <script src="js/app.js"></script>

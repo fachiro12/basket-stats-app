@@ -225,4 +225,6 @@ function navigaA(viewId) {
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("attivo"));
   document.getElementById("view-" + viewId)?.classList.add("attiva");
   document.querySelector(`.tab-btn[data-view="${viewId}"]`)?.classList.add("attivo");
+
+  if (viewId === "calendario" && typeof renderCalendario === "function") renderCalendario();
 }

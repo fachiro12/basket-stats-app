@@ -1,0 +1,133 @@
+/* ==========================================================================
+   CALENDARIO — lista partite, badge stato, FAB, modale aggiungi partita
+   ========================================================================== */
+
+#calendario-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cal-card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cal-luogo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.cal-luogo .ico { font-size: 15px; }
+.cal-luogo.casa { color: var(--color-brand); }
+.cal-luogo.trasferta { color: var(--color-text-secondary); }
+
+.cal-badge {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.cal-badge.stato-da-giocare { background: #EAECEF; color: #6B7280; border-color: #D1D5DB; }
+.cal-badge.stato-in-corso { background: #FFEEDF; color: #B45309; border-color: #FDBA74; }
+.cal-badge.stato-terminata { background: #DCFCE7; color: #15803D; border-color: #86EFAC; }
+
+.cal-avv { font-size: 16px; font-weight: 800; color: #000000; }
+.cal-meta { font-size: 12px; color: var(--color-text-muted); }
+.cal-note {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+}
+
+.cal-azioni { margin-top: 4px; }
+.cal-btn {
+  width: 100%;
+  min-height: 42px;
+  border-radius: var(--radius-sm);
+  font-weight: 800;
+  font-size: 14px;
+  touch-action: manipulation;
+}
+.cal-btn.primario {
+  background: var(--color-brand);
+  color: #FFFFFF;
+  border: 1px solid var(--color-brand);
+}
+.cal-btn.secondario {
+  background: #FFFFFF;
+  color: #000000;
+  border: 1.5px solid var(--color-border-strong);
+}
+
+/* ---------- FAB ---------- */
+#fab-aggiungi-partita {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--tabbar-height) + 30px + env(safe-area-inset-bottom, 0px));
+  z-index: 45;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand);
+  color: #FFFFFF;
+  border: none;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.20);
+  touch-action: manipulation;
+}
+@media (min-width: 460px) {
+  #fab-aggiungi-partita { right: calc(50% - 215px + 16px); }
+}
+
+/* ---------- Modale aggiungi partita ---------- */
+.ap-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.ap-campo > span {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-text-secondary);
+}
+.ap-campo input,
+.ap-campo select {
+  min-height: var(--tap-target);
+  padding: 8px 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #000000;
+  background: #FFFFFF;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
