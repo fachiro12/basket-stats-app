@@ -4,6 +4,7 @@
    ========================================================================== */
 
 let statsTab = "tabellino";
+let advTab = "squadra";
 let statsEventiRemoti = null;   // { id_partita, eventi, punteggio } se stiamo guardando una partita non live
 
 function tempoInSec(mmss) {
@@ -326,13 +327,21 @@ function vistaAndamento(ctx) {
 /* ==========================================================================
    RENDER — ADVANCED
    ========================================================================== */
-function renderAdv() {
+function renderAdv(tab) {
+  if (tab) advTab = tab;
   const ctx = statsContesto();
   const box = calcolaBox(ctx);
-  const a = calcolaAdvanced(box, ctx.minuti);
   const opp = state.avversarioBreve || "AVV";
   document.getElementById("adv-titolo").textContent = ctx.nome + (ctx.live ? " · LIVE" : "");
+  document.querySelectorAll("#adv-tabs button").forEach(b =>
+    b.classList.toggle("attivo", b.dataset.atab === advTab));
 
+  if (advTab === "giocatori") {
+    document.getElementById("adv-body").innerHTML = vistaAdvGiocatori(ctx, box, opp);
+    return;
+  }
+
+  const a = calcolaAdvanced(box, ctx.minuti);
   const card = (tit, valA, valB, nota) =>
     '<div class="adv-card">' +
       '<div class="adv-tit">' + tit + '</div>' +
@@ -357,6 +366,49 @@ function renderAdv() {
       card('Rimb. Dif %', dec(a.drbA) + '%', dec(a.drbB) + '%', 'DRB / (DRB + ORB avv)') +
     '</div>' +
     vistaStint();
+}
+
+function vistaAdvGiocatori(ctx, box, opp) {
+  const conv = ctx.convocati.slice();
+  const numeri = conv.length ? conv.map(c => c.numero)
+    : Object.keys(box.pg).map(Number).sort((a, b) => a - b);
+  const nick = n => {
+    const c = conv.find(x => String(x.numero) === String(n));
+    return c && c.nickname ? c.nickname : (c && c.cognome ? c.cognome.slice(0, 6) : "");
+  };
+  const s = (x, y) => (y ? x / y : 0);
+
+  let righe = "";
+  numeri.forEach(n => {
+    const g = box.pg[n] || statVuote();
+    const fga = g.a2 + g.a3, fgm = g.m2 + g.m3;
+    const ts = s(g.pt, 2 * (fga + 0.44 * g.fta)) * 100;
+    const efg = s(fgm + 0.5 * g.m3, fga) * 100;
+    const p40 = g.min ? g.pt / g.min * 40 : 0;
+    const pm40 = g.min ? g.pm / g.min * 40 : 0;
+    const astto = g.pp ? g.as / g.pp : g.as;
+    righe +=
+      '<tr>' +
+      '<td class="st-n">#' + n + '</td>' +
+      '<td class="st-g">' + nick(n) + '</td>' +
+      '<td>' + dec(g.min, 0) + '</td>' +
+      '<td class="st-pt">' + g.pt + '</td>' +
+      '<td>' + dec(p40, 0) + '</td>' +
+      '<td>' + dec(ts, 0) + '%</td>' +
+      '<td>' + dec(efg, 0) + '%</td>' +
+      '<td>' + dec(astto, 1) + '</td>' +
+      '<td class="' + (g.pm >= 0 ? 'pos' : 'neg') + '">' + (g.pm > 0 ? '+' : '') + dec(g.pm, 0) + '</td>' +
+      '<td class="' + (pm40 >= 0 ? 'pos' : 'neg') + '">' + (pm40 > 0 ? '+' : '') + dec(pm40, 0) + '</td>' +
+      '</tr>';
+  });
+
+  return '<div class="adv-legenda"><span class="noi">' + CONFIG.NOME_SQUADRA_MIA + '</span> · per-giocatore · ' +
+    dec(ctx.minuti, 0) + "' gara</div>" +
+    '<div class="st-scroll"><table class="st-box"><thead><tr>' +
+    ['#', 'G', 'MIN', 'PT', 'PT/40', 'TS%', 'eFG%', 'AS/PP', '±', '±/40']
+      .map(h => '<th>' + h + '</th>').join('') +
+    '</tr></thead><tbody>' + righe + '</tbody></table></div>' +
+    '<div class="st-hint">MIN e ± stimati dagli stint dei cambi</div>';
 }
 
 function vistaStint() {

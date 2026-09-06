@@ -2,6 +2,10 @@
    app.js — Entry point: collega tutti i listener DOM e avvia l'app
    ========================================================================== */
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 
   /* -------- PARTITA -------- */
@@ -75,8 +79,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* -------- STATS / ADVANCED -------- */
-  document.querySelectorAll(".stats-tabs button").forEach(b =>
+  document.querySelectorAll("#view-stats .stats-tabs button").forEach(b =>
     b.addEventListener("click", () => renderStats(b.dataset.stab)));
+  document.querySelectorAll("#adv-tabs button").forEach(b =>
+    b.addEventListener("click", () => renderAdv(b.dataset.atab)));
   document.getElementById("stats-refresh").addEventListener("click", aggiornaStatsDaFoglio);
   document.getElementById("adv-refresh").addEventListener("click", aggiornaStatsDaFoglio);
 

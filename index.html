@@ -3,16 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#FFFFFF">
+<meta name="theme-color" content="#F4F5F7">
 <title>Basket Stats Pro</title>
-<link rel="stylesheet" href="css/tokens.css?v=7">
-<link rel="stylesheet" href="css/base.css?v=7">
-<link rel="stylesheet" href="css/shell.css?v=7">
-<link rel="stylesheet" href="css/partita.css?v=7">
-<link rel="stylesheet" href="css/altro.css?v=7">
-<link rel="stylesheet" href="css/calendario.css?v=7">
-<link rel="stylesheet" href="css/roster.css?v=7">
-<link rel="stylesheet" href="css/stats.css?v=7">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Basket Stats">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="css/tokens.css?v=8">
+<link rel="stylesheet" href="css/base.css?v=8">
+<link rel="stylesheet" href="css/shell.css?v=8">
+<link rel="stylesheet" href="css/partita.css?v=8">
+<link rel="stylesheet" href="css/altro.css?v=8">
+<link rel="stylesheet" href="css/calendario.css?v=8">
+<link rel="stylesheet" href="css/roster.css?v=8">
+<link rel="stylesheet" href="css/stats.css?v=8">
 </head>
 <body>
 
@@ -199,6 +206,10 @@
           <svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg>
         </button>
       </header>
+      <div class="stats-tabs" id="adv-tabs">
+        <button data-atab="squadra" class="attivo">Squadra</button>
+        <button data-atab="giocatori">Giocatori</button>
+      </div>
       <div class="contenuto-pagina" id="adv-body"></div>
     </div><!-- /view-adv -->
 
@@ -494,17 +505,17 @@
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=7"></script>
-<script src="js/api.js?v=7"></script>
-<script src="js/timer.js?v=7"></script>
-<script src="js/azioni.js?v=7"></script>
-<script src="js/fallo-subito.js?v=7"></script>
-<script src="js/calendario.js?v=7"></script>
-<script src="js/giocatori.js?v=7"></script>
-<script src="js/stats.js?v=7"></script>
-<script src="js/ui.js?v=7"></script>
-<script src="js/pin.js?v=7"></script>
-<script src="js/app.js?v=7"></script>
+<script src="js/state.js?v=8"></script>
+<script src="js/api.js?v=8"></script>
+<script src="js/timer.js?v=8"></script>
+<script src="js/azioni.js?v=8"></script>
+<script src="js/fallo-subito.js?v=8"></script>
+<script src="js/calendario.js?v=8"></script>
+<script src="js/giocatori.js?v=8"></script>
+<script src="js/stats.js?v=8"></script>
+<script src="js/ui.js?v=8"></script>
+<script src="js/pin.js?v=8"></script>
+<script src="js/app.js?v=8"></script>
 
 </body>
 </html>
