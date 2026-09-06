@@ -89,7 +89,8 @@
 /* ---------- Tabella box score ---------- */
 .st-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-height: 62vh; overflow-y: auto; }
 table.st-box {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -132,13 +133,19 @@ table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
 .st-bar span.avv { background: var(--color-text-secondary); }
 
 /* ---------- Andamento ---------- */
-.st-and-tit { font-size: 13px; font-weight: 900; color: #000000; }
-.st-chart { width: 100%; min-width: 320px; height: 200px; }
-.st-zero { stroke: var(--color-border-strong); stroke-width: 1; }
-.st-q { stroke: var(--color-border); stroke-width: 1; stroke-dasharray: 3 3; }
-.st-qt { font-size: 9px; fill: var(--color-text-muted); font-weight: 700; }
+.st-and-tit { font-size: 12px; font-weight: 800; color: #000000; }
+.st-chart { width: 100%; min-width: 300px; height: auto; aspect-ratio: 680 / 240; display: block; }
+.st-zero { stroke: var(--color-border-strong); stroke-width: 1.5; }
+.st-grid { stroke: var(--color-border); stroke-width: 1; }
+.st-q { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 2 3; }
+.st-qt { font-size: 10px; fill: var(--color-text-secondary); font-weight: 800; }
+.st-axis { font-size: 10px; fill: var(--color-text-muted); font-weight: 700; }
 .st-area { fill: var(--color-brand-soft); }
-.st-linea { fill: none; stroke: var(--color-brand); stroke-width: 2; }
+.st-linea { fill: none; stroke: var(--color-brand); stroke-width: 2.5; stroke-linejoin: round; }
+
+@media (orientation: landscape) {
+  .st-scroll { max-height: 78vh; }
+}
 
 /* ---------- Advanced ---------- */
 .adv-legenda { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); display: flex; gap: 10px; }

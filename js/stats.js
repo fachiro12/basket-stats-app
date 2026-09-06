@@ -193,7 +193,8 @@ function minutiPlusMinus() {
   });
   (state.stints || []).forEach(s => {
     if (!s.inizio || !s.fine) return;
-    add(s.quintetto, tempoInSec(s.inizio.tempo) - tempoInSec(s.fine.tempo), s.plusMinus || 0);
+    const dur = Math.min(Math.max(tempoInSec(s.inizio.tempo) - tempoInSec(s.fine.tempo), 0), 600);
+    add(s.quintetto, dur, s.plusMinus || 0);
   });
   const sc = state.stintCorrente;
   if (sc && sc.inizio) {
@@ -341,26 +342,37 @@ function vistaAndamento(ctx) {
     const m = String(ev.punteggio_progressivo || "").match(/^(\d+)-(\d+)$/);
     if (m) pts.push({ d: (+m[1]) - (+m[2]) });
   });
-  const W = 640, H = 200, pad = 14;
-  const maxD = Math.max(6, ...pts.map(p => Math.abs(p.d)));
-  const xs = i => pad + i * (W - 2 * pad) / Math.max(pts.length - 1, 1);
-  const ys = d => H / 2 - d * (H / 2 - pad) / maxD;
+
+  const W = 680, H = 240, padL = 34, padR = 12, padT = 12, padB = 18;
+  const grezzo = Math.max(4, ...pts.map(p => Math.abs(p.d)));
+  const step = grezzo <= 8 ? 2 : grezzo <= 20 ? 5 : 10;
+  const maxD = Math.ceil(grezzo / step) * step;
+  const xs = i => padL + i * (W - padL - padR) / Math.max(pts.length - 1, 1);
+  const ys = d => padT + (maxD - d) * (H - padT - padB) / (2 * maxD);
   const line = pts.map((p, i) => (i ? "L" : "M") + xs(i).toFixed(1) + " " + ys(p.d).toFixed(1)).join(" ");
-  const area = line + " L" + xs(pts.length - 1).toFixed(1) + " " + (H / 2) + " L" + pad + " " + (H / 2) + " Z";
+  const area = line + " L" + xs(pts.length - 1).toFixed(1) + " " + ys(0).toFixed(1) + " L" + padL + " " + ys(0).toFixed(1) + " Z";
+
+  let griglia = "";
+  for (let v = -maxD; v <= maxD; v += step) {
+    const y = ys(v).toFixed(1);
+    griglia +=
+      '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" class="' + (v === 0 ? 'st-zero' : 'st-grid') + '"/>' +
+      '<text x="' + (padL - 5) + '" y="' + (ys(v) + 3).toFixed(1) + '" class="st-axis" text-anchor="end">' + (v > 0 ? '+' + v : v) + '</text>';
+  }
   const divisori = quarti.map(q =>
-    '<line x1="' + xs(q.i).toFixed(1) + '" y1="' + pad + '" x2="' + xs(q.i).toFixed(1) + '" y2="' + (H - pad) + '" class="st-q"/>' +
-    '<text x="' + (xs(q.i) + 3).toFixed(1) + '" y="' + (pad + 10) + '" class="st-qt">' + q.q + '</text>').join('');
+    '<line x1="' + xs(q.i).toFixed(1) + '" y1="' + padT + '" x2="' + xs(q.i).toFixed(1) + '" y2="' + (H - padB) + '" class="st-q"/>' +
+    '<text x="' + (xs(q.i) + 3).toFixed(1) + '" y="' + (H - 5) + '" class="st-qt">' + q.q + '</text>').join('');
   const finale = pts[pts.length - 1].d;
 
   return '<div class="st-and-tit">Margine ' + CONFIG.NOME_SQUADRA_MIA + ' · attuale ' +
-    (finale > 0 ? '+' : '') + finale + '</div>' +
+    (finale > 0 ? '+' : '') + finale + ' · max +' + Math.max(0, ...pts.map(p => p.d)) +
+    ' / min ' + Math.min(0, ...pts.map(p => p.d)) + '</div>' +
     '<div class="st-scroll"><svg class="st-chart" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
-    '<line x1="' + pad + '" y1="' + (H / 2) + '" x2="' + (W - pad) + '" y2="' + (H / 2) + '" class="st-zero"/>' +
-    divisori +
+    griglia + divisori +
     '<path d="' + area + '" class="st-area"/>' +
     '<path d="' + line + '" class="st-linea"/>' +
     '</svg></div>' +
-    '<div class="st-hint">Sopra la linea = ' + CONFIG.NOME_SQUADRA_MIA + ' avanti</div>';
+    '<div class="st-hint">Sopra lo 0 = ' + CONFIG.NOME_SQUADRA_MIA + ' avanti · ruota per vederlo più grande</div>';
 }
 
 /* ==========================================================================
@@ -423,31 +435,35 @@ function vistaAdvGiocatori(ctx, box, opp) {
     const fga = g.a2 + g.a3, fgm = g.m2 + g.m3;
     const ts = s(g.pt, 2 * (fga + 0.44 * g.fta)) * 100;
     const efg = s(fgm + 0.5 * g.m3, fga) * 100;
-    const p40 = g.min ? g.pt / g.min * 40 : 0;
-    const pm40 = g.min ? g.pm / g.min * 40 : 0;
-    const astto = g.pp ? g.as / g.pp : g.as;
+    const astto = g.pp ? dec(g.as / g.pp, 1) : (g.as ? "∞" : "0.0");
+    const net40 = g.min ? Math.round(g.pm / g.min * 40) : 0;   // margine squadra /40' con lui in campo
     righe +=
       '<tr>' +
       '<td class="st-n">#' + n + '</td>' +
       '<td class="st-g">' + nick(n) + '</td>' +
       '<td>' + dec(g.min, 0) + '</td>' +
       '<td class="st-pt">' + g.pt + '</td>' +
-      '<td>' + dec(p40, 0) + '</td>' +
-      '<td>' + dec(ts, 0) + '%</td>' +
-      '<td>' + dec(efg, 0) + '%</td>' +
-      '<td>' + dec(astto, 1) + '</td>' +
+      '<td>' + (fga || g.fta ? dec(ts, 0) + '%' : '–') + '</td>' +
+      '<td>' + (fga ? dec(efg, 0) + '%' : '–') + '</td>' +
+      '<td>' + (g.ro + g.rd) + '</td>' +
+      '<td>' + g.as + '</td>' +
+      '<td class="sm-hide">' + g.pr + '</td>' +
+      '<td class="sm-hide">' + g.pp + '</td>' +
+      '<td class="sm-hide">' + astto + '</td>' +
       '<td class="' + (g.pm >= 0 ? 'pos' : 'neg') + '">' + (g.pm > 0 ? '+' : '') + dec(g.pm, 0) + '</td>' +
-      '<td class="' + (pm40 >= 0 ? 'pos' : 'neg') + '">' + (pm40 > 0 ? '+' : '') + dec(pm40, 0) + '</td>' +
+      '<td class="' + (net40 >= 0 ? 'pos' : 'neg') + '">' + (net40 > 0 ? '+' : '') + net40 + '</td>' +
       '</tr>';
   });
+
+  const th = ['#', 'G', 'MIN', 'PT', 'TS%', 'eFG%', 'RIM', 'AS', 'PR', 'PP', 'AS/PP', '±', 'Net/40'];
+  const hide = { PR: 1, PP: 1, 'AS/PP': 1 };
 
   return '<div class="adv-legenda"><span class="noi">' + CONFIG.NOME_SQUADRA_MIA + '</span> · per-giocatore · ' +
     dec(ctx.minuti, 0) + "' gara</div>" +
     '<div class="st-scroll"><table class="st-box"><thead><tr>' +
-    ['#', 'G', 'MIN', 'PT', 'PT/40', 'TS%', 'eFG%', 'AS/PP', '±', '±/40']
-      .map(h => '<th>' + h + '</th>').join('') +
+    th.map(h => '<th' + (hide[h] ? ' class="sm-hide"' : '') + '>' + h + '</th>').join('') +
     '</tr></thead><tbody>' + righe + '</tbody></table></div>' +
-    '<div class="st-hint">MIN e ± stimati dagli stint dei cambi</div>';
+    '<div class="st-hint">Net/40 = margine di squadra ogni 40′ con il giocatore in campo · MIN e ± dagli stint dei cambi</div>';
 }
 
 function vistaStint() {

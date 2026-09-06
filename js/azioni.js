@@ -76,11 +76,9 @@ function registraTiro(tipo, esito) {
     punti_segnati: punti
   }, inverti, label);
 
-  // Macchina a stati: canestro MIA -> Assist? / errore MIA -> Rimbalzo
-  if (sq === "MIA") {
-    if (esito === "SEGNATO" && num) avviaOverlayAssist(num);
-    else if (esito === "ERRATO") avviaOverlayRimbalzo();
-  }
+  // Macchina a stati: canestro MIA -> Assist? / tiro sbagliato -> Rimbalzo (chiunque tiri)
+  if (sq === "MIA" && esito === "SEGNATO" && num) avviaOverlayAssist(num);
+  else if (esito === "ERRATO") avviaOverlayRimbalzo(sq);
 }
 
 /* ==========================================================================

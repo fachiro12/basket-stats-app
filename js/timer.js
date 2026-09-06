@@ -28,13 +28,35 @@ function avanzaQuarto() {
 }
 
 function passaAlPeriodo(indice) {
+  chiudiStintPeriodo();   // il periodo che finisce chiude lo stint corrente
+
   state.quartoIndice = indice;
   const durSec = indice < CONFIG.QUARTI_REGOLAMENTARI ? CONFIG.DURATA_QUARTO_SEC : CONFIG.DURATA_OT_SEC;
   state.tempoPartita = formatTempo(durSec);
   state.ultimoCheckpoint = { quarto: nomeQuarto(), mm: Math.round(durSec / 60), ss: 0 };
+
+  // nuovo stint dall'inizio del nuovo periodo, stesso quintetto in campo
+  if (typeof apriStint === "function") {
+    apriStint((state.inCampo || state.roster).slice(), {
+      quarto: nomeQuarto(),
+      tempo: state.tempoPartita,
+      punteggio: { MIA: state.punteggio.MIA, OPP: state.punteggio.OPP }
+    });
+  }
+
   salvaStato();
   renderPartita();
   if (indice < CONFIG.QUARTI_REGOLAMENTARI) mostraToast("Inizia " + nomeQuarto());
+}
+
+function chiudiStintPeriodo() {
+  if (!state.stintCorrente || !state.stintCorrente.inizio || typeof chiudiStint !== "function") return;
+  if (!Array.isArray(state.stints)) state.stints = [];
+  chiudiStint({
+    quarto: state.stintCorrente.quarto,
+    tempo: "00:00",
+    punteggio: { MIA: state.punteggio.MIA, OPP: state.punteggio.OPP }
+  });
 }
 
 function aggiungiPeriodoSupplementare() {
@@ -43,6 +65,8 @@ function aggiungiPeriodoSupplementare() {
 }
 
 function terminaPartita() {
+  chiudiStintPeriodo();
+  state.stintCorrente = null;
   state.partitaFinita = true;
   salvaStato();
   if (typeof impostaStatoPartita === "function") impostaStatoPartita(state.id_partita, "Terminata");

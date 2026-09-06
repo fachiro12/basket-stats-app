@@ -33,6 +33,14 @@ a,
 }
 #app-shell.visibile { display: flex; }
 
+/* Telefono ruotato in orizzontale: usa tutta la larghezza (esclude il desktop col mouse) */
+@media (orientation: landscape) and (pointer: coarse) {
+  #app-shell {
+    max-width: 100%;
+    box-shadow: none;
+  }
+}
+
 @media (max-width: 480px) {
   #app-shell {
     max-width: 100%;
