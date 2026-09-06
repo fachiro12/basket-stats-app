@@ -99,7 +99,7 @@ header.hud {
 
 #ultimo-evento-banner {
   margin-top: 8px;
-  padding: 8px 12px;
+  padding: 7px 12px;
   background: #F8F9FA;
   border: 1px solid #E5E7EB;
   border-radius: var(--radius-sm);
@@ -107,9 +107,11 @@ header.hud {
   font-weight: 700;
   color: #000000;
   text-align: center;
-  white-space: nowrap;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .badge-offline {

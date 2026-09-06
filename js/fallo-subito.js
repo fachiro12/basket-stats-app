@@ -6,12 +6,11 @@ let fsOpzione = null;
 let fsEsitiTl = [];
 
 function apriFalloSubito() {
+  // FALLO SUBITO = il giocatore selezionato ha SUBITO un fallo → solo un nostro giocatore
   if (state.selezione?.squadra === "MIA" && state.selezione.num != null) {
     apriModaleFalloSubito();
-  } else if (state.selezione?.squadra === "OPP") {
-    apriOverlayFalloAvversario();
   } else {
-    mostraToast("Seleziona un giocatore " + CONFIG.NOME_SQUADRA_MIA + " o AVVERSARI");
+    mostraToast("Seleziona il giocatore " + CONFIG.NOME_SQUADRA_MIA + " che ha subito il fallo");
   }
 }
 
@@ -79,7 +78,7 @@ function registraFalloSubitoSenzaTl(num) {
   registraEvento({
     squadra: "MIA", giocatore_num: String(num),
     tipo_evento: "FALLO_SUBITO", dettaglio: "SENZA_TL", punti_segnati: 0
-  }, inverti, "#" + num + " " + CONFIG.NOME_SQUADRA_MIA + " Fallo subito (no TL)");
+  }, inverti, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · fallo subito (senza TL)");
 }
 
 function registraTecnicoAvversario(num, tipoSpeciale, segnato) {
@@ -96,7 +95,7 @@ function registraTecnicoAvversario(num, tipoSpeciale, segnato) {
     tipo_evento: "FALLO_SUBITO", dettaglio: "TECNICO_1TL",
     punti_segnati: punti, esito_tl: [segnato ? "SI" : "NO"],
     fallo_speciale: tipoSpeciale
-  }, inverti, etichettaNum(num) + " TL tecnico avv. (" + (segnato ? "SI" : "NO") + ")");
+  }, inverti, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · TL tecnico avv. (" + (segnato ? "realizzato" : "sbagliato") + ")");
 }
 
 /* ---------- FALLO FATTO da un nostro giocatore: TL agli avversari ---------- */
@@ -140,7 +139,7 @@ function finalizzaFalloFatto(opzione, esiti) {
     squadra: "MIA", giocatore_num: String(num),
     tipo_evento: "FALLO_FATTO", dettaglio: opzione,
     punti_segnati: puntiOpp, esito_tl: esiti.slice()
-  }, inverti, etichettaNum(num) + " " + CONFIG.NOME_SQUADRA_MIA + " Fallo fatto" +
+  }, inverti, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · fallo fatto" +
      (esiti.length ? " (" + puntiOpp + "/" + esiti.length + " TL avv.)" : ""));
 
   chiudiActionOverlay();
@@ -161,7 +160,8 @@ function registraDoppioFallo(num, sottotipo) {
     squadra: "MIA", giocatore_num: String(num),
     tipo_evento: "FALLO_FATTO", dettaglio: sottotipo,
     punti_segnati: 0, fallo_speciale: "COMPENSATO"
-  }, inverti, etichettaNum(num) + " " + sottotipo.replace(/_/g, " ").toLowerCase() + " (compensato)");
+  }, inverti, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · " +
+     sottotipo.replace(/_/g, " ").toLowerCase() + " (compensato)");
 }
 
 function apriModaleFalloSubito() {
@@ -258,7 +258,7 @@ function confermaFalloSubito() {
     punti_segnati: puntiTl,
     esito_tl: fsEsitiTl.slice(),
     fallo_speciale: falloSpeciale
-  }, inverti, "#" + num + " " + CONFIG.NOME_SQUADRA_MIA + " Fallo subito (" + dettaglio + ")");
+  }, inverti, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · fallo subito (" + dettaglio + ")");
 
   const rimbalzoLive = falloSpeciale === "NESSUNO" &&
     fsOpzione !== "RIMESSA" &&

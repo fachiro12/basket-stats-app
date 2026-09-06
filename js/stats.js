@@ -535,17 +535,65 @@ function vistaAdvGiocatori(ctx, box, opp) {
 
 function vistaStint(box) {
   const st = (box && box.stints) || [];
-  if (!st.length) return '';
+  if (!st.length) return '<div class="st-hint">Nessuno stint: registra dei cambi durante la partita.</div>';
   const lbl = n => "#" + n + (nomeGiocatore(n) ? " " + nomeGiocatore(n) : "");
+  const dmin = s => Math.max(1, Math.round(s.durSec / 60));
+
   const righe = st.map((s, i) =>
     '<tr><td>' + (i + 1) + '</td><td>' + s.quarto + '</td>' +
     '<td>' + mmss(s.tIn / 60) + '→' + mmss(s.tFine / 60) + '</td>' +
-    '<td>' + Math.round(s.durSec / 60 * 10) / 10 + "'" + '</td>' +
+    '<td>' + dmin(s) + "'" + '</td>' +
     '<td>' + (s.quintetto || []).map(lbl).join(", ") + '</td>' +
     '<td class="' + (s.plusMinus >= 0 ? 'pos' : 'neg') + '">' + (s.plusMinus > 0 ? '+' : '') + s.plusMinus + '</td></tr>').join('');
-  return '<div class="adv-tit" style="margin-top:14px">Stint / lineup ±</div>' +
-    '<div class="st-scroll"><table class="st-box"><thead><tr><th>#</th><th>Q</th><th>Tempo</th><th>Durata</th><th>Quintetto</th><th>±</th></tr></thead><tbody>' +
+
+  return miglioriQuintetti(box) +
+    '<div class="adv-tit" style="margin-top:14px">Stint giocati</div>' +
+    '<div class="st-scroll"><table class="st-box"><thead><tr><th>#</th><th>Q</th><th>Tempo</th><th>Min</th><th>Quintetto</th><th>±</th></tr></thead><tbody>' +
     righe + '</tbody></table></div>';
+}
+
+/* Proposta: quintetti reali migliori per ± + quintetto teorico (somma ± singoli) */
+function miglioriQuintetti(box) {
+  const st = box.stints || [];
+  const lbl = n => "#" + n + (nomeGiocatore(n) ? " " + nomeGiocatore(n) : "");
+
+  // A) quintetti effettivamente in campo, aggregati
+  const agg = {};
+  st.forEach(s => {
+    const nums = (s.quintetto || []).slice().sort((a, b) => a - b);
+    if (nums.length !== 5) return;
+    const k = nums.join(",");
+    agg[k] = agg[k] || { nums: nums, min: 0, pm: 0 };
+    agg[k].min += s.durSec / 60;
+    agg[k].pm += s.plusMinus || 0;
+  });
+  const reali = Object.keys(agg).map(k => agg[k]).sort((a, b) => b.pm - a.pm);
+
+  // B) quintetto teorico: 5 migliori ± individuali (con minutaggio > 0)
+  const ind = Object.keys(box.pg)
+    .map(n => ({ n: +n, pm: box.pg[n].pm || 0, min: box.pg[n].min || 0 }))
+    .filter(x => x.min > 0)
+    .sort((a, b) => b.pm - a.pm);
+  const teo = ind.slice(0, 5);
+  const teoSum = teo.reduce((s, x) => s + x.pm, 0);
+
+  let html = '<div class="adv-tit">Migliori quintetti</div>';
+
+  if (reali.length) {
+    html += '<div class="mq-lista">' + reali.slice(0, 3).map(q =>
+      '<div class="mq-riga"><span class="mq-pm ' + (q.pm >= 0 ? 'pos' : 'neg') + '">' +
+      (q.pm > 0 ? '+' : '') + q.pm + '</span>' +
+      '<span class="mq-min">' + Math.max(1, Math.round(q.min)) + "'</span>" +
+      '<span class="mq-nomi">' + q.nums.map(lbl).join(", ") + '</span></div>').join('') + '</div>';
+  }
+
+  if (teo.length === 5) {
+    html += '<div class="mq-teo"><b>Quintetto teorico</b> (somma ± singoli: ' +
+      (teoSum > 0 ? '+' : '') + teoSum + ')<br>' +
+      teo.map(x => lbl(x.n) + ' (' + (x.pm > 0 ? '+' : '') + Math.round(x.pm) + ')').join(' · ') +
+      '</div>';
+  }
+  return html;
 }
 
 /* ---------- Fetch partite storiche ---------- */

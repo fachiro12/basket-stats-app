@@ -67,14 +67,13 @@ function registraTiro(tipo, esito) {
   state.punteggio[sq] += punti;
   const inverti = () => { state.punteggio[sq] -= punti; };
 
-  const label = (num ? "#" + num + " " : "") + etichettaSquadra(sq) + " " + tipo + " " + (esito === "SEGNATO" ? "segnato" : "errato");
   registraEvento({
     squadra: sq,
     giocatore_num: num ? String(num) : "",
     tipo_evento: "TIRO",
     dettaglio: tipo + "_" + esito,
     punti_segnati: punti
-  }, inverti, label);
+  }, inverti, feed(sq, num, tipo + " " + (esito === "SEGNATO" ? "segnato" : "sbagliato")));
 
   // Macchina a stati: canestro MIA -> Assist? / tiro sbagliato -> Rimbalzo (chiunque tiri)
   if (sq === "MIA" && esito === "SEGNATO" && num) avviaOverlayAssist(num);
@@ -117,16 +116,28 @@ function mostraActionOverlay(titolo, bottoni, timeoutMs) {
   aoTimeout = timeoutMs ? setTimeout(chiudiActionOverlay, timeoutMs) : null;
 }
 
-/* Etichetta squadra per feed/overlay: PVL per noi, prime 3 lettere per gli avversari */
+/* Sigla squadra per gli overlay compatti: PVL / prime 3 lettere avversario */
 function etichettaSquadra(sq) {
   if (sq === "MIA") return CONFIG.NOME_SQUADRA_MIA;
   return (state.avversarioBreve ? state.avversarioBreve.slice(0, 3) : "AVV").toUpperCase();
 }
 
-/* "#7 MRC" da state.convocati */
+/* Nome squadra esteso per il feed "ultimo evento" */
+function etichettaSquadraEstesa(sq) {
+  return sq === "MIA" ? CONFIG.NOME_SQUADRA_MIA : (state.avversarioBreve || "Avversari");
+}
+
+/* "#7 Rossi" — nickname o cognome dai convocati; solo "#7" se ignoti */
 function etichettaNum(n) {
-  const info = (state.convocati || []).find(c => String(c.numero) === String(n));
-  return "#" + n + (info && info.nickname ? " " + info.nickname : "");
+  const c = (state.convocati || []).find(x => String(x.numero) === String(n));
+  const nm = c ? (c.nickname || c.cognome || "") : "";
+  return "#" + n + (nm ? " " + nm : "");
+}
+
+/* Riga di feed: "PVL #7 Rossi · 2P segnato" */
+function feed(sq, num, azione) {
+  const chi = num ? " " + etichettaNum(num) : "";
+  return etichettaSquadraEstesa(sq) + chi + " · " + azione;
 }
 
 /* ---- Assist (timeout 4s) ---- */
@@ -145,7 +156,7 @@ function registraAssist(num, autoreNum) {
   registraEvento({
     squadra: "MIA", giocatore_num: String(num),
     tipo_evento: "ASSIST", dettaglio: "AST_A_" + autoreNum, punti_segnati: 0
-  }, () => {}, "#" + num + " " + CONFIG.NOME_SQUADRA_MIA + " Assist (a #" + autoreNum + ")");
+  }, () => {}, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · assist per " + etichettaNum(autoreNum));
 }
 
 /* ---- Rimbalzo (nessun timeout: obbligatorio).
@@ -182,7 +193,7 @@ function registraRimbalzo(tipo, squadra, num) {
   registraEvento({
     squadra: squadra, giocatore_num: num ? String(num) : "",
     tipo_evento: "RIMBALZO", dettaglio: tipo, punti_segnati: 0
-  }, () => {}, (num ? "#" + num + " " : "") + etichettaSquadra(squadra) + " Rimbalzo " + tipo.toLowerCase());
+  }, () => {}, feed(squadra, num, "rimbalzo " + tipo.toLowerCase()));
 }
 
 function richiedeSelezioneSquadra() {
@@ -200,7 +211,7 @@ function registraRecupero() {
   registraEvento({
     squadra: sq, giocatore_num: num ? String(num) : "",
     tipo_evento: "RECUPERO", dettaglio: "REC", punti_segnati: 0
-  }, () => {}, (num ? "#" + num + " " : "") + etichettaSquadra(sq) + " Recupero");
+  }, () => {}, feed(sq, num, "recupero"));
 }
 
 function registraPallaPersa() {
@@ -210,7 +221,7 @@ function registraPallaPersa() {
   registraEvento({
     squadra: sq, giocatore_num: num ? String(num) : "",
     tipo_evento: "PALLA_PERSA", dettaglio: "PP", punti_segnati: 0
-  }, () => {}, (num ? "#" + num + " " : "") + etichettaSquadra(sq) + " Palla persa");
+  }, () => {}, feed(sq, num, "palla persa"));
 }
 
 function registraFalloFatto() {
@@ -246,7 +257,7 @@ function annullaUltimoEvento() {
   };
   inviaEvento(eventoAnnulla);
 
-  state.ultimoTestoFeed = "Annullato: " + (ultimo.evento.tipo_evento || "");
+  state.ultimoTestoFeed = "↩ Annullato · " + (ultimo.evento.tipo_evento || "").replace(/_/g, " ").toLowerCase();
   salvaStato();
   renderPartita();
   mostraToast("Ultimo evento annullato");

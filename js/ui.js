@@ -77,9 +77,9 @@ function renderPartita() {
     "selezionato", !!(state.selezione?.squadra === "OPP")
   );
 
-  // Fallo subito disabilitato senza giocatore MIA
+  // FALLO SUBITO abilitato solo con un nostro giocatore selezionato
   document.getElementById("btn-fallo-subito").disabled =
-    !(state.selezione?.squadra === "MIA" || state.selezione?.squadra === "OPP");
+    !(state.selezione?.squadra === "MIA");
 
   // Azioni in grigio finché non c'è una selezione
   document.querySelector(".pannello-destro")
