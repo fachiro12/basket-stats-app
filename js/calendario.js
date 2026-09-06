@@ -176,7 +176,11 @@ function renderCalendario() {
       btn.addEventListener("click", () => apriStatistichePartita(p.id_partita));
     } else {
       btn.className = "cal-btn primario";
-      btn.textContent = stato === "In corso" ? "Riprendi Partita" : "Inizia Partita";
+      const mioLive = localStorage.getItem(STORAGE_KEYS.segnapunti) === String(p.id_partita)
+        && String(state.id_partita) === String(p.id_partita);
+      btn.textContent = stato === "In corso"
+        ? (mioLive ? "Riprendi Partita" : "Segui Live")
+        : "Inizia Partita";
       btn.addEventListener("click", () => iniziaPartita(p));
     }
     azioni.appendChild(btn);
@@ -185,18 +189,27 @@ function renderCalendario() {
 }
 
 function iniziaPartita(p) {
-  // Schermata intermedia: conferma/modifica convocati e maglie prima del via
-  if (typeof apriPrePartita === "function") {
-    apriPrePartita(p);
-    return;
+  const id = String(p.id_partita);
+  const sonoSegnapunti = localStorage.getItem(STORAGE_KEYS.segnapunti) === id
+    && String(state.id_partita) === id;
+
+  if (p.stato === "In corso") {
+    if (sonoSegnapunti) {              // ripresa in loco, stato invariato
+      navigaA("partita");
+      renderPartita();
+      return;
+    }
+    if (typeof avviaModalitaSegui === "function") { avviaModalitaSegui(p); return; }
   }
+
+  // "Da giocare" → schermata convocati → quintetto
+  if (typeof apriPrePartita === "function") { apriPrePartita(p); return; }
   state = statoIniziale();
-  state.id_partita = String(p.id_partita);
+  state.id_partita = id;
   salvaStato();
-  impostaStatoPartita(p.id_partita, "In corso");
+  impostaStatoPartita(id, "In corso");
   navigaA("partita");
   renderPartita();
-  mostraToast("Partita " + p.id_partita + " avviata");
 }
 
 function apriStatistichePartita(id) {

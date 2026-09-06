@@ -41,6 +41,31 @@
 
 #stats-body, #adv-body { gap: 10px; }
 
+.segui-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-state-negative-soft);
+  color: var(--color-state-negative);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.segui-bar button {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-state-negative);
+  background: #FFFFFF;
+  color: var(--color-state-negative);
+  font-weight: 800;
+  font-size: 11px;
+}
+
 /* ---------- Riepilogo squadra ---------- */
 .st-team {
   display: flex;

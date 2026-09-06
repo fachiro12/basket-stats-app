@@ -433,6 +433,8 @@ function confermaQuintetto() {
   };
   state.ultimoTestoFeed = state.nomePartita + " — palla a due";
   salvaStato();
+  localStorage.setItem(STORAGE_KEYS.segnapunti, String(p.id_partita));   // questo device è il segnapunti
+  if (typeof fermaSeguiLive === "function") fermaSeguiLive();
 
   if (typeof impostaStatoPartita === "function") impostaStatoPartita(p.id_partita, "In corso");
 

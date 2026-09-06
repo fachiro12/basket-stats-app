@@ -5,7 +5,44 @@
 
 let statsTab = "tabellino";
 let advTab = "squadra";
-let statsEventiRemoti = null;   // { id_partita, eventi, punteggio } se stiamo guardando una partita non live
+let statsEventiRemoti = null;   // { id_partita, eventi, nome } se guardiamo una partita non live
+let seguiLive = null;          // { id, nome, timer } modalità sola-lettura con polling
+
+/* ==========================================================================
+   SEGUI LIVE — un altro device sta segnando: sola lettura, refresh ~20s
+   ========================================================================== */
+function avviaModalitaSegui(p) {
+  fermaSeguiLive();
+  const id = String(p.id_partita);
+  const nome = CONFIG.NOME_SQUADRA_MIA + (p.luogo === "Casa" ? " vs " : " @ ") + (p.avversario || "");
+  seguiLive = { id: id, nome: nome, timer: null };
+  statsEventiRemoti = { id_partita: id, eventi: [], nome: nome };
+  statsTab = "tabellino";
+  navigaA("stats");
+  mostraToast("Segui live — sola lettura");
+  pollSeguiLive();
+}
+
+function fermaSeguiLive() {
+  if (seguiLive && seguiLive.timer) clearTimeout(seguiLive.timer);
+  seguiLive = null;
+}
+
+function pollSeguiLive() {
+  if (!seguiLive) return;
+  scaricaEventiPartita(seguiLive.id, () => {
+    if (!seguiLive) return;
+    if (document.getElementById("view-stats").classList.contains("attiva")) renderStats();
+    else if (document.getElementById("view-adv").classList.contains("attiva")) renderAdv();
+    seguiLive.timer = setTimeout(pollSeguiLive, 20000);
+  });
+}
+
+function bannerSegui() {
+  if (!seguiLive) return "";
+  return '<div class="segui-bar"><span>● SEGUI LIVE · aggiornamento auto 20s · sola lettura</span>' +
+    '<button id="segui-stop">Esci</button></div>';
+}
 
 function tempoInSec(mmss) {
   const p = String(mmss || "0:0").split(":");
@@ -207,9 +244,11 @@ function renderStats(tab) {
     b.classList.toggle("attivo", b.dataset.stab === statsTab));
 
   const body = document.getElementById("stats-body");
-  if (statsTab === "andamento") { body.innerHTML = vistaAndamento(ctx); return; }
-  if (statsTab === "tiri") { body.innerHTML = vistaTiri(box, opp); return; }
-  body.innerHTML = vistaTabellino(ctx, box, opp);
+  let html;
+  if (statsTab === "andamento") html = vistaAndamento(ctx);
+  else if (statsTab === "tiri") html = vistaTiri(box, opp);
+  else html = vistaTabellino(ctx, box, opp);
+  body.innerHTML = bannerSegui() + html;
 }
 
 function rigaSquadra(nome, t, cls) {
@@ -337,7 +376,7 @@ function renderAdv(tab) {
     b.classList.toggle("attivo", b.dataset.atab === advTab));
 
   if (advTab === "giocatori") {
-    document.getElementById("adv-body").innerHTML = vistaAdvGiocatori(ctx, box, opp);
+    document.getElementById("adv-body").innerHTML = bannerSegui() + vistaAdvGiocatori(ctx, box, opp);
     return;
   }
 
@@ -350,7 +389,7 @@ function renderAdv(tab) {
       (nota ? '<div class="adv-nota">' + nota + '</div>' : '') +
     '</div>';
 
-  document.getElementById("adv-body").innerHTML =
+  document.getElementById("adv-body").innerHTML = bannerSegui() +
     '<div class="adv-legenda"><span class="noi">' + CONFIG.NOME_SQUADRA_MIA + '</span><span class="avv">' + opp + '</span> · ' +
       dec(ctx.minuti, 0) + "' giocati</div>" +
     '<div class="adv-griglia">' +

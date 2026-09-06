@@ -85,6 +85,15 @@ document.addEventListener("DOMContentLoaded", () => {
     b.addEventListener("click", () => renderAdv(b.dataset.atab)));
   document.getElementById("stats-refresh").addEventListener("click", aggiornaStatsDaFoglio);
   document.getElementById("adv-refresh").addEventListener("click", aggiornaStatsDaFoglio);
+  const stopSegui = e => {
+    if (e.target && e.target.id === "segui-stop") {
+      fermaSeguiLive();
+      statsEventiRemoti = null;
+      navigaA("calendario");
+    }
+  };
+  document.getElementById("stats-body").addEventListener("click", stopSegui);
+  document.getElementById("adv-body").addEventListener("click", stopSegui);
 
   /* -------- CALENDARIO -------- */
   document.getElementById("cal-aggiungi").addEventListener("click", apriAggiungiPartita);

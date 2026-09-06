@@ -22,7 +22,8 @@ const STORAGE_KEYS = {
   stato: "bsp_stato_partita",
   coda: "bsp_coda_invio",
   pin: "bsp_pin_ok",
-  utente: "bsp_current_user"
+  utente: "bsp_current_user",
+  segnapunti: "bsp_segnapunti_di"   // id_partita di cui QUESTO device è segnapunti
 };
 
 function statoIniziale() {

@@ -54,6 +54,8 @@ function nuovaPartita() {
   if (!confirm("Sei sicuro? Tutti i dati non salvati andranno persi.")) return;
   state = statoIniziale();
   salvaStato();
+  localStorage.removeItem(STORAGE_KEYS.segnapunti);
+  if (typeof fermaSeguiLive === "function") fermaSeguiLive();
   navigaA("partita");
   renderPartita();
 }

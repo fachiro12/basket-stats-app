@@ -301,6 +301,11 @@ function chiudiRecap() {
 
 /* ---------- NAVIGAZIONE TAB ---------- */
 function navigaA(viewId) {
+  // In "Segui live" la vista Partita è bloccata (stato non nostro)
+  if (viewId === "partita" && typeof seguiLive !== "undefined" && seguiLive) {
+    mostraToast("Sei in Segui live · esci per usare la Partita");
+    viewId = "stats";
+  }
   document.querySelectorAll(".view").forEach(v => v.classList.remove("attiva"));
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("attivo"));
   document.getElementById("view-" + viewId)?.classList.add("attiva");
