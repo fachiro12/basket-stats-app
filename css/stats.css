@@ -86,6 +86,20 @@
 
 .st-hint { font-size: 11px; color: var(--color-text-muted); text-align: center; }
 
+.st-fmt { display: flex; gap: 6px; }
+.st-fmt button {
+  flex: 1;
+  min-height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  background: #FFFFFF;
+  color: var(--color-text-secondary);
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.st-fmt button.attivo { background: #000000; color: #FFFFFF; border-color: #000000; }
+
 /* ---------- Tabella box score ---------- */
 .st-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-height: 62vh; overflow-y: auto; }
 table.st-box {

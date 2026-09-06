@@ -5,6 +5,7 @@
 
 let statsTab = "tabellino";
 let advTab = "squadra";
+let statsFmt = "num";   // "num" | "pct"
 let statsEventiRemoti = null;   // { id_partita, eventi, nome } se guardiamo una partita non live
 let seguiLive = null;          // { id, nome, timer } modalità sola-lettura con polling
 
@@ -51,6 +52,23 @@ function tempoInSec(mmss) {
 function frac(m, a) { return m + "/" + a; }
 function pct(m, a) { return a ? Math.round(m / a * 100) + "%" : "–"; }
 function dec(x, n) { return (isFinite(x) ? x : 0).toFixed(n == null ? 1 : n); }
+function mmss(minFloat) {
+  const s = Math.round((minFloat || 0) * 60);
+  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+}
+function periodoSecQ(q) { return /^OT/i.test(String(q || "")) ? CONFIG.DURATA_OT_SEC : CONFIG.DURATA_QUARTO_SEC; }
+
+/* Nome breve giocatore: convocati della partita → anagrafica → vuoto */
+function nomeGiocatore(n) {
+  const c = (state.convocati || []).find(x => String(x.numero) === String(n));
+  if (c && c.nickname) return c.nickname;
+  if (c && c.cognome) return c.cognome.slice(0, 8);
+  const g = (typeof caricaGiocatori === "function" ? caricaGiocatori() : [])
+    .find(x => String(x.numero_maglia) === String(n));
+  if (g && g.nickname) return g.nickname;
+  if (g && g.cognome) return g.cognome.slice(0, 8);
+  return "";
+}
 
 function esitiArray(v) {
   if (Array.isArray(v)) return v;
@@ -67,17 +85,22 @@ function statsContesto() {
       punteggio: { MIA: state.punteggio.MIA, OPP: state.punteggio.OPP },
       convocati: state.convocati || [],
       nome: state.nomePartita || (CONFIG.NOME_SQUADRA_MIA + " vs " + (state.avversarioBreve || "AVV")),
-      minuti: minutiGiocatiLive()
+      minuti: minutiGiocatiLive(),
+      tempoOra: state.tempoPartita,
+      quartoOra: nomeQuarto()
     };
   }
   const ev = statsEventiRemoti.eventi.filter(e => String(e.valido).toUpperCase() !== "FALSE");
+  const ultimo = ev[ev.length - 1] || {};
   return {
     live: false,
     eventi: ev,
     punteggio: punteggioDaEventi(ev),
     convocati: [],
     nome: statsEventiRemoti.nome || ("Gara " + statsEventiRemoti.id_partita),
-    minuti: minutiDaEventi(ev)
+    minuti: minutiDaEventi(ev),
+    tempoOra: ultimo.tempo_partita || "00:00",
+    quartoOra: ultimo.quarto || "Q1"
   };
 }
 
@@ -167,40 +190,74 @@ function calcolaBox(ctx) {
   team.MIA.pt = ctx.punteggio.MIA;
   team.OPP.pt = ctx.punteggio.OPP;
 
-  // minuti + plus/minus (solo live, dai stint)
-  if (ctx.live) {
-    const mp = minutiPlusMinus();
-    Object.keys(pg).forEach(n => {
-      pg[n].min = mp[n] ? mp[n].min : 0;
-      pg[n].pm = mp[n] ? mp[n].pm : 0;
-    });
-  }
+  // minuti + plus/minus: ricostruiti dagli eventi (coerenti su ogni device)
+  const stints = stintsDaEventi(ctx.eventi, ctx.tempoOra, ctx.quartoOra);
+  const mp = minutiDaStints(stints);
+  Object.keys(pg).forEach(n => {
+    pg[n].min = mp[n] ? mp[n].min : 0;
+    pg[n].pm = mp[n] ? mp[n].pm : 0;
+  });
 
   Object.keys(pg).forEach(n => { pg[n].val = valutazione(pg[n]); });
   team.MIA.val = valutazione(team.MIA);
   team.OPP.val = valutazione(team.OPP);
   team.MIA.rSquadra = teamReb.MIA;
   team.OPP.rSquadra = teamReb.OPP;
-  return { pg, team };
+  return { pg, team, stints: stints };
 }
 
-function minutiPlusMinus() {
-  const out = {};
-  const add = (nums, sec, pm) => (nums || []).forEach(n => {
-    out[n] = out[n] || { min: 0, pm: 0 };
-    out[n].min += Math.max(sec, 0) / 60;
-    out[n].pm += pm;
+/* Ricostruisce gli stint (quintetto + durata + ±) dal flusso eventi.
+   quintetto_mia è su ogni evento; tempo_partita cambia solo ai checkpoint. */
+function stintsDaEventi(eventi, tempoOra, quartoOra) {
+  const lineupOf = v => String(v || "").split(",").map(x => x.trim()).filter(Boolean);
+  const scoreOf = ev => {
+    const m = String(ev.punteggio_progressivo || "").match(/^(\d+)-(\d+)$/);
+    return m ? { MIA: +m[1], OPP: +m[2] } : null;
+  };
+  const out = [];
+  let cur = null, lastSc = { MIA: 0, OPP: 0 };
+
+  const chiudi = (fineSc, fineT) => {
+    if (!cur) return;
+    out.push({
+      quarto: cur.quarto,
+      quintetto: cur.quintetto.slice(),
+      tIn: cur.tIn,
+      tFine: fineT,
+      durSec: Math.min(Math.max(cur.tIn - fineT, 0), periodoSecQ(cur.quarto)),
+      plusMinus: (fineSc.MIA - cur.scIn.MIA) - (fineSc.OPP - cur.scIn.OPP)
+    });
+  };
+
+  (eventi || []).forEach(ev => {
+    const lu = lineupOf(ev.quintetto_mia);
+    const t = tempoInSec(ev.tempo_partita);
+    const sc = scoreOf(ev) || lastSc;
+    lastSc = sc;
+    if (!lu.length) return;
+    if (!cur) { cur = { quarto: ev.quarto, quintetto: lu, tIn: t, scIn: sc }; return; }
+    if (ev.quarto && ev.quarto !== cur.quarto) {          // fine periodo
+      chiudi(sc, 0);
+      cur = { quarto: ev.quarto, quintetto: lu, tIn: periodoSecQ(ev.quarto), scIn: sc };
+    } else if (lu.join(",") !== cur.quintetto.join(",")) { // cambio quintetto
+      chiudi(sc, t);
+      cur = { quarto: ev.quarto, quintetto: lu, tIn: t, scIn: sc };
+    }
   });
-  (state.stints || []).forEach(s => {
-    if (!s.inizio || !s.fine) return;
-    const dur = Math.min(Math.max(tempoInSec(s.inizio.tempo) - tempoInSec(s.fine.tempo), 0), 600);
-    add(s.quintetto, dur, s.plusMinus || 0);
-  });
-  const sc = state.stintCorrente;
-  if (sc && sc.inizio) {
-    const pmNow = (state.punteggio.MIA - sc.inizio.punteggio.MIA) - (state.punteggio.OPP - sc.inizio.punteggio.OPP);
-    add(sc.quintetto || state.roster, tempoInSec(sc.inizio.tempo) - tempoInSec(state.tempoPartita), pmNow);
+  if (cur) {
+    const tOra = (quartoOra && quartoOra !== cur.quarto) ? 0 : tempoInSec(tempoOra);
+    chiudi(lastSc, tOra);
   }
+  return out;
+}
+
+function minutiDaStints(stints) {
+  const out = {};
+  (stints || []).forEach(s => (s.quintetto || []).forEach(n => {
+    out[n] = out[n] || { min: 0, pm: 0 };
+    out[n].min += s.durSec / 60;
+    out[n].pm += s.plusMinus || 0;
+  }));
   return out;
 }
 
@@ -252,16 +309,27 @@ function renderStats(tab) {
   body.innerHTML = bannerSegui() + html;
 }
 
-function rigaSquadra(nome, t, cls) {
+function rigaSquadra(nome, t, opp, cls) {
+  const p = statsFmt === "pct";
+  const orb = p ? '<span>RO% ' + pct(t.ro, t.ro + opp.rd) + '</span>' : '';
+  const drb = p ? '<span>RD% ' + pct(t.rd, t.rd + opp.ro) + '</span>' : '';
   return '<div class="st-team ' + (cls || "") + '">' +
     '<span class="st-team-nome">' + nome + '</span>' +
     '<span class="st-team-pt">' + t.pt + '</span>' +
-    '<span>FG ' + frac(t.m2 + t.m3, t.a2 + t.a3) + '</span>' +
-    '<span>3P ' + frac(t.m3, t.a3) + '</span>' +
-    '<span>TL ' + frac(t.ftm, t.fta) + '</span>' +
-    '<span>RIM ' + (t.ro + t.rd) + '</span>' +
+    '<span>FG ' + (p ? pct(t.m2 + t.m3, t.a2 + t.a3) : frac(t.m2 + t.m3, t.a2 + t.a3)) + '</span>' +
+    '<span>2P ' + (p ? pct(t.m2, t.a2) : frac(t.m2, t.a2)) + '</span>' +
+    '<span>3P ' + (p ? pct(t.m3, t.a3) : frac(t.m3, t.a3)) + '</span>' +
+    '<span>TL ' + (p ? pct(t.ftm, t.fta) : frac(t.ftm, t.fta)) + '</span>' +
+    '<span>RIM ' + (t.ro + t.rd) + '</span>' + orb + drb +
     '<span>AS ' + t.as + '</span>' +
     '<span>PP ' + t.pp + '</span>' +
+  '</div>';
+}
+
+function toggleFmt() {
+  return '<div class="st-fmt">' +
+    '<button data-fmt="num" class="' + (statsFmt === "num" ? "attivo" : "") + '">Numeri</button>' +
+    '<button data-fmt="pct" class="' + (statsFmt === "pct" ? "attivo" : "") + '">%</button>' +
   '</div>';
 }
 
@@ -270,25 +338,26 @@ function vistaTabellino(ctx, box, opp) {
   const numeri = conv.length
     ? conv.map(c => c.numero)
     : Object.keys(box.pg).map(Number).sort((a, b) => a - b);
-  const nick = n => {
-    const c = conv.find(x => String(x.numero) === String(n));
-    return c && c.nickname ? c.nickname : (c && c.cognome ? c.cognome.slice(0, 6) : "");
-  };
+  const p = statsFmt === "pct";
+  const s = (x, y) => (y ? x / y : 0);
 
   let righe = "";
   numeri.forEach(n => {
     const g = box.pg[n] || statVuote();
+    const fga = g.a2 + g.a3, fgm = g.m2 + g.m3;
+    const cel = p
+      ? '<td>' + pct(g.m2, g.a2) + '</td><td>' + pct(g.m3, g.a3) + '</td><td>' + pct(g.ftm, g.fta) + '</td>' +
+        '<td>' + (fga ? dec(s(fgm + 0.5 * g.m3, fga) * 100, 0) + '%' : '–') + '</td>' +
+        '<td>' + (fga || g.fta ? dec(s(g.pt, 2 * (fga + 0.44 * g.fta)) * 100, 0) + '%' : '–') + '</td>'
+      : '<td>' + frac(g.m2, g.a2) + '</td><td>' + frac(g.m3, g.a3) + '</td><td>' + frac(g.ftm, g.fta) + '</td>' +
+        '<td class="sm-hide">' + g.ro + '</td><td class="sm-hide">' + g.rd + '</td>';
     righe +=
       '<tr>' +
       '<td class="st-n">#' + n + '</td>' +
-      '<td class="st-g">' + nick(n) + '</td>' +
-      '<td class="sm-hide">' + dec(g.min, 0) + '</td>' +
+      '<td class="st-g">' + nomeGiocatore(n) + '</td>' +
+      '<td class="sm-hide">' + mmss(g.min) + '</td>' +
       '<td class="st-pt">' + g.pt + '</td>' +
-      '<td>' + frac(g.m2, g.a2) + '</td>' +
-      '<td>' + frac(g.m3, g.a3) + '</td>' +
-      '<td>' + frac(g.ftm, g.fta) + '</td>' +
-      '<td class="sm-hide">' + g.ro + '</td>' +
-      '<td class="sm-hide">' + g.rd + '</td>' +
+      cel +
       '<td>' + (g.ro + g.rd) + '</td>' +
       '<td>' + g.as + '</td>' +
       '<td class="sm-hide">' + g.pr + '</td>' +
@@ -300,14 +369,16 @@ function vistaTabellino(ctx, box, opp) {
       '</tr>';
   });
 
-  const th = ['#', 'G', 'MIN', 'PT', '2P', '3P', 'TL', 'RO', 'RD', 'RT', 'AS', 'PR', 'PP', 'FF', 'FS', 'VAL', '+/-'];
+  const th = p
+    ? ['#', 'G', 'MIN', 'PT', '2P%', '3P%', 'TL%', 'eFG%', 'TS%', 'RT', 'AS', 'PR', 'PP', 'FF', 'FS', 'VAL', '+/-']
+    : ['#', 'G', 'MIN', 'PT', '2P', '3P', 'TL', 'RO', 'RD', 'RT', 'AS', 'PR', 'PP', 'FF', 'FS', 'VAL', '+/-'];
   const hide = { MIN: 1, RO: 1, RD: 1, PR: 1, PP: 1, FS: 1, VAL: 1, '+/-': 1 };
   const thead = '<tr>' + th.map(h => '<th' + (hide[h] ? ' class="sm-hide"' : '') + '>' + h + '</th>').join('') + '</tr>';
 
-  return '' +
-    rigaSquadra(CONFIG.NOME_SQUADRA_MIA, box.team.MIA, 'noi') +
-    rigaSquadra(opp, box.team.OPP, 'avv') +
-    '<div class="st-hint">Ruota il telefono in orizzontale per tutte le colonne · header fisso</div>' +
+  return toggleFmt() +
+    rigaSquadra(CONFIG.NOME_SQUADRA_MIA, box.team.MIA, box.team.OPP, 'noi') +
+    rigaSquadra(opp, box.team.OPP, box.team.MIA, 'avv') +
+    '<div class="st-hint">Ruota il telefono per tutte le colonne · header fisso</div>' +
     '<div class="st-scroll"><table class="st-box"><thead>' + thead + '</thead><tbody>' + righe + '</tbody></table></div>';
 }
 
@@ -416,17 +487,13 @@ function renderAdv(tab) {
       card('Rimb. Off %', dec(a.orbA) + '%', dec(a.orbB) + '%', 'ORB / (ORB + DRB avv)') +
       card('Rimb. Dif %', dec(a.drbA) + '%', dec(a.drbB) + '%', 'DRB / (DRB + ORB avv)') +
     '</div>' +
-    vistaStint();
+    vistaStint(box);
 }
 
 function vistaAdvGiocatori(ctx, box, opp) {
   const conv = ctx.convocati.slice();
   const numeri = conv.length ? conv.map(c => c.numero)
     : Object.keys(box.pg).map(Number).sort((a, b) => a - b);
-  const nick = n => {
-    const c = conv.find(x => String(x.numero) === String(n));
-    return c && c.nickname ? c.nickname : (c && c.cognome ? c.cognome.slice(0, 6) : "");
-  };
   const s = (x, y) => (y ? x / y : 0);
 
   let righe = "";
@@ -440,8 +507,8 @@ function vistaAdvGiocatori(ctx, box, opp) {
     righe +=
       '<tr>' +
       '<td class="st-n">#' + n + '</td>' +
-      '<td class="st-g">' + nick(n) + '</td>' +
-      '<td>' + dec(g.min, 0) + '</td>' +
+      '<td class="st-g">' + nomeGiocatore(n) + '</td>' +
+      '<td>' + mmss(g.min) + '</td>' +
       '<td class="st-pt">' + g.pt + '</td>' +
       '<td>' + (fga || g.fta ? dec(ts, 0) + '%' : '–') + '</td>' +
       '<td>' + (fga ? dec(efg, 0) + '%' : '–') + '</td>' +
@@ -466,21 +533,18 @@ function vistaAdvGiocatori(ctx, box, opp) {
     '<div class="st-hint">Net/40 = margine di squadra ogni 40′ con il giocatore in campo · MIN e ± dagli stint dei cambi</div>';
 }
 
-function vistaStint() {
-  const st = (state.stints || []);
+function vistaStint(box) {
+  const st = (box && box.stints) || [];
   if (!st.length) return '';
-  const conv = state.convocati || [];
-  const lbl = n => {
-    const c = conv.find(x => String(x.numero) === String(n));
-    return "#" + n + (c && c.nickname ? " " + c.nickname : "");
-  };
-  let righe = st.map((s, i) =>
+  const lbl = n => "#" + n + (nomeGiocatore(n) ? " " + nomeGiocatore(n) : "");
+  const righe = st.map((s, i) =>
     '<tr><td>' + (i + 1) + '</td><td>' + s.quarto + '</td>' +
-    '<td>' + (s.inizio.tempo) + '→' + s.fine.tempo + '</td>' +
+    '<td>' + mmss(s.tIn / 60) + '→' + mmss(s.tFine / 60) + '</td>' +
+    '<td>' + Math.round(s.durSec / 60 * 10) / 10 + "'" + '</td>' +
     '<td>' + (s.quintetto || []).map(lbl).join(", ") + '</td>' +
     '<td class="' + (s.plusMinus >= 0 ? 'pos' : 'neg') + '">' + (s.plusMinus > 0 ? '+' : '') + s.plusMinus + '</td></tr>').join('');
-  return '<div class="adv-tit" style="margin-top:14px">Stint / lineup ± </div>' +
-    '<div class="st-scroll"><table class="st-box"><thead><tr><th>#</th><th>Q</th><th>Tempo</th><th>Quintetto</th><th>±</th></tr></thead><tbody>' +
+  return '<div class="adv-tit" style="margin-top:14px">Stint / lineup ±</div>' +
+    '<div class="st-scroll"><table class="st-box"><thead><tr><th>#</th><th>Q</th><th>Tempo</th><th>Durata</th><th>Quintetto</th><th>±</th></tr></thead><tbody>' +
     righe + '</tbody></table></div>';
 }
 

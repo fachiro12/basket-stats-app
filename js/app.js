@@ -85,15 +85,20 @@ document.addEventListener("DOMContentLoaded", () => {
     b.addEventListener("click", () => renderAdv(b.dataset.atab)));
   document.getElementById("stats-refresh").addEventListener("click", aggiornaStatsDaFoglio);
   document.getElementById("adv-refresh").addEventListener("click", aggiornaStatsDaFoglio);
-  const stopSegui = e => {
-    if (e.target && e.target.id === "segui-stop") {
+  const azioniStats = e => {
+    const t = e.target;
+    if (!t) return;
+    if (t.id === "segui-stop") {
       fermaSeguiLive();
       statsEventiRemoti = null;
       navigaA("calendario");
+    } else if (t.dataset && t.dataset.fmt) {
+      statsFmt = t.dataset.fmt;
+      renderStats();
     }
   };
-  document.getElementById("stats-body").addEventListener("click", stopSegui);
-  document.getElementById("adv-body").addEventListener("click", stopSegui);
+  document.getElementById("stats-body").addEventListener("click", azioniStats);
+  document.getElementById("adv-body").addEventListener("click", azioniStats);
 
   /* -------- CALENDARIO -------- */
   document.getElementById("cal-aggiungi").addEventListener("click", apriAggiungiPartita);
