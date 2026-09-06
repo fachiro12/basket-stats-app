@@ -112,26 +112,22 @@ header.hud {
   text-overflow: ellipsis;
 }
 
-/* Striscia fissa in alto: non sposta mai il layout (niente mis-tap) */
+/* Striscia sotto il bottone CAMBI: sopra non c'è nulla di tappabile → niente mis-tap */
 .badge-offline {
   display: none;
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 60;
-  width: 100%;
-  max-width: 430px;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  width: calc(100% - 8px);
+  margin: 0 4px 3px;
   background: var(--color-state-warning);
   color: #FFFFFF;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.3px;
-  padding: 3px 8px;
-  border-radius: 0 0 10px 10px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
 }
 .badge-offline.visibile { display: flex; }
 

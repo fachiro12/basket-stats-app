@@ -223,7 +223,7 @@ function apriStatistichePartita(id) {
   const nome = p
     ? CONFIG.NOME_SQUADRA_MIA + (p.luogo === "Casa" ? " vs " : " @ ") + p.avversario
     : "Gara " + id;
-  statsEventiRemoti = { id_partita: id, eventi: [], nome: nome };
+  statsEventiRemoti = { id_partita: id, eventi: [], nome: nome, finita: p && p.stato === "Terminata" };
   navigaA("stats");
   scaricaEventiPartita(id, ok => {
     if (ok && document.getElementById("view-stats").classList.contains("attiva")) renderStats();

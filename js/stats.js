@@ -96,6 +96,8 @@ function statsContesto(forzaLive) {
       punteggio: { MIA: state.punteggio.MIA, OPP: state.punteggio.OPP },
       convocati: state.convocati || [],
       nome: state.nomePartita || (CONFIG.NOME_SQUADRA_MIA + " vs " + (state.avversarioBreve || "AVV")),
+      oppLabel: state.avversarioBreve || "AVV",
+      finita: !!state.partitaFinita,
       minuti: minutiGiocatiLive(),
       tempoOra: state.tempoPartita,
       quartoOra: nomeQuarto()
@@ -103,16 +105,34 @@ function statsContesto(forzaLive) {
   }
   const ev = statsEventiRemoti.eventi.filter(e => String(e.valido).toUpperCase() !== "FALSE");
   const ultimo = ev[ev.length - 1] || {};
+  const nome = statsEventiRemoti.nome || ("Gara " + statsEventiRemoti.id_partita);
+  const mOpp = nome.match(/(?:vs|@)\s+(.+)$/);
   return {
     live: false,
     eventi: ev,
     punteggio: punteggioDaEventi(ev),
     convocati: [],
-    nome: statsEventiRemoti.nome || ("Gara " + statsEventiRemoti.id_partita),
+    nome: nome,
+    oppLabel: mOpp ? mOpp[1] : "AVV",
+    finita: !!statsEventiRemoti.finita,
     minuti: minutiDaEventi(ev),
     tempoOra: ultimo.tempo_partita || "00:00",
     quartoOra: ultimo.quarto || "Q1"
   };
+}
+
+/* Barra punteggio + periodo per le viste Stats / Adv */
+function barraPunteggio(ctx) {
+  const inCorso = ctx.finita ? "FINALE"
+    : (ctx.quartoOra || "") + (ctx.tempoOra && ctx.tempoOra !== "00:00" ? " · " + ctx.tempoOra : "");
+  return '<div class="st-score">' +
+    '<span class="st-score-team">' + CONFIG.NOME_SQUADRA_MIA + '</span>' +
+    '<span class="st-score-n noi">' + ctx.punteggio.MIA + '</span>' +
+    '<span class="st-score-vs">–</span>' +
+    '<span class="st-score-n">' + ctx.punteggio.OPP + '</span>' +
+    '<span class="st-score-team">' + (ctx.oppLabel || "AVV") + '</span>' +
+    (inCorso ? '<span class="st-score-q">' + inCorso + '</span>' : '') +
+  '</div>';
 }
 
 function punteggioDaEventi(eventi) {
@@ -306,9 +326,9 @@ function renderStats(tab) {
   if (tab) statsTab = tab;
   const ctx = statsContesto();
   const box = calcolaBox(ctx);
-  const opp = state.avversarioBreve || "AVV";
+  const opp = ctx.oppLabel || "AVV";
 
-  document.getElementById("stats-titolo").textContent = ctx.nome + (ctx.live ? " · LIVE" : "");
+  document.getElementById("stats-titolo").textContent = ctx.nome + (ctx.live && !ctx.finita ? " · LIVE" : "");
   document.querySelectorAll(".stats-tabs button").forEach(b =>
     b.classList.toggle("attivo", b.dataset.stab === statsTab));
 
@@ -317,6 +337,7 @@ function renderStats(tab) {
   if (statsTab === "andamento") html = vistaAndamento(ctx);
   else if (statsTab === "tiri") html = vistaTiri(box, opp);
   else html = vistaTabellino(ctx, box, opp);
+  html = barraPunteggio(ctx) + html;
   body.innerHTML = bannerSegui() + html;
 }
 
@@ -464,13 +485,15 @@ function renderAdv(tab) {
   if (tab) advTab = tab;
   const ctx = statsContesto();
   const box = calcolaBox(ctx);
-  const opp = state.avversarioBreve || "AVV";
-  document.getElementById("adv-titolo").textContent = ctx.nome + (ctx.live ? " · LIVE" : "");
+  const opp = ctx.oppLabel || "AVV";
+  document.getElementById("adv-titolo").textContent = ctx.nome + (ctx.live && !ctx.finita ? " · LIVE" : "");
   document.querySelectorAll("#adv-tabs button").forEach(b =>
     b.classList.toggle("attivo", b.dataset.atab === advTab));
 
+  const testa = bannerSegui() + barraPunteggio(ctx);
+
   if (advTab === "giocatori") {
-    document.getElementById("adv-body").innerHTML = bannerSegui() + vistaAdvGiocatori(ctx, box, opp);
+    document.getElementById("adv-body").innerHTML = testa + vistaAdvGiocatori(ctx, box, opp);
     return;
   }
 
@@ -483,7 +506,7 @@ function renderAdv(tab) {
       (nota ? '<div class="adv-nota">' + nota + '</div>' : '') +
     '</div>';
 
-  document.getElementById("adv-body").innerHTML = bannerSegui() +
+  document.getElementById("adv-body").innerHTML = testa +
     '<div class="adv-legenda"><span class="noi">' + CONFIG.NOME_SQUADRA_MIA + '</span><span class="avv">' + opp + '</span> · ' +
       dec(ctx.minuti, 0) + "' giocati</div>" +
     '<div class="adv-griglia">' +

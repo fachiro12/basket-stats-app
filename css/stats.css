@@ -41,6 +41,31 @@
 
 #stats-body, #adv-body { gap: 10px; }
 
+.st-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 8px 10px;
+  background: #000000;
+  color: #FFFFFF;
+  border-radius: var(--radius-sm);
+}
+.st-score-team { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; opacity: 0.85; }
+.st-score-n { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.st-score-n.noi { color: var(--color-brand); }
+.st-score-vs { font-size: 16px; opacity: 0.5; }
+.st-score-q {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: #FFFFFF;
+  opacity: 0.75;
+}
+
 .segui-bar {
   display: flex;
   align-items: center;
