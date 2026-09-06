@@ -51,6 +51,7 @@ function sincronizzaGiocatore(rec, elimina) {
     id_giocatore: rec.id,
     nome: rec.nome || "",
     cognome: rec.cognome || "",
+    nickname: rec.nickname || "",
     ruolo: rec.ruolo || "",
     numero_maglia: rec.numero_maglia != null ? rec.numero_maglia : "",
     team: rec.team || TEAM_DEFAULT
@@ -94,10 +95,13 @@ function mergeGiocatoriCloud(cloud) {
     const id = String(c.id_giocatore || "").trim();
     if (!id) return;
     const n = parseInt(c.numero_maglia, 10);
+    const loc = perId[id] || {};
     perId[id] = {
       id: id,
       nome: (c.nome || "").toString().trim(),
       cognome: (c.cognome || "").toString().trim(),
+      // se il cloud non porta ancora il nickname, non sovrascrivere quello locale
+      nickname: (c.nickname || "").toString().trim().toUpperCase() || loc.nickname || "",
       ruolo: RUOLI.indexOf(c.ruolo) > -1 ? c.ruolo : (c.ruolo || ""),
       numero_maglia: isNaN(n) ? "" : n,
       team: (c.team || TEAM_DEFAULT).toString().trim()
@@ -133,6 +137,7 @@ function renderRoster() {
     row.innerHTML =
       '<span class="roster-num">#' + (g.numero_maglia || "–") + '</span>' +
       '<span class="roster-info"><strong>' + (g.cognome || "") + ' ' + (g.nome || "") +
+      (g.nickname ? ' <em>(' + g.nickname + ')</em>' : "") +
       '</strong><small>' + (g.ruolo || "—") + ' · ' + (g.team || TEAM_DEFAULT) + '</small></span>' +
       '<svg class="ico" aria-hidden="true"><use href="#i-edit"></use></svg>';
     row.addEventListener("click", () => apriFormGiocatore(g.id));
@@ -146,6 +151,7 @@ function apriFormGiocatore(id) {
   document.getElementById("gioc-id").value = g ? g.id : "";
   document.getElementById("gioc-nome").value = g ? (g.nome || "") : "";
   document.getElementById("gioc-cognome").value = g ? (g.cognome || "") : "";
+  document.getElementById("gioc-nickname").value = g ? (g.nickname || "") : "";
   document.getElementById("gioc-ruolo").value = g && RUOLI.indexOf(g.ruolo) > -1 ? g.ruolo : RUOLI[0];
   document.getElementById("gioc-numero").value = g && g.numero_maglia != null ? g.numero_maglia : "";
   document.getElementById("gioc-team").value = g ? (g.team || TEAM_DEFAULT) : TEAM_DEFAULT;
@@ -163,6 +169,7 @@ function confermaFormGiocatore() {
     id: document.getElementById("gioc-id").value || "",
     nome: document.getElementById("gioc-nome").value.trim(),
     cognome: cognome,
+    nickname: document.getElementById("gioc-nickname").value.trim().toUpperCase(),
     ruolo: document.getElementById("gioc-ruolo").value,
     numero_maglia: numRaw === "" ? "" : parseInt(numRaw, 10),
     team: document.getElementById("gioc-team").value.trim() || TEAM_DEFAULT
@@ -181,10 +188,19 @@ function eliminaGiocatoreCorrente() {
   mostraToast("Giocatore eliminato");
 }
 
-/* ---------- Flusso pre-partita: convocati + maglie ---------- */
+/* ==========================================================================
+   FLUSSO PRE-PARTITA — Step 1: convocati + maglie + nome breve avversario
+                        Step 2: quintetto base → avvio ufficiale
+   ========================================================================== */
 let prePartitaMatch = null;
 let prePartitaPool = [];
 let prePartitaMax = MAX_REFERTO;
+let prePartitaConvocatiTemp = [];
+let quintettoSel = [];
+
+function nomePartitaComposto(luogo, breve) {
+  return CONFIG.NOME_SQUADRA_MIA + " " + (luogo === "Casa" ? "vs " : "@ ") + (breve || "AVV");
+}
 
 function apriPrePartita(partita) {
   prePartitaMatch = partita;
@@ -199,13 +215,14 @@ function apriPrePartita(partita) {
   if (base.length < MIN_CONVOCATI) {
     base = base.concat(CONFIG.ROSTER_INIZIALE
       .filter(n => !base.some(g => Number(g.numero_maglia) === n))
-      .map(n => ({ id: "", nome: "", cognome: "#" + n, ruolo: "", numero_maglia: n, team: team })));
+      .map(n => ({ id: "", nome: "", cognome: "#" + n, nickname: "", ruolo: "", numero_maglia: n, team: team })));
   }
 
   prePartitaPool = base.concat(altri).map((g, i) => ({
     id: g.id || "",
     nome: g.nome || "",
     cognome: g.cognome || "",
+    nickname: (g.nickname || "").toUpperCase(),
     ruolo: g.ruolo || "",
     numero_maglia: g.numero_maglia,
     convocato: i < base.length && i < MAX_REFERTO,
@@ -217,8 +234,18 @@ function apriPrePartita(partita) {
     partita.avversario + " · " + partita.luogo + " · " + partita.tipo +
     (amichevole ? "  ·  nessun limite convocati" : "  ·  max " + MAX_REFERTO + " a referto");
 
+  const breve = String(partita.avversario || "").slice(0, CONFIG.MAX_LABEL_AVVERSARIO);
+  document.getElementById("pp-avv-breve").value = breve;
+  aggiornaAnteprimaNome();
+
   renderPrePartita();
   document.getElementById("overlay-prepartita").classList.add("visibile");
+}
+
+function aggiornaAnteprimaNome() {
+  const breve = document.getElementById("pp-avv-breve").value.trim();
+  const luogo = (prePartitaMatch && prePartitaMatch.luogo) || "Casa";
+  document.getElementById("pp-nome-preview").textContent = nomePartitaComposto(luogo, breve);
 }
 
 function renderPrePartita() {
@@ -230,7 +257,8 @@ function renderPrePartita() {
     row.className = "pp-riga" + (g.convocato ? " on" : "");
     row.innerHTML =
       '<input type="checkbox" class="pp-check" data-idx="' + idx + '"' + (g.convocato ? " checked" : "") + '>' +
-      '<span class="pp-nome">' + nome + '<small>' + (g.ruolo || "—") + (g.manuale ? " · manuale" : "") + '</small></span>' +
+      '<span class="pp-nome">' + nome + (g.nickname ? ' (' + g.nickname + ')' : "") +
+        '<small>' + (g.ruolo || "—") + (g.manuale ? " · manuale" : "") + '</small></span>' +
       '<input type="tel" inputmode="numeric" maxlength="2" class="pp-num" data-idx="' + idx + '" value="' + g.numGara + '">' +
       (g.manuale ? '<button type="button" class="pp-del" data-idx="' + idx + '" aria-label="Rimuovi">&times;</button>' : '');
     cont.appendChild(row);
@@ -259,7 +287,7 @@ function ppNumero(idx, val) { if (prePartitaPool[idx]) prePartitaPool[idx].numGa
 function ppRimuovi(idx) { prePartitaPool.splice(idx, 1); renderPrePartita(); }
 
 function aggiungiConvocatoManuale() {
-  const raw = prompt("Nuovo convocato — numero;Cognome  (es. 47;Rossi)");
+  const raw = prompt("Nuovo convocato — numero;Cognome;NICK  (es. 47;Rossi;ROS)");
   if (!raw) return;
   const parti = raw.split(/[;,]/);
   const numero = parseInt((parti[0] || "").trim(), 10);
@@ -267,7 +295,8 @@ function aggiungiConvocatoManuale() {
   prePartitaPool.push({
     id: "",
     nome: "",
-    cognome: (parti.slice(1).join(" ").trim() || "#" + numero),
+    cognome: (parti[1] || "").trim() || ("#" + numero),
+    nickname: (parti[2] || "").trim().toUpperCase().slice(0, 4),
     ruolo: "",
     numero_maglia: numero,
     convocato: contaConvocati() < prePartitaMax,
@@ -296,36 +325,120 @@ function convocatiSelezionati() {
       id: g.id || "",
       nome: g.nome || "",
       cognome: g.cognome || "",
+      nickname: (g.nickname || "").toUpperCase(),
       ruolo: g.ruolo || "",
       numero: isNaN(numero) ? (Number(g.numero_maglia) || 0) : numero
     };
   });
 }
 
+/* ---------- Step 1 → Step 2 ---------- */
 function confermaPrePartita() {
-  const p = prePartitaMatch;
-  if (!p) return;
+  if (!prePartitaMatch) return;
   const convocati = convocatiSelezionati();
   if (convocati.length < MIN_CONVOCATI) { mostraToast("Minimo " + MIN_CONVOCATI + " giocatori"); return; }
   if (convocati.length > prePartitaMax) { mostraToast("Massimo " + prePartitaMax + " convocati"); return; }
-
   const numeri = convocati.map(c => c.numero);
   if (new Set(numeri).size !== numeri.length) { mostraToast("Numeri di maglia duplicati"); return; }
+  if (!document.getElementById("pp-avv-breve").value.trim()) { mostraToast("Inserisci il nome breve avversario"); return; }
+
+  prePartitaConvocatiTemp = convocati;
+  chiudiPrePartita();
+  apriQuintetto();
+}
+
+/* ---------- Step 2: quintetto base ---------- */
+function etichettaGiocatore(c) {
+  return "#" + c.numero + (c.nickname ? " " + c.nickname : (c.cognome ? " " + c.cognome : ""));
+}
+
+function apriQuintetto() {
+  quintettoSel = prePartitaConvocatiTemp.slice(0, 5).map(c => c.numero);
+  document.getElementById("q-contesto").textContent =
+    document.getElementById("pp-nome-preview").textContent + "  ·  scegli i 5 in campo";
+  renderQuintetto();
+  document.getElementById("overlay-quintetto").classList.add("visibile");
+}
+function chiudiQuintetto() {
+  document.getElementById("overlay-quintetto").classList.remove("visibile");
+}
+function tornaAConvocati() {
+  chiudiQuintetto();
+  document.getElementById("overlay-prepartita").classList.add("visibile");
+}
+
+function renderQuintetto() {
+  const cont = document.getElementById("q-lista");
+  cont.innerHTML = "";
+  prePartitaConvocatiTemp.forEach(c => {
+    const on = quintettoSel.indexOf(c.numero) > -1;
+    const row = document.createElement("div");
+    row.className = "pp-riga" + (on ? " on" : "");
+    row.innerHTML =
+      '<input type="checkbox" class="q-check" data-num="' + c.numero + '"' + (on ? " checked" : "") + '>' +
+      '<span class="pp-nome">' + etichettaGiocatore(c) +
+        '<small>' + (c.ruolo || "—") + '</small></span>';
+    cont.appendChild(row);
+  });
+  aggiornaContatoreQuintetto();
+}
+
+function qToggle(num, checked) {
+  const i = quintettoSel.indexOf(num);
+  if (checked) {
+    if (i === -1) {
+      if (quintettoSel.length >= 5) { mostraToast("Solo 5 in campo"); renderQuintetto(); return; }
+      quintettoSel.push(num);
+    }
+  } else if (i > -1) {
+    quintettoSel.splice(i, 1);
+  }
+  renderQuintetto();
+}
+
+function aggiornaContatoreQuintetto() {
+  const n = quintettoSel.length;
+  const el = document.getElementById("q-contatore");
+  el.textContent = n + " / 5" + (n === 5 ? " · ok" : " · scegline " + (5 - n) + (n > 5 ? "" : ""));
+  el.classList.toggle("ko", n !== 5);
+  document.getElementById("q-conferma").disabled = n !== 5;
+}
+
+function confermaQuintetto() {
+  const p = prePartitaMatch;
+  if (!p || quintettoSel.length !== 5) { mostraToast("Servono 5 giocatori"); return; }
+
+  const convocati = prePartitaConvocatiTemp;
+  const numeri = convocati.map(c => c.numero);
+  const breve = document.getElementById("pp-avv-breve").value.trim().slice(0, CONFIG.MAX_LABEL_AVVERSARIO);
+  const durataMin = Math.round(CONFIG.DURATA_QUARTO_SEC / 60);
 
   state = statoIniziale();
   state.id_partita = String(p.id_partita);
+  state.avversario = p.avversario || "";
+  state.avversarioBreve = breve;
+  state.luogoPartita = p.luogo || "Casa";
+  state.nomePartita = nomePartitaComposto(state.luogoPartita, breve);
   state.convocati = convocati;
-  state.roster = numeri.slice(0, 5);
-  state.inCampo = state.roster.slice();
+  state.roster = quintettoSel.slice();
+  state.inCampo = quintettoSel.slice();
   state.falliGiocatori = {};
   numeri.forEach(n => { state.falliGiocatori[n] = 0; });
+  state.tempoPartita = formatTempo(CONFIG.DURATA_QUARTO_SEC);
+  state.ultimoCheckpoint = { quarto: "Q1", mm: durataMin, ss: 0 };
+  state.stintCorrente = {
+    quarto: "Q1",
+    inizio: { quarto: "Q1", tempo: state.tempoPartita, punteggio: { MIA: 0, OPP: 0 } },
+    quintetto: quintettoSel.slice()
+  };
+  state.ultimoTestoFeed = state.nomePartita + " — palla a due";
   salvaStato();
 
   if (typeof impostaStatoPartita === "function") impostaStatoPartita(p.id_partita, "In corso");
 
-  chiudiPrePartita();
+  chiudiQuintetto();
   if (typeof renderCalendario === "function") renderCalendario();
   navigaA("partita");
   renderPartita();
-  mostraToast("Partita " + p.id_partita + " avviata · " + convocati.length + " convocati");
+  mostraToast(state.nomePartita + " avviata");
 }

@@ -102,16 +102,16 @@
       <header class="hud">
         <div class="riga-punteggio">
           <div class="blocco-squadra mia">
-            <div class="nome" id="nome-mia">MIA</div>
+            <div class="nome" id="nome-mia">PVL</div>
             <div class="punti" id="punti-mia">0</div>
           </div>
           <div class="centro-hud">
             <div class="quarto-badge" id="quarto-badge">Q1</div>
-            <span class="bonus-badge" id="bonus-mia">BONUS MIA</span>
-            <span class="bonus-badge" id="bonus-opp">BONUS OPP</span>
+            <span class="bonus-badge" id="bonus-mia">BONUS PVL</span>
+            <span class="bonus-badge" id="bonus-opp">BONUS AVV</span>
           </div>
           <div class="blocco-squadra opp">
-            <div class="nome" id="nome-opp">OPP</div>
+            <div class="nome" id="nome-opp">AVV</div>
             <div class="punti" id="punti-opp">0</div>
           </div>
         </div>
@@ -128,9 +128,9 @@
 
       <main class="corpo-partita">
         <section class="pannello pannello-sinistro">
-          <div class="titolo-pannello">ROSTER MIA</div>
+          <div class="titolo-pannello">PVL</div>
           <div id="lista-giocatori"></div>
-          <button class="btn-opp" id="btn-opp"><svg class="ico" aria-hidden="true"><use href="#i-alert"></use></svg> AVVERSARI (OPP)</button>
+          <button class="btn-opp" id="btn-opp"><svg class="ico" aria-hidden="true"><use href="#i-alert"></use></svg> <span id="btn-opp-label">AVVERSARI</span></button>
           <button class="btn-cambi" id="btn-cambi"><svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg> CAMBI</button>
         </section>
 
@@ -390,15 +390,15 @@
         <span class="cc-valore" id="cambi-quarto">Q1</span>
       </div>
       <div class="cc-riga">
-        <span class="cc-label">Tempo</span>
+        <span class="cc-label">Tempo rimanente</span>
         <span class="cc-campi">
-          <input type="tel" inputmode="numeric" maxlength="2" id="cambi-min" placeholder="MM">
+          <select id="cambi-min"></select>
           <span>:</span>
-          <input type="tel" inputmode="numeric" maxlength="2" id="cambi-sec" placeholder="SS">
+          <select id="cambi-sec"></select>
         </span>
       </div>
       <div class="cc-riga">
-        <span class="cc-label">Punteggio (MIA − OPP)</span>
+        <span class="cc-label" id="cambi-punti-label">Punteggio</span>
         <span class="cc-campi">
           <input type="tel" inputmode="numeric" maxlength="3" id="cambi-punti-mia">
           <span>−</span>
@@ -432,6 +432,9 @@
       <input type="text" id="gioc-nome" autocomplete="off"></label>
     <label class="ap-campo"><span>Cognome</span>
       <input type="text" id="gioc-cognome" autocomplete="off"></label>
+    <label class="ap-campo"><span>Nickname / iniziali (max 4)</span>
+      <input type="text" id="gioc-nickname" maxlength="4" autocomplete="off"
+             autocapitalize="characters" placeholder="es. MRC"></label>
     <label class="ap-campo"><span>Ruolo</span>
       <select id="gioc-ruolo">
         <option value="Primary Handler">Primary Handler</option>
@@ -454,11 +457,26 @@
   <div class="modale">
     <h2><svg class="ico" aria-hidden="true"><use href="#i-clipboard"></use></svg> Convocati</h2>
     <div id="pp-contesto" class="pp-contesto"></div>
+    <label class="ap-campo"><span>Avversario — nome breve</span>
+      <input type="text" id="pp-avv-breve" maxlength="14" autocomplete="off" autocapitalize="words"></label>
+    <div id="pp-nome-preview" class="pp-nome-preview"></div>
     <div id="pp-lista"></div>
     <button class="btn-annulla-modale" id="pp-aggiungi">+ Aggiungi convocato</button>
     <div id="pp-contatore" class="pp-contatore"></div>
-    <button class="btn-conferma" id="pp-conferma">INIZIA PARTITA</button>
+    <button class="btn-conferma" id="pp-conferma">AVANTI · QUINTETTO</button>
     <button class="btn-annulla-modale" id="pp-annulla">Annulla</button>
+  </div>
+</div>
+
+<!-- Pre-partita: quintetto base -->
+<div class="overlay" id="overlay-quintetto">
+  <div class="modale">
+    <h2><svg class="ico" aria-hidden="true"><use href="#i-users"></use></svg> Quintetto base</h2>
+    <div id="q-contesto" class="pp-contesto"></div>
+    <div id="q-lista"></div>
+    <div id="q-contatore" class="pp-contatore"></div>
+    <button class="btn-conferma" id="q-conferma">AVVIA PARTITA</button>
+    <button class="btn-annulla-modale" id="q-indietro">Indietro</button>
   </div>
 </div>
 

@@ -266,7 +266,14 @@ main.corpo-partita {
   box-shadow: none;
   border-width: 1.5px;
 }
+.btn-giocatore .g-id { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
 .btn-giocatore .numero { font-size: 17px; font-weight: 800; }
+.btn-giocatore .nick {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.btn-giocatore.selezionato .nick { color: #FFFFFF; }
 .btn-giocatore .falli { font-size: 11px; color: var(--color-text-muted); font-weight: 800; }
 .btn-giocatore .falli.warning-falli { color: var(--color-state-warning); }
 .btn-giocatore .falli.out-falli { color: var(--color-state-negative); }
@@ -563,6 +570,30 @@ main.corpo-partita {
   padding: 10px 4px;
 }
 .slot-cambio .freccia { color: var(--color-text-secondary); }
+.slot-cambio .slot-in { font-weight: 900; font-size: 15px; color: #000000; flex-shrink: 0; min-width: 74px; }
+.slot-cambio select {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap-target);
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+  background: #FFFFFF;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+.cc-campi select {
+  min-height: 40px;
+  padding: 4px 8px;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  color: #000000;
+  background: #FFFFFF;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
 
 .cambi-checkpoint {
   background: #F8F9FA;

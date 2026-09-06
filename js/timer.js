@@ -29,9 +29,9 @@ function avanzaQuarto() {
 
 function passaAlPeriodo(indice) {
   state.quartoIndice = indice;
-  state.tempoPartita = formatTempo(
-    indice < CONFIG.QUARTI_REGOLAMENTARI ? CONFIG.DURATA_QUARTO_SEC : CONFIG.DURATA_OT_SEC
-  );
+  const durSec = indice < CONFIG.QUARTI_REGOLAMENTARI ? CONFIG.DURATA_QUARTO_SEC : CONFIG.DURATA_OT_SEC;
+  state.tempoPartita = formatTempo(durSec);
+  state.ultimoCheckpoint = { quarto: nomeQuarto(), mm: Math.round(durSec / 60), ss: 0 };
   salvaStato();
   renderPartita();
   if (indice < CONFIG.QUARTI_REGOLAMENTARI) mostraToast("Inizia " + nomeQuarto());

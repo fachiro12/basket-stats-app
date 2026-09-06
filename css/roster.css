@@ -39,13 +39,22 @@
   margin-bottom: 10px;
 }
 
-#pp-lista {
+#pp-lista,
+#q-lista {
   display: flex;
   flex-direction: column;
   gap: 6px;
   max-height: 46vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+.pp-nome-preview {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--color-brand);
+  text-align: center;
+  margin: 2px 0 10px;
 }
 
 .pp-riga {

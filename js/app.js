@@ -65,6 +65,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const b = e.target.closest(".pp-del");
     if (b) ppRimuovi(+b.dataset.idx);
   });
+  document.getElementById("pp-avv-breve").addEventListener("input", aggiornaAnteprimaNome);
+
+  /* -------- QUINTETTO BASE -------- */
+  document.getElementById("q-conferma").addEventListener("click", confermaQuintetto);
+  document.getElementById("q-indietro").addEventListener("click", tornaAConvocati);
+  document.getElementById("q-lista").addEventListener("change", e => {
+    if (e.target.classList.contains("q-check")) qToggle(+e.target.dataset.num, e.target.checked);
+  });
 
   /* -------- CALENDARIO -------- */
   document.getElementById("cal-aggiungi").addEventListener("click", apriAggiungiPartita);
