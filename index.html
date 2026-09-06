@@ -83,10 +83,12 @@
 <div id="pin-gate">
   <div class="logo"><svg class="ico" aria-hidden="true"><use href="#i-ball"></use></svg></div>
   <h1>Basket Stats Pro</h1>
-  <p>Inserisci il PIN di accesso</p>
-  <input id="pin-input" type="tel" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••">
+  <p>Accedi con le tue credenziali</p>
+  <input id="login-username" type="text" autocomplete="username" autocapitalize="none"
+         spellcheck="false" placeholder="Username">
+  <input id="login-password" type="password" autocomplete="current-password" placeholder="Password">
   <div id="pin-errore"></div>
-  <button id="pin-submit">SBLOCCA</button>
+  <button id="pin-submit">ACCEDI</button>
 </div>
 
 <!-- ===================== APP SHELL ===================== -->
@@ -232,7 +234,7 @@
     <div class="view" id="view-squadra">
       <div class="header-pagina">
         <h1><svg class="ico" aria-hidden="true"><use href="#i-clipboard"></use></svg> Altro</h1>
-        <p>Squadra, statistiche e configurazione</p>
+        <p>Profilo attivo: <strong id="profilo-attivo">—</strong></p>
       </div>
       <div class="contenuto-pagina">
 
@@ -299,6 +301,11 @@
           <div class="riga-altro">
             <svg class="ico ico-riga" aria-hidden="true"><use href="#i-alert"></use></svg>
             <span class="titolo-altro">Eventi in coda / offline</span>
+            <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          </div>
+          <div class="riga-altro" id="btn-logout">
+            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-undo"></use></svg>
+            <span class="titolo-altro">Esci / Cambia profilo</span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </div>
         </div>

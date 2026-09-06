@@ -1,84 +1,78 @@
 /* ==========================================================================
-   pin.js — PIN gate con verifica server JSONP, fallback offline, flag localStorage
+   pin.js — Login multiutente (JSONP verso Apps Script), fallback offline
    ========================================================================== */
+
+function utenteCorrente() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.utente)) || null; }
+  catch (e) { return null; }
+}
 
 function inizializzaPinGate() {
   const gate = document.getElementById("pin-gate");
   const app  = document.getElementById("app-shell");
 
-  if (localStorage.getItem(STORAGE_KEYS.pin) === "true") {
-    gate.classList.add("nascosto");
-    app.classList.add("visibile");
-    renderPartita();
+  if (localStorage.getItem(STORAGE_KEYS.pin) === "true" && utenteCorrente()) {
+    _entra(gate, app);
     return;
   }
 
-  document.getElementById("pin-submit").addEventListener("click", tentaSblocco);
-  document.getElementById("pin-input").addEventListener("keydown", e => {
-    if (e.key === "Enter") tentaSblocco();
+  document.getElementById("pin-submit").addEventListener("click", tentaLogin);
+  document.getElementById("login-password").addEventListener("keydown", e => {
+    if (e.key === "Enter") tentaLogin();
   });
 
-  function tentaSblocco() {
-    const pin = document.getElementById("pin-input").value.trim();
-    const erroreEl = document.getElementById("pin-errore");
-    if (!pin) { erroreEl.textContent = "Inserisci il PIN"; return; }
+  function tentaLogin() {
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value;
+    const err = document.getElementById("pin-errore");
+    if (!username || !password) { err.textContent = "Inserisci username e password"; return; }
 
-    /* URL non configurato: modalità test locale */
-    if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.indexOf("INCOLLA_QUI") === 0) {
-      erroreEl.textContent = "URL non configurato — modalità test locale";
-      _sblocca(gate, app, pin);
-      return;
-    }
+    if (navigator.onLine === false) { loginOffline(username, err); return; }
 
-    /* Offline dichiarato dal browser: salta la rete, prova il fallback locale */
-    if (navigator.onLine === false) {
-      if (pinValidoOffline(pin)) {
-        _sbloccaOffline(gate, app);
-      } else {
-        erroreEl.textContent = "Offline: usa il PIN abituale o quello di emergenza";
-      }
-      return;
-    }
-
-    erroreEl.textContent = "Verifica in corso…";
-    verificaPinServer(pin, (valido, errore) => {
-      if (valido) { _sblocca(gate, app, pin); return; }
-
-      /* Server irraggiungibile / timeout: fallback locale sicuro */
-      if (errore) {
-        if (pinValidoOffline(pin)) {
-          _sbloccaOffline(gate, app);
-        } else {
-          erroreEl.textContent = "Server non raggiungibile: PIN non riconosciuto offline";
-        }
+    err.textContent = "Verifica in corso…";
+    verificaLoginServer(username, password, (utente, ok, erroreRete, messaggio) => {
+      if (ok && utente) {
+        localStorage.setItem(STORAGE_KEYS.utente, JSON.stringify({
+          id: utente.id, username: utente.username, ruolo: utente.ruolo
+        }));
+        _entra(gate, app);
         return;
       }
-
-      erroreEl.textContent = "PIN errato";
+      if (erroreRete) { loginOffline(username, err); return; }
+      err.textContent = messaggio || "Credenziali non valide";
     });
+  }
+
+  /* Server irraggiungibile: rientro consentito solo se il profilo è già
+     stato autenticato su questo dispositivo. */
+  function loginOffline(username, err) {
+    const salvato = utenteCorrente();
+    if (salvato && salvato.username === username) {
+      _entra(gate, app);
+      if (typeof mostraToast === "function") mostraToast("Accesso offline");
+      return;
+    }
+    err.textContent = "Offline: nessun profilo salvato per questo utente";
   }
 }
 
-/* Il PIN è accettabile offline se coincide con la chiave di emergenza
-   o con l'ultimo PIN validato online e memorizzato localmente. */
-function pinValidoOffline(pin) {
-  const emergenza = CONFIG.PIN_EMERGENZA || "";
-  const ultimoValido = localStorage.getItem(STORAGE_KEYS.pinValore) || "";
-  return (emergenza && pin === emergenza) || (ultimoValido && pin === ultimoValido);
-}
-
-function _sblocca(gate, app, pin) {
-  localStorage.setItem(STORAGE_KEYS.pin, "true");
-  if (pin) localStorage.setItem(STORAGE_KEYS.pinValore, pin);
-  gate.classList.add("nascosto");
-  app.classList.add("visibile");
-  renderPartita();
-}
-
-function _sbloccaOffline(gate, app) {
+function _entra(gate, app) {
   localStorage.setItem(STORAGE_KEYS.pin, "true");
   gate.classList.add("nascosto");
   app.classList.add("visibile");
+  aggiornaProfiloAttivo();
   renderPartita();
-  if (typeof mostraToast === "function") mostraToast("Accesso offline");
+}
+
+function aggiornaProfiloAttivo() {
+  const u = utenteCorrente();
+  const el = document.getElementById("profilo-attivo");
+  if (el) el.textContent = u ? (u.username + (u.ruolo ? " · " + u.ruolo : "")) : "—";
+}
+
+function logout() {
+  if (!confirm("Uscire dal profilo attuale?")) return;
+  localStorage.removeItem(STORAGE_KEYS.pin);
+  localStorage.removeItem(STORAGE_KEYS.utente);
+  location.reload();
 }

@@ -38,6 +38,9 @@ document.addEventListener("DOMContentLoaded", () => {
   /* -------- RECAP -------- */
   document.getElementById("recap-chiudi").addEventListener("click", chiudiRecap);
 
+  /* -------- PROFILO / LOGOUT -------- */
+  document.getElementById("btn-logout").addEventListener("click", logout);
+
   /* -------- ROSTER / ANAGRAFICA GIOCATORI -------- */
   document.querySelectorAll('[data-apri="roster"]').forEach(el =>
     el.addEventListener("click", apriRoster));

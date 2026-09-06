@@ -40,18 +40,30 @@ function processaCoda() {
   });
 }
 
-function verificaPinServer(pin, callback) {
-  const nomeCb = "bspPinCallback_" + Date.now();
-  window[nomeCb] = function (risposta) {
-    callback(risposta && risposta.valido === true);
-    delete window[nomeCb];
-    script.remove();
-  };
+function verificaLoginServer(username, password, callback) {
+  const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
+  if (!base || base.indexOf("INCOLLA_QUI") === 0) { callback(null, false, true); return; }
+
+  const nomeCb = "bspLoginCb_" + Date.now();
   const script = document.createElement("script");
-  const base = CONFIG.APPS_SCRIPT_URL;
+  let concluso = false;
+
+  const pulisci = () => {
+    delete window[nomeCb];
+    if (script.parentNode) script.parentNode.removeChild(script);
+  };
+
+  window[nomeCb] = function (risposta) {
+    concluso = true;
+    if (risposta && risposta.ok) callback(risposta.utente || null, true, false);
+    else callback(null, false, false, (risposta && risposta.error) || "Credenziali non valide");
+    pulisci();
+  };
+
   script.src = base + (base.indexOf("?") > -1 ? "&" : "?") +
-    "action=auth&pin=" + encodeURIComponent(pin) + "&callback=" + nomeCb;
-  script.onerror = () => { callback(false, true); delete window[nomeCb]; };
+    "action=verificaLogin&username=" + encodeURIComponent(username) +
+    "&password=" + encodeURIComponent(password) + "&callback=" + nomeCb;
+  script.onerror = () => { if (!concluso) callback(null, false, true); pulisci(); };
   document.body.appendChild(script);
 }
 

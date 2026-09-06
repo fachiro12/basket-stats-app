@@ -70,18 +70,16 @@ button:disabled { opacity: 0.4; cursor: default; }
 #pin-gate h1 { font-size: 22px; font-weight: 800; }
 #pin-gate p { color: var(--color-text-secondary); font-size: 14px; margin-bottom: var(--space-2); }
 
-#pin-input {
-  width: min(240px, 80vw);
-  font-size: 26px;
-  text-align: center;
-  letter-spacing: 8px;
+#pin-gate input {
+  width: min(280px, 82vw);
+  font-size: 16px;
   background: var(--color-surface);
-  border: 2px solid var(--color-border-strong);
-  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
   color: var(--color-text-primary);
-  padding: 14px;
+  padding: 12px 14px;
 }
-#pin-input:focus { outline: none; border-color: var(--color-brand); box-shadow: var(--focus-ring); }
+#pin-gate input:focus { outline: none; border-color: var(--color-brand); box-shadow: var(--focus-ring); }
 #pin-errore { color: var(--color-state-negative); font-size: 13px; font-weight: 600; min-height: 18px; }
 
 #pin-submit {
