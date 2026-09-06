@@ -76,8 +76,8 @@ function esitiArray(v) {
 }
 
 /* ---------- Sorgente eventi: live (state) o remota (fetch foglio) ---------- */
-function statsContesto() {
-  const live = !statsEventiRemoti || statsEventiRemoti.id_partita === state.id_partita;
+function statsContesto(forzaLive) {
+  const live = forzaLive || !statsEventiRemoti || statsEventiRemoti.id_partita === state.id_partita;
   if (live) {
     return {
       live: true,

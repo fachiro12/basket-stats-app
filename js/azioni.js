@@ -108,6 +108,10 @@ function mostraActionOverlay(titolo, bottoni, timeoutMs) {
   const g = document.getElementById("ao-griglia");
   g.innerHTML = "";
   bottoni.forEach(b => g.appendChild(b));
+  // Via di fuga sempre presente: annulla / chiudi senza registrare nulla
+  const annulla = aoBottone("✕ Annulla", chiudiActionOverlay, true);
+  annulla.classList.add("ao-annulla");
+  g.appendChild(annulla);
   aoElemento().classList.remove("hidden");
   clearTimeout(aoTimeout);
   aoTimeout = timeoutMs ? setTimeout(chiudiActionOverlay, timeoutMs) : null;

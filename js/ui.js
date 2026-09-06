@@ -260,35 +260,28 @@ function chiudiCambi() {
 
 /* ---------- MODALE RECAP ---------- */
 function apriRecap() {
-  const pg = {};
-  state.roster.forEach(n => pg[n] = { punti: 0, tiriT: 0, tiriS: 0, falli: 0, rec: 0, pp: 0 });
+  const ctx = statsContesto(true);   // sempre la partita live
+  const box = calcolaBox(ctx);
+  const conv = state.convocati || [];
+  const numeri = conv.length
+    ? conv.map(c => c.numero)
+    : Object.keys(box.pg).map(Number).sort((a, b) => a - b);
+  const s = (x, y) => (y ? x / y : 0);
 
-  state.eventLog.forEach(({ evento: ev }) => {
-    if (ev.squadra !== "MIA" || !ev.giocatore_num) return;
-    const n = ev.giocatore_num;
-    if (!pg[n]) pg[n] = { punti: 0, tiriT: 0, tiriS: 0, falli: 0, rec: 0, pp: 0 };
-    if (ev.tipo_evento === "TIRO") {
-      pg[n].tiriT++;
-      if (ev.dettaglio.indexOf("SEGNATO") > -1) pg[n].tiriS++;
-      pg[n].punti += ev.punti_segnati || 0;
-    } else if (ev.tipo_evento === "FALLO_SUBITO") {
-      pg[n].punti += ev.punti_segnati || 0;
-    } else if (ev.tipo_evento === "FALLO_FATTO") {
-      pg[n].falli++;
-    } else if (ev.tipo_evento === "RECUPERO") {
-      pg[n].rec++;
-    } else if (ev.tipo_evento === "PALLA_PERSA") {
-      pg[n].pp++;
-    }
-  });
-
-  let html = "<tr><th>#</th><th>PTS</th><th>TIRI</th><th>FL</th><th>REC</th><th>PP</th></tr>";
-  Object.keys(pg).forEach(n => {
-    const g = pg[n];
+  let html = "<tr><th>#</th><th>G</th><th>PT</th><th>+/-</th><th>eFG%</th><th>Net/40</th><th>FF</th></tr>";
+  numeri.forEach(n => {
+    const g = box.pg[n] || {};
+    const fga = (g.a2 || 0) + (g.a3 || 0), fgm = (g.m2 || 0) + (g.m3 || 0);
+    const efg = fga ? Math.round(s(fgm + 0.5 * (g.m3 || 0), fga) * 100) + "%" : "–";
+    const pm = Math.round(g.pm || 0);
+    const net = g.min ? Math.round((g.pm || 0) / g.min * 40) : 0;
     html += `<tr>
-      <td>#${n}</td><td>${g.punti}</td>
-      <td>${g.tiriS}/${g.tiriT}</td>
-      <td>${g.falli}</td><td>${g.rec}</td><td>${g.pp}</td>
+      <td>#${n}</td><td style="text-align:left">${nomeGiocatore(n)}</td>
+      <td>${g.pt || 0}</td>
+      <td class="${pm >= 0 ? "pos" : "neg"}">${pm > 0 ? "+" : ""}${pm}</td>
+      <td>${efg}</td>
+      <td class="${net >= 0 ? "pos" : "neg"}">${net > 0 ? "+" : ""}${net}</td>
+      <td>${g.ff || 0}</td>
     </tr>`;
   });
   document.getElementById("recap-tabella").innerHTML = html;

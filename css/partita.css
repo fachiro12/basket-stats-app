@@ -202,6 +202,13 @@ main.corpo-partita {
   -webkit-user-select: none;
 }
 .ao-btn.ao-neutro { background: #EAECEF; color: #6B7280; grid-column: 1 / -1; }
+.ao-btn.ao-annulla {
+  background: #FFFFFF;
+  color: var(--color-text-secondary);
+  border: 1.5px solid var(--color-border-strong);
+  min-height: 40px;
+  margin-top: 2px;
+}
 
 /* ---------- Pannello Fine Partita ---------- */
 #end-game-panel {
@@ -555,6 +562,9 @@ main.corpo-partita {
 }
 .recap-tabella td:first-child,
 .recap-tabella th:first-child { text-align: left; }
+.recap-tabella td.pos { color: var(--color-state-positive); font-weight: 800; }
+.recap-tabella td.neg { color: var(--color-state-negative); font-weight: 800; }
+.recap-tabella { font-variant-numeric: tabular-nums; }
 
 .slot-cambio {
   display: flex;
