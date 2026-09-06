@@ -77,9 +77,9 @@ function renderPartita() {
     "selezionato", !!(state.selezione?.squadra === "OPP")
   );
 
-  // FALLO SUBITO abilitato solo con un nostro giocatore selezionato
+  // FALLO SUBITO: nostro giocatore (sua modale TL) o AVVERSARI (fallo che abbiamo fatto noi)
   document.getElementById("btn-fallo-subito").disabled =
-    !(state.selezione?.squadra === "MIA");
+    !(state.selezione?.squadra === "MIA" || state.selezione?.squadra === "OPP");
 
   // Azioni in grigio finché non c'è una selezione
   document.querySelector(".pannello-destro")

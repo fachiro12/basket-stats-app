@@ -6,12 +6,55 @@ let fsOpzione = null;
 let fsEsitiTl = [];
 
 function apriFalloSubito() {
-  // FALLO SUBITO = il giocatore selezionato ha SUBITO un fallo → solo un nostro giocatore
+  // FALLO SUBITO = il selezionato ha SUBITO un fallo
   if (state.selezione?.squadra === "MIA" && state.selezione.num != null) {
     apriModaleFalloSubito();
+  } else if (state.selezione?.squadra === "OPP") {
+    apriOverlayAvversariSubito();
   } else {
-    mostraToast("Seleziona il giocatore " + CONFIG.NOME_SQUADRA_MIA + " che ha subito il fallo");
+    mostraToast("Seleziona un giocatore " + CONFIG.NOME_SQUADRA_MIA + " o AVVERSARI");
   }
+}
+
+/* AVVERSARI selezionato + FALLO SUBITO = l'avversario ha subito un fallo → l'abbiamo fatto noi */
+function apriOverlayAvversariSubito() {
+  mostraActionOverlay("Fallo subito dagli avversari", [
+    aoBottone("Fallo di un nostro giocatore", () => chiediGiocatoreCheHaFattoFallo()),
+    aoBottone("Tecnico nostra panchina / coach", () => faseEsitoTecnicoNostro()),
+    aoBottone("Doppio / compensati", () => faseDoppioGiocatore(), true)
+  ], 0);
+}
+
+function chiediGiocatoreCheHaFattoFallo() {
+  const btns = state.roster.map(n => aoBottone(etichettaNum(n), () => {
+    chiudiActionOverlay();
+    apriTlAvversari(n);   // 0 / 1 / 2 / 3 TL agli avversari
+  }));
+  mostraActionOverlay("Chi dei nostri ha fatto il fallo?", btns, 0);
+}
+
+function faseEsitoTecnicoNostro() {
+  mostraActionOverlay("Tecnico panchina " + CONFIG.NOME_SQUADRA_MIA + " — TL avversario realizzato?", [
+    aoBottone("SÌ", () => { registraTecnicoPanchinaNostra(true); chiudiActionOverlay(); }),
+    aoBottone("NO", () => { registraTecnicoPanchinaNostra(false); chiudiActionOverlay(); }, true)
+  ], 0);
+}
+
+function registraTecnicoPanchinaNostra(segnato) {
+  const qi = state.quartoIndice;
+  const punti = segnato ? 1 : 0;
+  state.punteggio.OPP += punti;
+  state.falliSquadraPerQuarto.MIA[qi] += 1;
+  const inverti = () => {
+    state.punteggio.OPP -= punti;
+    state.falliSquadraPerQuarto.MIA[qi] = Math.max(0, state.falliSquadraPerQuarto.MIA[qi] - 1);
+  };
+  registraEvento({
+    squadra: "MIA", giocatore_num: "",
+    tipo_evento: "FALLO_FATTO", dettaglio: "TECNICO_PANCHINA",
+    punti_segnati: punti, esito_tl: [segnato ? "SI" : "NO"],
+    fallo_speciale: "TECNICO_PANCHINA"
+  }, inverti, CONFIG.NOME_SQUADRA_MIA + " · tecnico panchina · TL avv. " + (segnato ? "realizzato" : "sbagliato"));
 }
 
 function chiediGiocatoreMiaFallo() {
@@ -29,11 +72,11 @@ function chiediGiocatoreMiaFallo() {
    FALLO AVVERSARIO — personale / tecnico panchina o giocatore / doppio-compensati
    ========================================================================== */
 function apriOverlayFalloAvversario() {
-  mostraActionOverlay("Fallo avversario", [
+  mostraActionOverlay("Fallo commesso dagli avversari", [
     aoBottone("Fallo su tiro / bonus → TL", () => { chiudiActionOverlay(); chiediGiocatoreMiaFallo(); }),
     aoBottone("Fallo senza TL", () => faseGiocatoreFalloSenzaTl()),
-    aoBottone("Tecnico panchina / coach", () => faseTiratoreTecnico("TECNICO_PANCHINA")),
-    aoBottone("Tecnico giocatore avv.", () => faseTiratoreTecnico("TECNICO")),
+    aoBottone("Tecnico panchina avversaria", () => faseTiratoreTecnico("TECNICO_PANCHINA")),
+    aoBottone("Tecnico giocatore avversario", () => faseTiratoreTecnico("TECNICO")),
     aoBottone("Doppio / compensati", () => faseDoppioGiocatore(), true)
   ], 0);
 }
