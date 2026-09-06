@@ -67,7 +67,7 @@ function registraTiro(tipo, esito) {
   state.punteggio[sq] += punti;
   const inverti = () => { state.punteggio[sq] -= punti; };
 
-  const label = (num ? "#" + num + " " : "") + sq + " " + tipo + " " + (esito === "SEGNATO" ? "segnato" : "errato");
+  const label = (num ? "#" + num + " " : "") + etichettaSquadra(sq) + " " + tipo + " " + (esito === "SEGNATO" ? "segnato" : "errato");
   registraEvento({
     squadra: sq,
     giocatore_num: num ? String(num) : "",
@@ -115,6 +115,18 @@ function mostraActionOverlay(titolo, bottoni, timeoutMs) {
   aoTimeout = timeoutMs ? setTimeout(chiudiActionOverlay, timeoutMs) : null;
 }
 
+/* Etichetta squadra per feed/overlay: PVL per noi, prime 3 lettere per gli avversari */
+function etichettaSquadra(sq) {
+  if (sq === "MIA") return CONFIG.NOME_SQUADRA_MIA;
+  return (state.avversarioBreve ? state.avversarioBreve.slice(0, 3) : "AVV").toUpperCase();
+}
+
+/* "#7 MRC" da state.convocati */
+function etichettaNum(n) {
+  const info = (state.convocati || []).find(c => String(c.numero) === String(n));
+  return "#" + n + (info && info.nickname ? " " + info.nickname : "");
+}
+
 /* ---- Assist (timeout 4s) ---- */
 function avviaOverlayAssist(autoreNum) {
   const bottoni = state.roster
@@ -131,14 +143,14 @@ function registraAssist(num, autoreNum) {
   registraEvento({
     squadra: "MIA", giocatore_num: String(num),
     tipo_evento: "ASSIST", dettaglio: "AST_A_" + autoreNum, punti_segnati: 0
-  }, () => {}, "#" + num + " MIA Assist (a #" + autoreNum + ")");
+  }, () => {}, "#" + num + " " + CONFIG.NOME_SQUADRA_MIA + " Assist (a #" + autoreNum + ")");
 }
 
 /* ---- Rimbalzo (nessun timeout: obbligatorio) ---- */
 function avviaOverlayRimbalzo() {
   mostraActionOverlay("Rimbalzo", [
-    aoBottone("Offensivo (MIA)", chiediRimbalzistaMIA),
-    aoBottone("Difensivo (OPP)", () => { registraRimbalzo("DIFENSIVO", "OPP", null); chiudiActionOverlay(); }),
+    aoBottone("Offensivo (" + CONFIG.NOME_SQUADRA_MIA + ")", chiediRimbalzistaMIA),
+    aoBottone("Difensivo (" + etichettaSquadra("OPP") + ")", () => { registraRimbalzo("DIFENSIVO", "OPP", null); chiudiActionOverlay(); }),
     aoBottone("Di squadra", () => { registraRimbalzo("SQUADRA", "MIA", null); chiudiActionOverlay(); }, true)
   ], 0);
 }
@@ -155,12 +167,12 @@ function registraRimbalzo(tipo, squadra, num) {
   registraEvento({
     squadra: squadra, giocatore_num: num ? String(num) : "",
     tipo_evento: "RIMBALZO", dettaglio: tipo, punti_segnati: 0
-  }, () => {}, (num ? "#" + num + " " : "") + squadra + " Rimbalzo " + tipo.toLowerCase());
+  }, () => {}, (num ? "#" + num + " " : "") + etichettaSquadra(squadra) + " Rimbalzo " + tipo.toLowerCase());
 }
 
 function richiedeSelezioneSquadra() {
   if (!state.selezione || (state.selezione.squadra !== "MIA" && state.selezione.squadra !== "OPP")) {
-    mostraToast("Seleziona un giocatore MIA o AVVERSARI");
+    mostraToast("Seleziona un giocatore " + CONFIG.NOME_SQUADRA_MIA + " o AVVERSARI");
     return false;
   }
   return true;
@@ -173,7 +185,7 @@ function registraRecupero() {
   registraEvento({
     squadra: sq, giocatore_num: num ? String(num) : "",
     tipo_evento: "RECUPERO", dettaglio: "REC", punti_segnati: 0
-  }, () => {}, (num ? "#" + num + " " : "") + sq + " Recupero");
+  }, () => {}, (num ? "#" + num + " " : "") + etichettaSquadra(sq) + " Recupero");
 }
 
 function registraPallaPersa() {
@@ -183,11 +195,13 @@ function registraPallaPersa() {
   registraEvento({
     squadra: sq, giocatore_num: num ? String(num) : "",
     tipo_evento: "PALLA_PERSA", dettaglio: "PP", punti_segnati: 0
-  }, () => {}, (num ? "#" + num + " " : "") + sq + " Palla persa");
+  }, () => {}, (num ? "#" + num + " " : "") + etichettaSquadra(sq) + " Palla persa");
 }
 
 function registraFalloFatto() {
   if (!richiedeSelezione()) return;
+  // Fallo commesso dagli avversari → flusso dedicato (personale / tecnico / doppio)
+  if (state.selezione.squadra === "OPP") { apriOverlayFalloAvversario(); return; }
   const sq = state.selezione.squadra, num = state.selezione.num;
   const qi = state.quartoIndice;
 
@@ -202,7 +216,7 @@ function registraFalloFatto() {
   registraEvento({
     squadra: sq, giocatore_num: num ? String(num) : "",
     tipo_evento: "FALLO_FATTO", dettaglio: "PERSONALE", punti_segnati: 0
-  }, inverti, (num ? "#" + num + " " : "") + sq + " Fallo fatto");
+  }, inverti, (num ? "#" + num + " " : "") + etichettaSquadra(sq) + " Fallo fatto");
 }
 
 function annullaUltimoEvento() {

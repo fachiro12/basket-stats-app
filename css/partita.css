@@ -150,6 +150,13 @@ main.corpo-partita {
 .pannello-sinistro { flex: 0 0 40%; max-width: 44%; }
 .pannello-destro { flex: 1; min-width: 0; position: relative; }
 
+/* Nessuna selezione: azioni in grigio (restano tappabili → toast "seleziona…") */
+.pannello-destro.azioni-bloccate .griglia-azioni,
+.pannello-destro.azioni-bloccate .titolo-pannello {
+  opacity: 0.4;
+  filter: grayscale(0.5);
+}
+
 /* ---------- Pannello contestuale Assist / Rimbalzo ---------- */
 .hidden { display: none !important; }
 

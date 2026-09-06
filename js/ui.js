@@ -81,6 +81,10 @@ function renderPartita() {
   document.getElementById("btn-fallo-subito").disabled =
     !(state.selezione?.squadra === "MIA" || state.selezione?.squadra === "OPP");
 
+  // Azioni in grigio finché non c'è una selezione
+  document.querySelector(".pannello-destro")
+    .classList.toggle("azioni-bloccate", !state.selezione);
+
   aggiornaBadgeOffline();
 }
 
