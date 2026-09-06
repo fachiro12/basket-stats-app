@@ -1,0 +1,377 @@
+# Basket Stats Pro — Documento di handoff / specifica
+
+> Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=18` · SW `bsp-v18` · backend V4.6.
+
+---
+
+## 1. Cos'è
+
+PWA per segnare le statistiche di una partita di basket **in tempo reale**, pensata per la **Virtus Luino (PVL)** — campionato **DR1 Lombardia, Girone D, stagione 2026/27**.
+
+- Un "segnapunti" su tablet/telefono registra ogni evento (tiri, falli, rimbalzi, assist, palle perse/recuperate, cambi).
+- Il punteggio, il tabellino stile Lega Basket e le advanced stats si calcolano **client-side** dagli eventi — zero latenza, funziona offline.
+- Gli eventi vengono anche inviati a un **Google Sheet** (via Apps Script) → un secondo dispositivo può **"Seguire Live"** in sola lettura, e le partite storiche si rivedono dal calendario.
+- Multiutente con login username/password.
+
+**Non** è un cronometro: il tempo di gara si inserisce a mano ai "checkpoint" (cambi).
+
+---
+
+## 2. Stack e deploy
+
+| | |
+|---|---|
+| Frontend | HTML + CSS + JS vanilla, **nessun build**, nessuna dipendenza |
+| Hosting | GitHub Pages — `https://fachiro12.github.io/basket-stats-app/` |
+| Repo | `github.com/fachiro12/basket-stats-app` (branch `main`) |
+| Backend | Google Apps Script Web App (deploy "anyone") + Google Sheet |
+| PWA | `manifest.webmanifest` + `sw.js` (service worker network-first) |
+
+### Deploy
+1. Modifica i file.
+2. **Bump cache**: in `index.html` sostituisci tutti i `?v=N` con `?v=N+1`; in `sw.js` `bsp-vN` → `bsp-vN+1`.
+   ```bash
+   sed -i 's/?v=18/?v=19/g' index.html && sed -i 's/bsp-v18/bsp-v19/' sw.js
+   ```
+3. `git add -A && git commit && git push` → GitHub Pages ridistribuisce in 1–5 min.
+4. Hard refresh sul client (`Ctrl+Shift+R` / riapri la PWA).
+
+### Backend deploy
+- Codice nell'editor Apps Script (non nel repo — copia in §9).
+- Modifica → **Distribuisci → Gestisci deployment → nuova versione**.
+- Se cambia l'URL `/exec`, aggiorna `CONFIG.APPS_SCRIPT_URL` in `js/state.js`.
+- `setupSheet()` è **idempotente e non distruttivo** (crea fogli/intestazioni se mancano, semina l'admin solo se `Utenti` è vuoto). Sicuro da rilanciare.
+
+### Icone PWA — DA FARE
+Servono 4 PNG nella root, generati da `icon.svg` (un tasso del miele stilizzato):
+`icon-180.png` (180²) · `icon-192.png` · `icon-512.png` · `icon-maskable.png` (512², margine ~10%).
+Finché mancano, iOS usa uno screenshot come icona home.
+
+---
+
+## 3. File sorgente
+
+### JS (`js/`, caricati in quest'ordine in `index.html`)
+| File | Responsabilità |
+|---|---|
+| `state.js` | `CONFIG`, `STORAGE_KEYS`, `state` globale, `statoIniziale()`, `salvaStato/caricaStato`, `nomeQuarto()`, `formatTempo()`, `uuid()` |
+| `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (JSONP) |
+| `timer.js` | gestione periodi (**non c'è cronometro**): `avanzaQuarto`, `passaAlPeriodo`, OT, `terminaPartita` (emette evento `FINE`), `nuovaPartita` |
+| `azioni.js` | `registraEvento` (costruisce il payload evento + feed banner), tiri, recupero, palla persa, fallo fatto; macchina a stati overlay Assist/Rimbalzo; helper `etichettaSquadra/etichettaSquadraEstesa/etichettaNum/feed` |
+| `fallo-subito.js` | modale TL "fallo subito"; overlay fallo avversario (fatto/subito), tecnici, doppio/compensati; `apriTlAvversari` (0/1/2/3 TL avversari) |
+| `calendario.js` | `CALENDARIO_DR1` (26 gare seed offline), cache/pending partite (`bsp_partite_cache`/`bsp_partite_pending`), `scaricaPartite` (JSONP), `salvaPartitaCloud`, `impostaStatoPartita`, `renderCalendario`, `iniziaPartita`, `apriStatistichePartita`, modale "aggiungi partita" |
+| `giocatori.js` | anagrafica giocatori (`bsp_giocatori`, sync JSONP `getGiocatori` + POST `SALVA_GIOCATORE`), CRUD UI; **flusso pre-partita 2 step**: convocati → quintetto base → avvio |
+| `stats.js` | motore stat: `statsContesto`, `calcolaBox`, `stintsDaEventi`, `calcolaAdvanced`; render Stats (tabellino/andamento/tiri) e Adv (squadra/giocatori); **Segui Live** (`avviaModalitaSegui`, `pollSeguiLive` ogni 20s); `barraPunteggio`; fetch storico `scaricaEventiPartita` |
+| `ui.js` | `renderPartita` (HUD, roster, selezione), `mostraToast`, `aggiornaBadgeOffline`, modale CAMBI (`apriCambi`/`confermaCambi` + select tempo con vincolo), `apriRecap`, `navigaA` (router viste + hook render) |
+| `pin.js` | login gate (`inizializzaPinGate`, `tentaLogin`, fallback offline, `logout`, `aggiornaProfiloAttivo`) |
+| `app.js` | `DOMContentLoaded`: registra tutti i listener + avvio (`navigaA`, `renderCalendario`, `scaricaPartite`, `scaricaGiocatori`, `inizializzaPinGate`, `processaCoda`); registra il service worker |
+
+### CSS (`css/`)
+`tokens.css` (variabili) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro") · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live)
+
+### Altro
+`index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `icon.svg`
+
+---
+
+## 4. Viste (SPA, `id="view-*"`, toggle via `navigaA`)
+
+- **`view-partita`** — HUD (punteggio PVL/AVV, quarto, Q+1/UNDO/RECAP, banner ultimo evento) + pannello sinistro (roster + AVVERSARI) + pannello destro (griglie TIRI/PALLA/FALLI + overlay contestuali) + barra CAMBI a piena larghezza + striscia "eventi in coda".
+- **`view-stats`** — topbar + tab `Tabellino` / `Andamento` / `Tiri`; barra punteggio nera; toggle `Numeri`/`%`.
+- **`view-adv`** — topbar + tab `Squadra` / `Giocatori`; barra punteggio; card metriche + migliori quintetti + stint.
+- **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, Roster (anagrafica), profilo attivo, Esci.
+- **`view-calendario`** — topbar (hamburger placeholder / select stagione / +) + lista 26 gare con stato e bottone contestuale.
+
+Nav: capsula fluttuante in basso (portrait), **sidebar icone a sinistra** (landscape su touch).
+
+---
+
+## 5. Modello dati
+
+### `state` (in memoria + `localStorage: bsp_stato_partita`)
+```
+id_partita, nomePartita, avversario, avversarioBreve, luogoPartita
+quartoIndice (0-based; 0..3 = Q1..Q4, poi OT), partitaFinita
+tempoPartita "MM:SS" (tempo RIMANENTE del periodo, aggiornato ai checkpoint)
+ultimoCheckpoint { quarto, mm, ss }
+punteggio { MIA, OPP }
+convocati [ { id, nome, cognome, nickname, ruolo, numero } ]   // roster della gara
+roster [5 numeri]         // quintetto in campo
+inCampo [5 numeri]        // = roster (ridondante, usato nei payload)
+falliGiocatori { <num>: n }
+falliSquadraPerQuarto { MIA: [..], OPP: [..] }   // esteso con push(0) per OT
+selezione { squadra: "MIA"|"OPP", num }  | null
+eventLog [ { evento, delta } ]   // delta = fn di UNDO
+ultimoTestoFeed
+stints / stintCorrente            // ⚠️ NON PIÙ USATI dalle stat (vedi §8.7)
+```
+
+### Evento (payload verso il foglio — colonne `COLONNE_EVENTI`)
+```
+id_partita, id_evento (uuid), timestamp (ISO), quarto ("Q3"/"OT1"/"FINALE"),
+tempo_partita ("MM:SS"), squadra ("MIA"|"OPP"), giocatore_num,
+tipo_evento, dettaglio, punti_segnati,
+punteggio_progressivo ("MIA-OPP"), quintetto_mia ("5,8,12,23,33"),
+fallo_speciale, esito_tl ("SI,NO"), valido (true/false), id_evento_target
+```
+`tipo_evento`: `TIRO` (dett. `2P_SEGNATO`/`2P_ERRATO`/`3P_...`), `FALLO_SUBITO` (dett. `RIMESSA`/`1TL`/`2TL`/`3TL`/`1TL_AND1`/`SENZA_TL`/`TECNICO_1TL`), `FALLO_FATTO` (dett. `PERSONALE`/`1TL`/`2TL`/`3TL`/`DOPPIO_PERSONALE`/`TECNICI_COMPENSATI`/`ANTISPORTIVI_COMPENSATI`/`TECNICO_PANCHINA`), `RECUPERO`, `PALLA_PERSA`, `ASSIST` (dett. `AST_A_<num>`), `RIMBALZO` (dett. `OFFENSIVO`/`DIFENSIVO`/`SQUADRA`), `CAMBIO` (dett. `STINT`), `ANNULLA`, `FINE`.
+
+⚠️ `esito_tl` di un `FALLO_FATTO` = i TL **degli avversari**; `punti_segnati` di `FALLO_FATTO` = punti concessi agli avversari.
+
+### localStorage — tutte le chiavi
+`bsp_stato_partita` · `bsp_coda_invio` · `bsp_pin_ok` · `bsp_current_user` ({id,username,ruolo}) · `bsp_segnapunti_di` (id_partita che questo device sta segnando) · `bsp_partite_cache` · `bsp_partite_pending` · `bsp_giocatori`
+
+### Google Sheet — fogli
+- **Eventi** — `COLONNE_EVENTI` (sopra)
+- **Partite** — `id_partita, data_ora, avversario, luogo, tipo, stagione, categoria, stato, note`
+- **Giocatori** — `id_giocatore, nome, cognome, ruolo, numero_maglia, team, nickname`
+- **Utenti** — `id_utente, username, ruolo, password_hash, attivo` (admin di default `admin`/`1234`)
+
+---
+
+## 6. Flussi principali
+
+### Login
+`pin.js` → `verificaLoginServer` (JSONP `?action=verificaLogin&username=&password=&callback=`) → il backend confronta `sha256(password)` con `password_hash` → salva `bsp_current_user`, mostra app. Offline: rientro consentito solo se l'username coincide col profilo già salvato sul device.
+
+### Avvio partita (dal calendario, gara "Da giocare")
+`iniziaPartita(p)` → `apriPrePartita(p)`:
+1. **Convocati** (`#overlay-prepartita`) — carica i giocatori del team, preseleziona i primi 12, permette +/- (min 5, max 12; **nessun max se `tipo == "Amichevole"`**), numero maglia editabile per-gara, nome breve avversario.
+2. **Quintetto base** (`#overlay-quintetto`) — scegli esattamente 5.
+3. `confermaQuintetto` → `state = statoIniziale()` + popola convocati/roster/nomePartita/ecc., `localStorage.bsp_segnapunti_di = id`, `impostaStatoPartita(id, "In corso")`, vai a `view-partita`.
+
+### Registrazione evento
+Seleziona giocatore PVL o AVVERSARI → tap azione → `registra*()` in `azioni.js`/`fallo-subito.js` → `registraEvento(campi, delta, testoFeed)` → push in `state.eventLog`, aggiorna `#ultimo-evento-banner`, `salvaStato()`, `inviaEvento()` (coda → foglio), `renderPartita()`.
+Tiro sbagliato / TL finale sbagliato → overlay **Rimbalzo**. Canestro PVL → overlay **Assist** (timeout 4s).
+
+### Cambi / checkpoint (`apriCambi`/`confermaCambi` in `ui.js`)
+Modale: periodo, **tempo rimanente** (2 `<select>` MM/SS — vincolo: non può aumentare nello stesso quarto), punteggio del checkpoint, e per ognuno dei 5 in campo un `<select>` per scambiarlo con un panchinaro. Alla conferma registra un evento `CAMBIO` e aggiorna `state.roster`/`inCampo`/`tempoPartita`/`ultimoCheckpoint`.
+
+### Fine partita
+`avanzaQuarto` su Q4 → `confirm()` OK=OT / Annulla=`terminaPartita()`. `terminaPartita` emette evento `FINE`, `partitaFinita=true`, `impostaStatoPartita("Terminata")`, mostra `#end-game-panel`.
+
+### Secondo device — "Segui Live"
+Se apri dal calendario una gara "In corso" che **non** stai segnando tu → `avviaModalitaSegui(p)`: va su Stats sola-lettura, `pollSeguiLive` scarica `getEventi` ogni 20s e ricalcola tutto. Quando trova un evento `FINE` → banner "PARTITA TERMINATA", stop polling, ricarica il calendario. La vista Partita è bloccata (`navigaA` reindirizza).
+
+### Stat (client-side)
+`statsContesto()` sceglie sorgente: **live** (`state.eventLog`) o **remota** (`statsEventiRemoti.eventi` dal foglio). `calcolaBox(ctx)` produce per-giocatore + squadra. `stintsDaEventi(eventi, tempoOra, quartoOra)` ricostruisce gli stint (minuti, ±) dal flusso: cambio quando `quintetto_mia` cambia o cambia `quarto`. `calcolaAdvanced` applica le formule FIBA/Hack-a-Stat (§7).
+
+---
+
+## 7. Formule advanced (in `stats.js:calcolaAdvanced`)
+
+```
+FGA = 2PA + 3PA        FGM = 2PM + 3PM
+Poss = FGA + 0.44·FTA − ORB + TO
+ORtg = PTS / Poss · 100
+DRtg = PTS_opp / Poss_opp · 100
+Net  = ORtg − DRtg
+Pace = (Poss_medi) · 40 / minuti_giocati
+eFG% = (FGM + 0.5·3PM) / FGA
+TS%  = PTS / (2·(FGA + 0.44·FTA))
+TOV% = TO / Poss · 100
+ORB% = ORB / (ORB + DRB_opp)     DRB% = DRB / (DRB + ORB_opp)
+```
+Per-giocatore: `Net/40 = ±_giocatore / minuti_giocatore · 40` (margine squadra col giocatore in campo).
+Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL sbagliati + PP + FF).
+**Quintetto teorico**: 5 migliori ± individuali con vincolo **max 2 Primary Handler, max 2 Centro** (greedy per valore decrescente).
+
+---
+
+## 8. Limiti noti / debolezze (dal review)
+
+1. **Scritture non autenticate** — Web App "anyone", POST `no-cors` senza token. Chiunque legga l'URL può scrivere sui fogli. → serve `token` validato da `doPost`.
+2. **Perdita silenziosa eventi** — `no-cors` `.then()` risolve anche su HTTP 500 → l'evento esce dalla coda e si perde. Retry solo su errore di rete. → riconciliazione via `getEventi`.
+3. **Password** — SHA-256 senza salt, inviata in query string GET (JSONP) → finisce nei log. → salt + eventuale POST.
+4. **Partita viva solo in `localStorage`** del device segnapunti — nessun "ricostruisci stato dal foglio". Dati cancellati / browser cambiato a metà gara = partita persa.
+5. **UNDO di un CAMBIO** — l'evento `CAMBIO` ha `delta` vuota: UNDO non ripristina `state.roster`/`inCampo`.
+6. **XSS latente** — nomi (da Sheet/localStorage) concatenati in `innerHTML` in `renderCalendario`, `vistaTabellino`, `vistaStint`, `miglioriQuintetti`, `renderRoster`, `barraPunteggio`. → helper `esc()`.
+7. **`state.stints`/`stintCorrente` = codice morto** — le stat usano solo `stintsDaEventi()`. Il bookkeeping in `ui.js`/`timer.js` è da rimuovere.
+8. `apriRecap` dipende da `stats.js` senza guardia `typeof`.
+9. **Cache-busting manuale** su ~19 riferimenti + nome SW.
+10. `impostaStatoPartita` re-invia la partita con campi locali possibilmente stale → può clobberare modifiche fatte sul foglio.
+11. Minuti/± dipendono dalla disciplina del segnapunti (checkpoint CAMBI + punteggio corretto ai checkpoint).
+12. **Zero test.**
+13. Icone PWA PNG mancanti.
+
+### Backlog consigliato (ordine)
+token scritture → `esc()` HTML → delta reale CAMBIO → riconciliazione coda → "riprendi come segnapunti" → rimuovi `state.stints` → test node del motore stat → auto cache-bust → salt password.
+
+---
+
+## 9. Backend — codice completo attuale (V4.6)
+
+> Da incollare nell'editor Apps Script. `setupSheet()` idempotente. Deploy Web App: eseguito come "me", accesso "chiunque".
+
+```javascript
+/**
+ * BASKET STATS PRO — Backend Google Apps Script (V4.6)
+ * Eventi · Partite · Giocatori · Utenti — cloud-sync, JSONP, multiutente
+ */
+const SHEET_EVENTI = "Eventi";
+const SHEET_PARTITE = "Partite";
+const SHEET_GIOCATORI = "Giocatori";
+const SHEET_UTENTI = "Utenti";
+
+const COLONNE_EVENTI = [
+  "id_partita","id_evento","timestamp","quarto","tempo_partita",
+  "squadra","giocatore_num","tipo_evento","dettaglio",
+  "punti_segnati","punteggio_progressivo","quintetto_mia",
+  "fallo_speciale","esito_tl","valido","id_evento_target"
+];
+const COLONNE_PARTITE = ["id_partita","data_ora","avversario","luogo","tipo","stagione","categoria","stato","note"];
+const COLONNE_GIOCATORI = ["id_giocatore","nome","cognome","ruolo","numero_maglia","team","nickname"];
+const COLONNE_UTENTI = ["id_utente","username","ruolo","password_hash","attivo"];
+
+function setupSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  inizializzaFoglio_(ss, SHEET_EVENTI, COLONNE_EVENTI);
+  inizializzaFoglio_(ss, SHEET_PARTITE, COLONNE_PARTITE);
+  inizializzaFoglio_(ss, SHEET_GIOCATORI, COLONNE_GIOCATORI);
+  const u = inizializzaFoglio_(ss, SHEET_UTENTI, COLONNE_UTENTI);
+  if (u.getLastRow() <= 1) u.appendRow(["usr_admin","admin","Admin",computeSha256_("1234"),"SI"]);
+}
+function inizializzaFoglio_(ss, nome, colonne) {
+  let s = ss.getSheetByName(nome);
+  if (!s) s = ss.insertSheet(nome);
+  if (s.getLastRow() === 0) { s.appendRow(colonne); s.setFrozenRows(1); }
+  return s;
+}
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    if (data.azione === "SALVA_PARTITA")          return salvaPartita_(data);
+    if (data.azione === "AGGIORNA_STATO_PARTITA") return aggiornaStatoPartita_(data);
+    if (data.azione === "SALVA_GIOCATORE")        return salvaGiocatore_(data);
+    if (data.tipo_evento === "ANNULLA")           return handleAnnulla_(data);
+    appendEvento_(data, true);
+    return jsonResponse_({ ok: true, azione: "evento_salvato" });
+  } catch (err) { return jsonResponse_({ ok: false, error: String(err) }); }
+}
+
+function doGet(e) {
+  const params = (e && e.parameter) || {};
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (params.action === "getPartite")   return rispostaDati_(params, "partite",   leggiFoglio_(ss, SHEET_PARTITE, true));
+  if (params.action === "getGiocatori") return rispostaDati_(params, "giocatori", leggiFoglio_(ss, SHEET_GIOCATORI, false));
+  if (params.action === "getEventi") {
+    const idp = String(params.id_partita || "");
+    let ev = leggiFoglio_(ss, SHEET_EVENTI, false);
+    if (idp) ev = ev.filter(x => String(x.id_partita) === idp);
+    return rispostaDati_(params, "eventi", ev);
+  }
+  if (params.action === "verificaLogin") {
+    const sheet = ss.getSheetByName(SHEET_UTENTI);
+    let esito = { ok: false, error: "Utente non trovato" };
+    if (sheet && sheet.getLastRow() > 1) {
+      const rows = sheet.getDataRange().getValues(), h = rows[0];
+      for (let r = 1; r < rows.length; r++) {
+        const u = {}; h.forEach((k, i) => u[k] = rows[r][i]);
+        if (u.username === params.username && String(u.attivo).toUpperCase() === "SI") {
+          esito = (u.password_hash === computeSha256_(params.password || ""))
+            ? { ok: true, utente: { id: u.id_utente, username: u.username, ruolo: u.ruolo } }
+            : { ok: false, error: "Password errata" };
+          break;
+        }
+      }
+    }
+    return rispostaJsonp_(params, esito);
+  }
+  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.6", stato: "attivo" });
+}
+
+function leggiFoglio_(ss, nome, formatDate) {
+  const sheet = ss.getSheetByName(nome);
+  if (!sheet || sheet.getLastRow() <= 1) return [];
+  const tz = ss.getSpreadsheetTimeZone(), rows = sheet.getDataRange().getValues(), h = rows[0];
+  return rows.slice(1).map(r => {
+    const o = {};
+    h.forEach((k, i) => o[k] = (formatDate && r[i] instanceof Date)
+      ? Utilities.formatDate(r[i], tz, "yyyy-MM-dd HH:mm") : r[i]);
+    return o;
+  });
+}
+function rispostaDati_(params, chiave, dati) { const o = { ok: true }; o[chiave] = dati; return rispostaJsonp_(params, o); }
+function rispostaJsonp_(params, obj) {
+  const p = JSON.stringify(obj);
+  return params.callback
+    ? ContentService.createTextOutput(params.callback + "(" + p + ");").setMimeType(ContentService.MimeType.JAVASCRIPT)
+    : ContentService.createTextOutput(p).setMimeType(ContentService.MimeType.JSON);
+}
+function computeSha256_(str) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, str, Utilities.Charset.UTF_8)
+    .map(b => { const v = (b < 0 ? b + 256 : b).toString(16); return v.length === 1 ? "0" + v : v; }).join("");
+}
+
+function appendEvento_(data, validoDefault) {
+  const sheet = inizializzaFoglio_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_EVENTI, COLONNE_EVENTI);
+  if (data.valido === undefined) data.valido = validoDefault;
+  sheet.appendRow(COLONNE_EVENTI.map(c => {
+    const v = data[c];
+    return Array.isArray(v) ? v.join(",") : (v !== undefined && v !== null ? v : "");
+  }));
+}
+function handleAnnulla_(data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_EVENTI);
+  if (sheet && data.id_evento_target) {
+    const v = sheet.getDataRange().getValues();
+    const idI = COLONNE_EVENTI.indexOf("id_evento"), okI = COLONNE_EVENTI.indexOf("valido");
+    for (let r = 1; r < v.length; r++) if (String(v[r][idI]) === String(data.id_evento_target)) {
+      sheet.getRange(r + 1, okI + 1).setValue(false); break;
+    }
+  }
+  appendEvento_(data, true);
+  return jsonResponse_({ ok: true, azione: "evento_annullato" });
+}
+function salvaPartita_(data) {
+  const sheet = inizializzaFoglio_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_PARTITE, COLONNE_PARTITE);
+  const v = sheet.getDataRange().getValues(), idI = COLONNE_PARTITE.indexOf("id_partita");
+  let riga = -1;
+  for (let r = 1; r < v.length; r++) if (String(v[r][idI]) === String(data.id_partita)) { riga = r + 1; break; }
+  const val = COLONNE_PARTITE.map(c => (data[c] !== undefined && data[c] !== null) ? data[c] : "");
+  if (riga > 0) sheet.getRange(riga, 1, 1, COLONNE_PARTITE.length).setValues([val]);
+  else { sheet.appendRow(val); sheet.getRange(sheet.getLastRow(), 2).setNumberFormat("@"); }
+  return jsonResponse_({ ok: true, azione: riga > 0 ? "partita_aggiornata" : "partita_creata" });
+}
+function aggiornaStatoPartita_(data) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PARTITE);
+  if (!sheet) return jsonResponse_({ ok: false, error: "Foglio Partite non trovato" });
+  const v = sheet.getDataRange().getValues();
+  const idI = COLONNE_PARTITE.indexOf("id_partita"), stI = COLONNE_PARTITE.indexOf("stato");
+  for (let r = 1; r < v.length; r++) if (String(v[r][idI]) === String(data.id_partita)) {
+    sheet.getRange(r + 1, stI + 1).setValue(data.stato);
+    return jsonResponse_({ ok: true, azione: "stato_aggiornato" });
+  }
+  return jsonResponse_({ ok: false, error: "Partita non trovata" });
+}
+function salvaGiocatore_(data) {
+  const sheet = inizializzaFoglio_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_GIOCATORI, COLONNE_GIOCATORI);
+  const v = sheet.getDataRange().getValues(), idI = COLONNE_GIOCATORI.indexOf("id_giocatore");
+  let riga = -1;
+  for (let r = 1; r < v.length; r++) if (String(v[r][idI]) === String(data.id_giocatore)) { riga = r + 1; break; }
+  if (data.elimina) { if (riga > 0) sheet.deleteRow(riga); return jsonResponse_({ ok: true, azione: "giocatore_eliminato" }); }
+  const val = COLONNE_GIOCATORI.map(c => (data[c] !== undefined && data[c] !== null) ? data[c] : "");
+  if (riga > 0) sheet.getRange(riga, 1, 1, COLONNE_GIOCATORI.length).setValues([val]);
+  else sheet.appendRow(val);
+  return jsonResponse_({ ok: true, azione: riga > 0 ? "giocatore_aggiornato" : "giocatore_creato" });
+}
+function jsonResponse_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
+```
+
+---
+
+## 10. Come riprendere in una nuova chat
+
+**Contesto da dare a Claude:**
+> Progetto `basket-stats-app`: PWA vanilla (no build) per statistiche basket live della Virtus Luino, backend Google Apps Script + Sheet, deploy GitHub Pages. Leggi `CLAUDE.md` e `docs/HANDOFF.md`. Convenzioni: JS globale non-modulare, italiano, CSS a token, cache-busting `?v=N` manuale + `sw.js`. Non committare senza che te lo chieda.
+
+**File da fornire** (o link al repo):
+- Sempre: `CLAUDE.md`, `docs/HANDOFF.md`, `index.html`, tutti i `js/*.js`, tutti i `css/*.css`.
+- Se si tocca il backend: incollare la versione corrente dello script (§9) — l'utente la ridistribuisce.
+- Utili: `manifest.webmanifest`, `sw.js`.
+
+**Prima di modificare:** `for f in js/*.js; do node -c "$f"; done`. Dopo: idem + bump `?v=`.
+
+**Cronologia lavori** (commit recenti): calendario cloud-sync → pre-partita convocati/quintetto → anagrafica giocatori + nickname → login multiutente → stats (tabellino Lega Basket, andamento, tiri) → advanced (formule FIBA, quintetti, ±) → Segui Live 2° device → PWA + service worker → nav sidebar landscape → barra punteggio in stats/adv → evento `FINE` per sincronizzare la chiusura.
