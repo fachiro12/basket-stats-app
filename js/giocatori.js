@@ -321,10 +321,7 @@ function confermaPrePartita() {
   numeri.forEach(n => { state.falliGiocatori[n] = 0; });
   salvaStato();
 
-  if (typeof salvaStatoPartitaLocale === "function") {
-    salvaStatoPartitaLocale(p.id_partita, "In corso");
-    aggiornaStatoPartitaBackend(p.id_partita, "In corso");
-  }
+  if (typeof impostaStatoPartita === "function") impostaStatoPartita(p.id_partita, "In corso");
 
   chiudiPrePartita();
   if (typeof renderCalendario === "function") renderCalendario();

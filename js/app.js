@@ -93,8 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* -------- AVVIO -------- */
   navigaA("partita");          // vista di default
-  if (typeof renderCalendario === "function") renderCalendario();  // popola la lista partite
-  if (typeof scaricaGiocatori === "function") scaricaGiocatori();  // sync anagrafica cloud -> client
+  if (typeof renderCalendario === "function") renderCalendario();  // lista partite (cache/seed)
+  if (typeof scaricaPartite === "function") scaricaPartite();      // sync calendario dal foglio
+  if (typeof scaricaGiocatori === "function") scaricaGiocatori();  // sync anagrafica dal foglio
   inizializzaPinGate();        // mostra pin gate o app direttamente
   processaCoda();              // tentativo invio eventi in coda
 });

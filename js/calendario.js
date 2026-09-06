@@ -37,38 +37,107 @@ const CALENDARIO_DR1 = [
   note: ""
 }, p));
 
-const KEY_PARTITE_EXTRA = "bsp_partite_extra";
-const KEY_PARTITE_STATO = "bsp_partite_stato";
+const KEY_PARTITE_CACHE = "bsp_partite_cache";      // ultimo snapshot dal foglio Partite
+const KEY_PARTITE_PENDING = "bsp_partite_pending";  // modifiche locali non ancora confermate dal cloud
 
-function caricaPartiteExtra() {
-  try { return JSON.parse(localStorage.getItem(KEY_PARTITE_EXTRA)) || []; }
-  catch (e) { return []; }
+function _leggiJSON(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+  catch (e) { return fallback; }
 }
-function salvaPartiteExtra(lista) {
-  localStorage.setItem(KEY_PARTITE_EXTRA, JSON.stringify(lista));
-}
-function caricaStatiPartite() {
-  try { return JSON.parse(localStorage.getItem(KEY_PARTITE_STATO)) || {}; }
-  catch (e) { return {}; }
-}
-function salvaStatoPartitaLocale(id, stato) {
-  const m = caricaStatiPartite();
-  m[String(id)] = stato;
-  localStorage.setItem(KEY_PARTITE_STATO, JSON.stringify(m));
+function cachePartite() { return _leggiJSON(KEY_PARTITE_CACHE, []); }
+function pendingPartite() { return _leggiJSON(KEY_PARTITE_PENDING, []); }
+function salvaCachePartite(l) { localStorage.setItem(KEY_PARTITE_CACHE, JSON.stringify(l)); }
+function salvaPendingPartite(l) { localStorage.setItem(KEY_PARTITE_PENDING, JSON.stringify(l)); }
+
+function normalizzaPartita(p) {
+  return {
+    id_partita: String(p.id_partita),
+    data_ora: p.data_ora || "",
+    avversario: p.avversario || "",
+    luogo: p.luogo === "Trasferta" ? "Trasferta" : "Casa",
+    tipo: p.tipo || "Campionato",
+    stagione: p.stagione || "2026/27",
+    categoria: p.categoria || "DR1",
+    stato: p.stato || "Da giocare",
+    note: p.note || ""
+  };
 }
 
+/* Vista unificata: seed offline < snapshot cloud < modifiche locali (vincono) */
 function elencoPartite() {
-  const stati = caricaStatiPartite();
-  return CALENDARIO_DR1.concat(caricaPartiteExtra())
-    .map(p => Object.assign({}, p, { stato: stati[String(p.id_partita)] || p.stato }))
+  const byId = {};
+  CALENDARIO_DR1.forEach(p => { byId[String(p.id_partita)] = normalizzaPartita(p); });
+  cachePartite().forEach(p => { if (p && p.id_partita) byId[String(p.id_partita)] = normalizzaPartita(p); });
+  pendingPartite().forEach(p => { if (p && p.id_partita) byId[String(p.id_partita)] = normalizzaPartita(p); });
+  return Object.keys(byId).map(k => byId[k])
     .sort((a, b) => (a.data_ora || "9999").localeCompare(b.data_ora || "9999"));
+}
+
+/* ---------- Sync col foglio Partite ---------- */
+function scaricaPartite(cb) {
+  const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
+  if (!base || base.indexOf("INCOLLA_QUI") === 0) { if (cb) cb(false); return; }
+
+  const nomeCb = "bspPartiteCb_" + Date.now();
+  const script = document.createElement("script");
+  let concluso = false;
+  const pulisci = () => {
+    delete window[nomeCb];
+    if (script.parentNode) script.parentNode.removeChild(script);
+  };
+
+  window[nomeCb] = function (risposta) {
+    concluso = true;
+    if (risposta && risposta.ok && Array.isArray(risposta.partite)) {
+      applicaPartiteCloud(risposta.partite);
+      if (cb) cb(true);
+    } else if (cb) { cb(false); }
+    pulisci();
+  };
+  script.src = base + (base.indexOf("?") > -1 ? "&" : "?") + "action=getPartite&callback=" + nomeCb;
+  script.onerror = () => { if (!concluso && cb) cb(false); pulisci(); };
+  document.body.appendChild(script);
+}
+
+function applicaPartiteCloud(cloud) {
+  const norm = cloud.map(normalizzaPartita).filter(p => p.id_partita);
+  salvaCachePartite(norm);
+
+  const restanti = pendingPartite().filter(p => {
+    const c = norm.find(x => x.id_partita === String(p.id_partita));
+    if (!c) return true;                              // non ancora sul foglio
+    return String(c.stato) !== String(p.stato || ""); // stato non ancora propagato
+  });
+  salvaPendingPartite(restanti);
+
+  renderCalendario();
+}
+
+/* Upsert di una partita: applica subito in locale + invia al foglio */
+function salvaPartitaCloud(partita) {
+  const p = normalizzaPartita(partita);
+  const pend = pendingPartite().filter(x => String(x.id_partita) !== p.id_partita);
+  pend.push(p);
+  salvaPendingPartite(pend);
+
+  if (typeof inviaAzione === "function") {
+    inviaAzione(Object.assign({ azione: "SALVA_PARTITA" }, p));
+  }
+  renderCalendario();
+}
+
+function impostaStatoPartita(id, stato) {
+  const attuale = elencoPartite().find(x => String(x.id_partita) === String(id)) || { id_partita: id };
+  salvaPartitaCloud(Object.assign({}, attuale, { stato: stato }));
 }
 
 function formattaDataOra(s) {
   if (!s) return "Data da definire";
+  s = String(s);
   const parti = s.split(/[ T]/);
-  const [Y, M, D] = (parti[0] || "").split("-");
-  return (D && M && Y) ? D + "/" + M + "/" + Y + (parti[1] ? " · " + parti[1] : "") : s;
+  const d = (parti[0] || "").split("-");
+  const ora = (parti[1] || "").slice(0, 5);
+  return (d.length === 3) ? d[2] + "/" + d[1] + "/" + d[0] + (ora ? " · " + ora : "") : s;
 }
 function slugStato(s) {
   return String(s || "").toLowerCase().replace(/\s+/g, "-");
@@ -124,9 +193,7 @@ function iniziaPartita(p) {
   state = statoIniziale();
   state.id_partita = String(p.id_partita);
   salvaStato();
-  salvaStatoPartitaLocale(p.id_partita, "In corso");
-  aggiornaStatoPartitaBackend(p.id_partita, "In corso");
-  renderCalendario();
+  impostaStatoPartita(p.id_partita, "In corso");
   navigaA("partita");
   renderPartita();
   mostraToast("Partita " + p.id_partita + " avviata");
@@ -136,12 +203,6 @@ function apriStatistichePartita(id) {
   state.id_partita = String(id);
   salvaStato();
   navigaA("stats");
-}
-
-function aggiornaStatoPartitaBackend(id, stato) {
-  if (typeof inviaAzione === "function") {
-    inviaAzione({ azione: "AGGIORNA_STATO_PARTITA", id_partita: String(id), stato: stato });
-  }
 }
 
 /* ---------- Modale "Aggiungi partita" ---------- */
@@ -162,8 +223,7 @@ function confermaAggiungiPartita() {
 
   const dl = document.getElementById("ap-data").value;
   const tipo = document.getElementById("ap-tipo").value;
-  const extra = caricaPartiteExtra();
-  extra.push({
+  salvaPartitaCloud({
     id_partita: "X" + Date.now(),
     data_ora: dl ? dl.replace("T", " ") : "",
     avversario: avv,
@@ -174,9 +234,7 @@ function confermaAggiungiPartita() {
     stato: "Da giocare",
     note: document.getElementById("ap-note").value.trim()
   });
-  salvaPartiteExtra(extra);
 
   chiudiAggiungiPartita();
-  renderCalendario();
   mostraToast("Partita aggiunta");
 }
