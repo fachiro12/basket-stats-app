@@ -183,74 +183,103 @@ function eliminaGiocatoreCorrente() {
 
 /* ---------- Flusso pre-partita: convocati + maglie ---------- */
 let prePartitaMatch = null;
+let prePartitaPool = [];
+let prePartitaMax = MAX_REFERTO;
 
 function apriPrePartita(partita) {
   prePartitaMatch = partita;
   const team = partita.categoria === "DR1" ? "DR1" : (partita.team || TEAM_DEFAULT);
-  let pool = giocatoriDelTeam(team);
+  const amichevole = partita.tipo === "Amichevole";
+  prePartitaMax = amichevole ? Infinity : MAX_REFERTO;
 
-  if (pool.length < MIN_CONVOCATI) {
-    pool = pool.concat(CONFIG.ROSTER_INIZIALE
-      .filter(n => !pool.some(g => Number(g.numero_maglia) === n))
+  const inTeam = giocatoriDelTeam(team);
+  const altri = caricaGiocatori().filter(g => !inTeam.some(t => t.id && t.id === g.id));
+
+  let base = inTeam.slice();
+  if (base.length < MIN_CONVOCATI) {
+    base = base.concat(CONFIG.ROSTER_INIZIALE
+      .filter(n => !base.some(g => Number(g.numero_maglia) === n))
       .map(n => ({ id: "", nome: "", cognome: "#" + n, ruolo: "", numero_maglia: n, team: team })));
   }
 
-  const amichevole = partita.tipo === "Amichevole";
-  const maxRef = amichevole ? Infinity : MAX_REFERTO;
+  prePartitaPool = base.concat(altri).map((g, i) => ({
+    id: g.id || "",
+    nome: g.nome || "",
+    cognome: g.cognome || "",
+    ruolo: g.ruolo || "",
+    numero_maglia: g.numero_maglia,
+    convocato: i < base.length && i < MAX_REFERTO,
+    numGara: g.numero_maglia != null && g.numero_maglia !== "" ? String(g.numero_maglia) : "",
+    manuale: false
+  }));
 
   document.getElementById("pp-contesto").textContent =
     partita.avversario + " · " + partita.luogo + " · " + partita.tipo +
-    (amichevole ? "  (nessun limite convocati)" : "  (max " + MAX_REFERTO + " a referto)");
+    (amichevole ? "  ·  nessun limite convocati" : "  ·  max " + MAX_REFERTO + " a referto");
 
-  const cont = document.getElementById("pp-lista");
-  cont.innerHTML = "";
-  pool.forEach((g, idx) => {
-    const preselezionato = idx < MAX_REFERTO;
-    const nome = ((g.cognome || "") + " " + (g.nome || "")).trim() || ("#" + g.numero_maglia);
-    const row = document.createElement("label");
-    row.className = "pp-riga";
-    row.innerHTML =
-      '<input type="checkbox" class="pp-check" data-idx="' + idx + '"' + (preselezionato ? " checked" : "") + '>' +
-      '<span class="pp-nome">' + nome + '<small>' + (g.ruolo || "—") + '</small></span>' +
-      '<input type="tel" inputmode="numeric" maxlength="2" class="pp-num" data-idx="' + idx +
-      '" value="' + (g.numero_maglia != null ? g.numero_maglia : "") + '">';
-    cont.appendChild(row);
-  });
-  cont._pool = pool;
-  cont._max = maxRef;
-
-  aggiornaContatorePrePartita();
+  renderPrePartita();
   document.getElementById("overlay-prepartita").classList.add("visibile");
 }
+
+function renderPrePartita() {
+  const cont = document.getElementById("pp-lista");
+  cont.innerHTML = "";
+  prePartitaPool.forEach((g, idx) => {
+    const nome = ((g.cognome || "") + " " + (g.nome || "")).trim() || ("#" + g.numGara);
+    const row = document.createElement("div");
+    row.className = "pp-riga" + (g.convocato ? " on" : "");
+    row.innerHTML =
+      '<input type="checkbox" class="pp-check" data-idx="' + idx + '"' + (g.convocato ? " checked" : "") + '>' +
+      '<span class="pp-nome">' + nome + '<small>' + (g.ruolo || "—") + (g.manuale ? " · manuale" : "") + '</small></span>' +
+      '<input type="tel" inputmode="numeric" maxlength="2" class="pp-num" data-idx="' + idx + '" value="' + g.numGara + '">' +
+      (g.manuale ? '<button type="button" class="pp-del" data-idx="' + idx + '" aria-label="Rimuovi">&times;</button>' : '');
+    cont.appendChild(row);
+  });
+  aggiornaContatorePrePartita();
+}
+
 function chiudiPrePartita() {
   document.getElementById("overlay-prepartita").classList.remove("visibile");
 }
 
-function convocatiSelezionati() {
-  const cont = document.getElementById("pp-lista");
-  const pool = cont._pool || [];
-  const out = [];
-  cont.querySelectorAll(".pp-check").forEach(chk => {
-    if (!chk.checked) return;
-    const idx = parseInt(chk.dataset.idx, 10);
-    const g = pool[idx];
-    const numInput = cont.querySelector('.pp-num[data-idx="' + idx + '"]');
-    const numero = parseInt((numInput && numInput.value || "").trim(), 10);
-    out.push({
-      id: g.id || "",
-      nome: g.nome || "",
-      cognome: g.cognome || "",
-      ruolo: g.ruolo || "",
-      numero: isNaN(numero) ? (Number(g.numero_maglia) || 0) : numero
-    });
+function contaConvocati() { return prePartitaPool.filter(g => g.convocato).length; }
+
+function ppToggle(idx, checked) {
+  if (checked && contaConvocati() >= prePartitaMax) {
+    mostraToast("Massimo " + prePartitaMax + " convocati (Campionato)");
+    renderPrePartita();
+    return;
+  }
+  prePartitaPool[idx].convocato = checked;
+  const riga = document.querySelectorAll("#pp-lista .pp-riga")[idx];
+  if (riga) riga.classList.toggle("on", checked);
+  aggiornaContatorePrePartita();
+}
+function ppNumero(idx, val) { if (prePartitaPool[idx]) prePartitaPool[idx].numGara = val.trim(); }
+function ppRimuovi(idx) { prePartitaPool.splice(idx, 1); renderPrePartita(); }
+
+function aggiungiConvocatoManuale() {
+  const raw = prompt("Nuovo convocato — numero;Cognome  (es. 47;Rossi)");
+  if (!raw) return;
+  const parti = raw.split(/[;,]/);
+  const numero = parseInt((parti[0] || "").trim(), 10);
+  if (isNaN(numero)) { mostraToast("Numero non valido"); return; }
+  prePartitaPool.push({
+    id: "",
+    nome: "",
+    cognome: (parti.slice(1).join(" ").trim() || "#" + numero),
+    ruolo: "",
+    numero_maglia: numero,
+    convocato: contaConvocati() < prePartitaMax,
+    numGara: String(numero),
+    manuale: true
   });
-  return out;
+  renderPrePartita();
 }
 
 function aggiornaContatorePrePartita() {
-  const cont = document.getElementById("pp-lista");
-  const n = cont.querySelectorAll(".pp-check:checked").length;
-  const max = cont._max || MAX_REFERTO;
+  const n = contaConvocati();
+  const max = prePartitaMax;
   const ok = n >= MIN_CONVOCATI && n <= max;
   const el = document.getElementById("pp-contatore");
   el.textContent = n + " convocati" +
@@ -260,11 +289,25 @@ function aggiornaContatorePrePartita() {
   document.getElementById("pp-conferma").disabled = !ok;
 }
 
+function convocatiSelezionati() {
+  return prePartitaPool.filter(g => g.convocato).map(g => {
+    const numero = parseInt((g.numGara || "").trim(), 10);
+    return {
+      id: g.id || "",
+      nome: g.nome || "",
+      cognome: g.cognome || "",
+      ruolo: g.ruolo || "",
+      numero: isNaN(numero) ? (Number(g.numero_maglia) || 0) : numero
+    };
+  });
+}
+
 function confermaPrePartita() {
   const p = prePartitaMatch;
   if (!p) return;
   const convocati = convocatiSelezionati();
   if (convocati.length < MIN_CONVOCATI) { mostraToast("Minimo " + MIN_CONVOCATI + " giocatori"); return; }
+  if (convocati.length > prePartitaMax) { mostraToast("Massimo " + prePartitaMax + " convocati"); return; }
 
   const numeri = convocati.map(c => c.numero);
   if (new Set(numeri).size !== numeri.length) { mostraToast("Numeri di maglia duplicati"); return; }

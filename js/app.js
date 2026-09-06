@@ -50,7 +50,18 @@ document.addEventListener("DOMContentLoaded", () => {
   /* -------- PRE-PARTITA (convocati) -------- */
   document.getElementById("pp-conferma").addEventListener("click", confermaPrePartita);
   document.getElementById("pp-annulla").addEventListener("click", chiudiPrePartita);
-  document.getElementById("pp-lista").addEventListener("change", aggiornaContatorePrePartita);
+  document.getElementById("pp-aggiungi").addEventListener("click", aggiungiConvocatoManuale);
+  const ppLista = document.getElementById("pp-lista");
+  ppLista.addEventListener("change", e => {
+    if (e.target.classList.contains("pp-check")) ppToggle(+e.target.dataset.idx, e.target.checked);
+  });
+  ppLista.addEventListener("input", e => {
+    if (e.target.classList.contains("pp-num")) ppNumero(+e.target.dataset.idx, e.target.value);
+  });
+  ppLista.addEventListener("click", e => {
+    const b = e.target.closest(".pp-del");
+    if (b) ppRimuovi(+b.dataset.idx);
+  });
 
   /* -------- CALENDARIO -------- */
   document.getElementById("cal-aggiungi").addEventListener("click", apriAggiungiPartita);
