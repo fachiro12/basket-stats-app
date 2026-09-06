@@ -33,16 +33,25 @@ function pollSeguiLive() {
   if (!seguiLive) return;
   scaricaEventiPartita(seguiLive.id, () => {
     if (!seguiLive) return;
+    const finita = (statsEventiRemoti && statsEventiRemoti.eventi || [])
+      .some(e => String(e.tipo_evento) === "FINE");
+    if (finita) {
+      seguiLive.terminata = true;
+      if (typeof scaricaPartite === "function") scaricaPartite();   // aggiorna lo stato nel calendario
+    }
     if (document.getElementById("view-stats").classList.contains("attiva")) renderStats();
     else if (document.getElementById("view-adv").classList.contains("attiva")) renderAdv();
-    seguiLive.timer = setTimeout(pollSeguiLive, 20000);
+    if (!seguiLive.terminata) seguiLive.timer = setTimeout(pollSeguiLive, 20000);
   });
 }
 
 function bannerSegui() {
   if (!seguiLive) return "";
-  return '<div class="segui-bar"><span>● SEGUI LIVE · aggiornamento auto 20s · sola lettura</span>' +
-    '<button id="segui-stop">Esci</button></div>';
+  return seguiLive.terminata
+    ? '<div class="segui-bar fin"><span>● PARTITA TERMINATA · dati finali</span>' +
+      '<button id="segui-stop">Esci</button></div>'
+    : '<div class="segui-bar"><span>● SEGUI LIVE · aggiornamento auto 20s · sola lettura</span>' +
+      '<button id="segui-stop">Esci</button></div>';
 }
 
 function tempoInSec(mmss) {
@@ -114,7 +123,7 @@ function statsContesto(forzaLive) {
     convocati: [],
     nome: nome,
     oppLabel: mOpp ? mOpp[1] : "AVV",
-    finita: !!statsEventiRemoti.finita,
+    finita: !!statsEventiRemoti.finita || ev.some(e => String(e.tipo_evento) === "FINE"),
     minuti: minutiDaEventi(ev),
     tempoOra: ultimo.tempo_partita || "00:00",
     quartoOra: ultimo.quarto || "Q1"

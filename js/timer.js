@@ -67,6 +67,17 @@ function aggiungiPeriodoSupplementare() {
 function terminaPartita() {
   chiudiStintPeriodo();
   state.stintCorrente = null;
+  state.tempoPartita = "00:00";
+
+  // evento esplicito di fine → lo vedono anche gli altri device (Segui Live)
+  registraEvento({
+    squadra: "MIA", giocatore_num: "",
+    tipo_evento: "FINE", dettaglio: "FINALE", punti_segnati: 0
+  }, () => {
+    state.partitaFinita = false;
+    if (typeof impostaStatoPartita === "function") impostaStatoPartita(state.id_partita, "In corso");
+  }, "Partita terminata · " + state.punteggio.MIA + "-" + state.punteggio.OPP);
+
   state.partitaFinita = true;
   salvaStato();
   if (typeof impostaStatoPartita === "function") impostaStatoPartita(state.id_partita, "Terminata");
