@@ -212,3 +212,5 @@ table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
   padding: 8px 10px;
 }
 .mq-teo b { color: #000000; }
+.mq-teo .mq-r { font-size: 10px; font-weight: 800; color: var(--color-brand); }
+.mq-vincolo { font-size: 10px; color: var(--color-text-muted); margin-top: 3px; }

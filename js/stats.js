@@ -70,6 +70,17 @@ function nomeGiocatore(n) {
   return "";
 }
 
+function ruoloGiocatore(n) {
+  const c = (state.convocati || []).find(x => String(x.numero) === String(n));
+  if (c && c.ruolo) return c.ruolo;
+  const g = (typeof caricaGiocatori === "function" ? caricaGiocatori() : [])
+    .find(x => String(x.numero_maglia) === String(n));
+  return (g && g.ruolo) || "";
+}
+function siglaRuolo(r) {
+  return r === "Primary Handler" ? "PH" : r === "Centro" ? "C" : r === "3&D" ? "3D" : "—";
+}
+
 function esitiArray(v) {
   if (Array.isArray(v)) return v;
   return String(v || "").split(",").map(s => s.trim()).filter(Boolean);
@@ -569,12 +580,24 @@ function miglioriQuintetti(box) {
   });
   const reali = Object.keys(agg).map(k => agg[k]).sort((a, b) => b.pm - a.pm);
 
-  // B) quintetto teorico: 5 migliori ± individuali (con minutaggio > 0)
-  const ind = Object.keys(box.pg)
-    .map(n => ({ n: +n, pm: box.pg[n].pm || 0, min: box.pg[n].min || 0 }))
+  // B) quintetto teorico: 5 migliori ± individuali con vincoli di ruolo
+  //    (max 2 Primary Handler, max 2 Centro) → se 3 PH, cade quello col ± peggiore
+  const CAP = { "Primary Handler": 2, "Centro": 2 };
+  const cand = Object.keys(box.pg)
+    .map(n => ({ n: +n, pm: box.pg[n].pm || 0, min: box.pg[n].min || 0, ruolo: ruoloGiocatore(+n) }))
     .filter(x => x.min > 0)
     .sort((a, b) => b.pm - a.pm);
-  const teo = ind.slice(0, 5);
+
+  const usati = { "Primary Handler": 0, "Centro": 0 };
+  const teo = [];
+  cand.forEach(x => {
+    if (teo.length >= 5) return;
+    const cap = CAP[x.ruolo];
+    if (cap != null && usati[x.ruolo] >= cap) return;
+    teo.push(x);
+    if (cap != null) usati[x.ruolo]++;
+  });
+  if (teo.length < 5) cand.forEach(x => { if (teo.length < 5 && teo.indexOf(x) === -1) teo.push(x); });
   const teoSum = teo.reduce((s, x) => s + x.pm, 0);
 
   let html = '<div class="adv-tit">Migliori quintetti</div>';
@@ -588,10 +611,11 @@ function miglioriQuintetti(box) {
   }
 
   if (teo.length === 5) {
-    html += '<div class="mq-teo"><b>Quintetto teorico</b> (somma ± singoli: ' +
-      (teoSum > 0 ? '+' : '') + teoSum + ')<br>' +
-      teo.map(x => lbl(x.n) + ' (' + (x.pm > 0 ? '+' : '') + Math.round(x.pm) + ')').join(' · ') +
-      '</div>';
+    html += '<div class="mq-teo"><b>Quintetto teorico</b> — somma ± singoli: ' +
+      (teoSum > 0 ? '+' : '') + teoSum + '<br>' +
+      teo.map(x => lbl(x.n) + ' <span class="mq-r">' + siglaRuolo(x.ruolo) + '</span> (' +
+        (x.pm > 0 ? '+' : '') + Math.round(x.pm) + ')').join(' · ') +
+      '<div class="mq-vincolo">max 2 PH · max 2 C</div></div>';
   }
   return html;
 }
