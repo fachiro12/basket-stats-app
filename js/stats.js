@@ -334,20 +334,22 @@ function calcolaAdvanced(box, minuti) {
 function renderStats(tab) {
   if (tab) statsTab = tab;
   const ctx = statsContesto();
-  const box = calcolaBox(ctx);
   const opp = ctx.oppLabel || "AVV";
 
   document.getElementById("stats-titolo").textContent = ctx.nome + (ctx.live && !ctx.finita ? " · LIVE" : "");
-  document.querySelectorAll(".stats-tabs button").forEach(b =>
+  document.querySelectorAll("#view-stats .stats-tabs button").forEach(b =>
     b.classList.toggle("attivo", b.dataset.stab === statsTab));
 
-  const body = document.getElementById("stats-body");
-  let html;
-  if (statsTab === "andamento") html = vistaAndamento(ctx);
-  else if (statsTab === "tiri") html = vistaTiri(box, opp);
-  else html = vistaTabellino(ctx, box, opp);
-  html = barraPunteggio(ctx) + html;
-  body.innerHTML = bannerSegui() + html;
+  let contenuto = "";
+  try {
+    const box = calcolaBox(ctx);
+    if (statsTab === "andamento") contenuto = vistaAndamento(ctx);
+    else if (statsTab === "tiri") contenuto = vistaTiri(box, opp);
+    else contenuto = vistaTabellino(ctx, box, opp);
+  } catch (e) {
+    contenuto = '<div class="st-hint">Errore stats: ' + (e && e.message || e) + '</div>';
+  }
+  document.getElementById("stats-body").innerHTML = bannerSegui() + barraPunteggio(ctx) + contenuto;
 }
 
 function rigaSquadra(nome, t, opp, cls) {
@@ -493,20 +495,30 @@ function vistaAndamento(ctx) {
 function renderAdv(tab) {
   if (tab) advTab = tab;
   const ctx = statsContesto();
-  const box = calcolaBox(ctx);
   const opp = ctx.oppLabel || "AVV";
   document.getElementById("adv-titolo").textContent = ctx.nome + (ctx.live && !ctx.finita ? " · LIVE" : "");
   document.querySelectorAll("#adv-tabs button").forEach(b =>
     b.classList.toggle("attivo", b.dataset.atab === advTab));
 
   const testa = bannerSegui() + barraPunteggio(ctx);
+  const errore = e => testa + '<div class="st-hint">Errore adv: ' + (e && e.message || e) + '</div>';
 
-  if (advTab === "giocatori") {
-    document.getElementById("adv-body").innerHTML = testa + vistaAdvGiocatori(ctx, box, opp);
+  let box, a;
+  try {
+    box = calcolaBox(ctx);
+    if (advTab !== "giocatori") a = calcolaAdvanced(box, ctx.minuti);
+  } catch (e) {
+    document.getElementById("adv-body").innerHTML = errore(e);
     return;
   }
 
-  const a = calcolaAdvanced(box, ctx.minuti);
+  if (advTab === "giocatori") {
+    let c = "";
+    try { c = vistaAdvGiocatori(ctx, box, opp); }
+    catch (e) { c = '<div class="st-hint">Errore adv: ' + (e && e.message || e) + '</div>'; }
+    document.getElementById("adv-body").innerHTML = testa + c;
+    return;
+  }
   const card = (tit, valA, valB, nota) =>
     '<div class="adv-card">' +
       '<div class="adv-tit">' + tit + '</div>' +
@@ -514,6 +526,10 @@ function renderAdv(tab) {
         (valB != null ? '<span class="avv">' + valB + '</span>' : '') + '</div>' +
       (nota ? '<div class="adv-nota">' + nota + '</div>' : '') +
     '</div>';
+
+  let stint = "";
+  try { stint = vistaStint(box); }
+  catch (e) { stint = '<div class="st-hint">Errore stint: ' + (e && e.message || e) + '</div>'; }
 
   document.getElementById("adv-body").innerHTML = testa +
     '<div class="adv-legenda"><span class="noi">' + CONFIG.NOME_SQUADRA_MIA + '</span><span class="avv">' + opp + '</span> · ' +
@@ -530,7 +546,7 @@ function renderAdv(tab) {
       card('Rimb. Off %', dec(a.orbA) + '%', dec(a.orbB) + '%', 'ORB / (ORB + DRB avv)') +
       card('Rimb. Dif %', dec(a.drbA) + '%', dec(a.drbB) + '%', 'DRB / (DRB + ORB avv)') +
     '</div>' +
-    vistaStint(box);
+    stint;
 }
 
 function vistaAdvGiocatori(ctx, box, opp) {

@@ -671,9 +671,14 @@ main.corpo-partita {
 }
 
 /* Contenitore verticale: la partita resta dentro il frame, sopra la bottom bar */
-#view-partita { padding-bottom: calc(var(--tabbar-height) + 20px + env(safe-area-inset-bottom)); }
+/* La schermata partita non scrolla: sta in un dvh, i pannelli scrollano da soli.
+   padding-bottom lascia spazio alla capsula nav (che sta sopra il contenuto). */
+#view-partita {
+  overflow: hidden;
+  padding-bottom: calc(var(--tabbar-height) + 24px + env(safe-area-inset-bottom));
+}
 @media (orientation: landscape) and (pointer: coarse) {
-  #view-partita { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)); }
+  #view-partita { overflow: hidden; padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
 #view-partita .corpo-partita { min-height: 0; }
 

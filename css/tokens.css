@@ -66,7 +66,7 @@
   --font-num: "SF Mono", "Roboto Mono", ui-monospace, monospace;
 
   /* ---------- Layout / interazione ---------- */
-  --tabbar-height: 58px;
+  --tabbar-height: 50px;
   --tap-target: 44px;
   --focus-ring: 0 0 0 3px rgba(255, 107, 0, 0.35);
 }
