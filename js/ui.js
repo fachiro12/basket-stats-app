@@ -307,4 +307,6 @@ function navigaA(viewId) {
   document.querySelector(`.tab-btn[data-view="${viewId}"]`)?.classList.add("attivo");
 
   if (viewId === "calendario" && typeof renderCalendario === "function") renderCalendario();
+  if (viewId === "stats" && typeof renderStats === "function") renderStats();
+  if (viewId === "adv" && typeof renderAdv === "function") renderAdv();
 }

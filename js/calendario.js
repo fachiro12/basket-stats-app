@@ -200,9 +200,21 @@ function iniziaPartita(p) {
 }
 
 function apriStatistichePartita(id) {
-  state.id_partita = String(id);
-  salvaStato();
+  id = String(id);
+  if (id === String(state.id_partita)) {
+    statsEventiRemoti = null;            // partita live in corso/memoria
+    navigaA("stats");
+    return;
+  }
+  const p = elencoPartite().find(x => String(x.id_partita) === id);
+  const nome = p
+    ? CONFIG.NOME_SQUADRA_MIA + (p.luogo === "Casa" ? " vs " : " @ ") + p.avversario
+    : "Gara " + id;
+  statsEventiRemoti = { id_partita: id, eventi: [], nome: nome };
   navigaA("stats");
+  scaricaEventiPartita(id, ok => {
+    if (ok && document.getElementById("view-stats").classList.contains("attiva")) renderStats();
+  });
 }
 
 /* ---------- Modale "Aggiungi partita" ---------- */

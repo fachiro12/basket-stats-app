@@ -1,0 +1,141 @@
+/* ==========================================================================
+   STATS + ADVANCED
+   ========================================================================== */
+.st-titolo {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 900;
+  color: #000000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+  padding: 8px var(--space-4);
+  background: var(--color-surface-raised);
+  border-bottom: 1px solid var(--color-border);
+}
+.stats-tabs button {
+  flex: 1;
+  min-height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-weight: 800;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  touch-action: manipulation;
+}
+.stats-tabs button.attivo {
+  background: var(--color-brand);
+  color: #FFFFFF;
+  border-color: var(--color-brand);
+}
+
+#stats-body, #adv-body { gap: 10px; }
+
+/* ---------- Riepilogo squadra ---------- */
+.st-team {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+.st-team.noi { background: var(--color-brand-soft); }
+.st-team.avv { background: var(--color-surface); }
+.st-team-nome { font-size: 13px; font-weight: 900; color: #000000; min-width: 44px; }
+.st-team-pt { font-size: 20px; font-weight: 900; color: var(--color-brand); }
+.st-team.avv .st-team-pt { color: #000000; }
+
+.st-hint { font-size: 11px; color: var(--color-text-muted); text-align: center; }
+
+/* ---------- Tabella box score ---------- */
+.st-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-height: 62vh; overflow-y: auto; }
+table.st-box {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+table.st-box th, table.st-box td {
+  padding: 6px 7px;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+}
+table.st-box thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #000000;
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 800;
+}
+table.st-box td.st-n, table.st-box th:first-child { text-align: left; font-weight: 800; color: var(--color-brand); }
+table.st-box td.st-g, table.st-box th:nth-child(2) { text-align: left; font-weight: 700; color: #000000; }
+table.st-box td.st-pt { font-weight: 900; color: #000000; }
+table.st-box td.st-val { font-weight: 800; }
+table.st-box tbody tr:nth-child(even) { background: var(--color-surface); }
+table.st-box td.pos { color: var(--color-state-positive); font-weight: 800; }
+table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
+
+/* Verticale: nascondi le colonne estese. Orizzontale: mostrale tutte. */
+@media (orientation: portrait) {
+  .sm-hide { display: none; }
+}
+
+/* ---------- Tiri ---------- */
+.st-tiro { display: flex; flex-direction: column; gap: 4px; }
+.st-tiro-top { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; font-weight: 700; color: var(--color-text-secondary); }
+.st-tiro-top span:first-child { font-weight: 900; color: #000000; }
+.st-bar { height: 10px; background: var(--color-surface); border-radius: 999px; overflow: hidden; }
+.st-bar span { display: block; height: 100%; border-radius: 999px; }
+.st-bar span.noi { background: var(--color-brand); }
+.st-bar span.avv { background: var(--color-text-secondary); }
+
+/* ---------- Andamento ---------- */
+.st-and-tit { font-size: 13px; font-weight: 900; color: #000000; }
+.st-chart { width: 100%; min-width: 320px; height: 200px; }
+.st-zero { stroke: var(--color-border-strong); stroke-width: 1; }
+.st-q { stroke: var(--color-border); stroke-width: 1; stroke-dasharray: 3 3; }
+.st-qt { font-size: 9px; fill: var(--color-text-muted); font-weight: 700; }
+.st-area { fill: var(--color-brand-soft); }
+.st-linea { fill: none; stroke: var(--color-brand); stroke-width: 2; }
+
+/* ---------- Advanced ---------- */
+.adv-legenda { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); display: flex; gap: 10px; }
+.adv-legenda .noi::before, .adv-legenda .avv::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px;
+}
+.adv-legenda .noi::before { background: var(--color-brand); }
+.adv-legenda .avv::before { background: var(--color-text-secondary); }
+
+.adv-griglia { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.adv-card {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+.adv-tit { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; color: var(--color-text-secondary); }
+.adv-vals { display: flex; align-items: baseline; gap: 10px; margin-top: 2px; }
+.adv-vals .noi { font-size: 20px; font-weight: 900; color: var(--color-brand); }
+.adv-vals .avv { font-size: 14px; font-weight: 800; color: var(--color-text-secondary); }
+.adv-nota { font-size: 10px; color: var(--color-text-muted); margin-top: 4px; }
+
+@media (orientation: landscape) {
+  .adv-griglia { grid-template-columns: repeat(4, 1fr); }
+}

@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="css/altro.css">
 <link rel="stylesheet" href="css/calendario.css">
 <link rel="stylesheet" href="css/roster.css">
+<link rel="stylesheet" href="css/stats.css">
 </head>
 <body>
 
@@ -176,58 +177,29 @@
 
     <!-- ============ VIEW: STATS ============ -->
     <div class="view" id="view-stats">
-      <div class="header-pagina">
-        <h1><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg> Statistiche</h1>
-        <p>Box score e andamento partita</p>
+      <header class="cal-topbar">
+        <span class="st-titolo" id="stats-titolo">Statistiche</span>
+        <button class="cal-tb-btn" id="stats-refresh" aria-label="Aggiorna dal foglio">
+          <svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg>
+        </button>
+      </header>
+      <div class="stats-tabs">
+        <button data-stab="tabellino" class="attivo">Tabellino</button>
+        <button data-stab="andamento">Andamento</button>
+        <button data-stab="tiri">Tiri</button>
       </div>
-      <div class="contenuto-pagina">
-        <div class="card-placeholder">
-          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-clipboard"></use></svg></div>
-          <h3>Box Score</h3>
-          <p>Punti, rimbalzi, assist e percentuali tiro per ogni giocatore in tempo reale.</p>
-          <span class="badge-in-arrivo">In arrivo</span>
-        </div>
-        <div class="card-placeholder">
-          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-trending-up"></use></svg></div>
-          <h3>Andamento punteggio</h3>
-          <p>Grafico quarto per quarto con run e parziali per ogni periodo.</p>
-          <span class="badge-in-arrivo">In arrivo</span>
-        </div>
-        <div class="card-placeholder">
-          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-target"></use></svg></div>
-          <h3>Percentuali tiro</h3>
-          <p>FG%, 3P%, FT% per giocatore con dettaglio zona (quando disponibile).</p>
-          <span class="badge-in-arrivo">In arrivo</span>
-        </div>
-      </div>
+      <div class="contenuto-pagina" id="stats-body"></div>
     </div><!-- /view-stats -->
 
     <!-- ============ VIEW: ADV STATS ============ -->
     <div class="view" id="view-adv">
-      <div class="header-pagina">
-        <h1><svg class="ico" aria-hidden="true"><use href="#i-calc"></use></svg> Advanced Stats</h1>
-        <p>Metriche avanzate da database SQLite</p>
-      </div>
-      <div class="contenuto-pagina">
-        <div class="card-placeholder">
-          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-zap"></use></svg></div>
-          <h3>Efficienza Offensiva / Difensiva</h3>
-          <p>Offensive Rating, Defensive Rating e Net Rating per lineup e per giocatore.</p>
-          <span class="badge-in-arrivo">In arrivo</span>
-        </div>
-        <div class="card-placeholder">
-          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg></div>
-          <h3>Plus/Minus per lineup</h3>
-          <p>Parziali con i 5 in campo, per identificare i quintetti più efficaci.</p>
-          <span class="badge-in-arrivo">In arrivo</span>
-        </div>
-        <div class="card-placeholder">
-          <div class="icona-grande"><svg class="ico" aria-hidden="true"><use href="#i-ball"></use></svg></div>
-          <h3>Possessi e Pace</h3>
-          <p>Stima possessi per quarto, Pace e True Shooting % calcolati offline su SQLite.</p>
-          <span class="badge-in-arrivo">In arrivo</span>
-        </div>
-      </div>
+      <header class="cal-topbar">
+        <span class="st-titolo" id="adv-titolo">Advanced</span>
+        <button class="cal-tb-btn" id="adv-refresh" aria-label="Aggiorna dal foglio">
+          <svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg>
+        </button>
+      </header>
+      <div class="contenuto-pagina" id="adv-body"></div>
     </div><!-- /view-adv -->
 
     <!-- ============ VIEW: ALTRO ============ -->
@@ -529,6 +501,7 @@
 <script src="js/fallo-subito.js"></script>
 <script src="js/calendario.js"></script>
 <script src="js/giocatori.js"></script>
+<script src="js/stats.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/pin.js"></script>
 <script src="js/app.js"></script>

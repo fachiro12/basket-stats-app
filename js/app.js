@@ -74,6 +74,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.classList.contains("q-check")) qToggle(+e.target.dataset.num, e.target.checked);
   });
 
+  /* -------- STATS / ADVANCED -------- */
+  document.querySelectorAll(".stats-tabs button").forEach(b =>
+    b.addEventListener("click", () => renderStats(b.dataset.stab)));
+  document.getElementById("stats-refresh").addEventListener("click", aggiornaStatsDaFoglio);
+  document.getElementById("adv-refresh").addEventListener("click", aggiornaStatsDaFoglio);
+
   /* -------- CALENDARIO -------- */
   document.getElementById("cal-aggiungi").addEventListener("click", apriAggiungiPartita);
   document.getElementById("cal-menu").addEventListener("click", () => mostraToast("Menu in arrivo"));
