@@ -99,6 +99,54 @@ function registraTecnicoAvversario(num, tipoSpeciale, segnato) {
   }, inverti, etichettaNum(num) + " TL tecnico avv. (" + (segnato ? "SI" : "NO") + ")");
 }
 
+/* ---------- FALLO FATTO da un nostro giocatore: TL agli avversari ---------- */
+let ffNum = null;
+
+function apriTlAvversari(num) {
+  ffNum = num;
+  mostraActionOverlay("Fallo " + etichettaNum(num) + " — TL avversari?", [
+    aoBottone("Nessun TL", () => finalizzaFalloFatto("PERSONALE", []), true),
+    aoBottone("1 TL", () => faseEsitiTlAvv(1, [])),
+    aoBottone("2 TL", () => faseEsitiTlAvv(2, [])),
+    aoBottone("3 TL", () => faseEsitiTlAvv(3, []))
+  ], 0);
+}
+
+function faseEsitiTlAvv(n, esiti) {
+  if (esiti.length >= n) { finalizzaFalloFatto(n + "TL", esiti); return; }
+  const i = esiti.length + 1;
+  mostraActionOverlay("TL avversario " + i + "/" + n + " — realizzato?", [
+    aoBottone("SÌ", () => faseEsitiTlAvv(n, esiti.concat("SI"))),
+    aoBottone("NO", () => faseEsitiTlAvv(n, esiti.concat("NO")), true)
+  ], 0);
+}
+
+function finalizzaFalloFatto(opzione, esiti) {
+  const num = ffNum;
+  const qi = state.quartoIndice;
+  const puntiOpp = esiti.filter(v => v === "SI").length;
+
+  state.falliSquadraPerQuarto.MIA[qi] += 1;
+  if (num) state.falliGiocatori[num] = (state.falliGiocatori[num] || 0) + 1;
+  state.punteggio.OPP += puntiOpp;
+
+  const inverti = () => {
+    state.falliSquadraPerQuarto.MIA[qi] = Math.max(0, state.falliSquadraPerQuarto.MIA[qi] - 1);
+    if (num) state.falliGiocatori[num] = Math.max(0, (state.falliGiocatori[num] || 0) - 1);
+    state.punteggio.OPP -= puntiOpp;
+  };
+
+  registraEvento({
+    squadra: "MIA", giocatore_num: String(num),
+    tipo_evento: "FALLO_FATTO", dettaglio: opzione,
+    punti_segnati: puntiOpp, esito_tl: esiti.slice()
+  }, inverti, etichettaNum(num) + " " + CONFIG.NOME_SQUADRA_MIA + " Fallo fatto" +
+     (esiti.length ? " (" + puntiOpp + "/" + esiti.length + " TL avv.)" : ""));
+
+  chiudiActionOverlay();
+  if (esiti.length && esiti[esiti.length - 1] === "NO") avviaOverlayRimbalzo("OPP");
+}
+
 function registraDoppioFallo(num, sottotipo) {
   const qi = state.quartoIndice;
   state.falliSquadraPerQuarto.MIA[qi] += 1;

@@ -146,21 +146,34 @@ function registraAssist(num, autoreNum) {
   }, () => {}, "#" + num + " " + CONFIG.NOME_SQUADRA_MIA + " Assist (a #" + autoreNum + ")");
 }
 
-/* ---- Rimbalzo (nessun timeout: obbligatorio) ---- */
-function avviaOverlayRimbalzo() {
+/* ---- Rimbalzo (nessun timeout: obbligatorio).
+       squadraTiro = "MIA" (default, abbiamo tirato noi) oppure "OPP". ---- */
+function avviaOverlayRimbalzo(squadraTiro) {
+  const nostro = CONFIG.NOME_SQUADRA_MIA;
+  const avv = etichettaSquadra("OPP");
+  const dopoTiroOpp = squadraTiro === "OPP";
+
+  const btnNostro = dopoTiroOpp
+    ? aoBottone("Difensivo (" + nostro + ")", () => chiediRimbalzistaMIA("DIFENSIVO"))
+    : aoBottone("Offensivo (" + nostro + ")", () => chiediRimbalzistaMIA("OFFENSIVO"));
+  const btnAvv = dopoTiroOpp
+    ? aoBottone("Offensivo (" + avv + ")", () => { registraRimbalzo("OFFENSIVO", "OPP", null); chiudiActionOverlay(); })
+    : aoBottone("Difensivo (" + avv + ")", () => { registraRimbalzo("DIFENSIVO", "OPP", null); chiudiActionOverlay(); });
+
   mostraActionOverlay("Rimbalzo", [
-    aoBottone("Offensivo (" + CONFIG.NOME_SQUADRA_MIA + ")", chiediRimbalzistaMIA),
-    aoBottone("Difensivo (" + etichettaSquadra("OPP") + ")", () => { registraRimbalzo("DIFENSIVO", "OPP", null); chiudiActionOverlay(); }),
+    btnNostro,
+    btnAvv,
     aoBottone("Di squadra", () => { registraRimbalzo("SQUADRA", "MIA", null); chiudiActionOverlay(); }, true)
   ], 0);
 }
 
-function chiediRimbalzistaMIA() {
-  const bottoni = state.roster.map(n => aoBottone("#" + n, () => {
-    registraRimbalzo("OFFENSIVO", "MIA", n);
+function chiediRimbalzistaMIA(tipo) {
+  tipo = tipo || "OFFENSIVO";
+  const bottoni = state.roster.map(n => aoBottone(etichettaNum(n), () => {
+    registraRimbalzo(tipo, "MIA", n);
     chiudiActionOverlay();
   }));
-  mostraActionOverlay("Rimbalzo offensivo — chi?", bottoni, 0);
+  mostraActionOverlay("Rimbalzo " + tipo.toLowerCase() + " — chi?", bottoni, 0);
 }
 
 function registraRimbalzo(tipo, squadra, num) {
@@ -202,21 +215,8 @@ function registraFalloFatto() {
   if (!richiedeSelezione()) return;
   // Fallo commesso dagli avversari → flusso dedicato (personale / tecnico / doppio)
   if (state.selezione.squadra === "OPP") { apriOverlayFalloAvversario(); return; }
-  const sq = state.selezione.squadra, num = state.selezione.num;
-  const qi = state.quartoIndice;
-
-  state.falliSquadraPerQuarto[sq][qi] += 1;
-  if (sq === "MIA" && num) state.falliGiocatori[num] = (state.falliGiocatori[num] || 0) + 1;
-
-  const inverti = () => {
-    state.falliSquadraPerQuarto[sq][qi] = Math.max(0, state.falliSquadraPerQuarto[sq][qi] - 1);
-    if (sq === "MIA" && num) state.falliGiocatori[num] = Math.max(0, (state.falliGiocatori[num] || 0) - 1);
-  };
-
-  registraEvento({
-    squadra: sq, giocatore_num: num ? String(num) : "",
-    tipo_evento: "FALLO_FATTO", dettaglio: "PERSONALE", punti_segnati: 0
-  }, inverti, (num ? "#" + num + " " : "") + etichettaSquadra(sq) + " Fallo fatto");
+  // Fallo nostro → scelta TL avversari (0/1/2/3) prima di registrare
+  apriTlAvversari(state.selezione.num);
 }
 
 function annullaUltimoEvento() {
