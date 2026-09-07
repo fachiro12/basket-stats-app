@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=30` · SW `bsp-v30` · backend V4.9.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=32` · SW `bsp-v32` · backend V4.9.
 
 ---
 
@@ -45,10 +45,13 @@ PWA per segnare le statistiche di una partita di basket **in tempo reale**, pens
 - Se cambia l'URL `/exec`, aggiorna `CONFIG.APPS_SCRIPT_URL` in `js/state.js`.
 - `setupSheet()` è **idempotente e non distruttivo** (crea fogli/intestazioni se mancano, semina l'admin solo se `Utenti` è vuoto). Sicuro da rilanciare.
 
-### Icone PWA — FATTE (v23)
-Sorgenti: `icon.svg` (muso del tasso, palette PVL — cresta bianca, maschera scura, canna del naso chiara, occhi ambra con pupilla, goccia di miele) e `icon-maskable.svg` (stesso disegno all'80%, dentro la safe zone Android — generato da `genera-icone.sh`).
-PNG in root: `icon-180.png` (apple-touch), `icon-192.png`, `icon-512.png`, `icon-maskable.png`.
-Rigenerare dopo una modifica ai `.svg`: `bash scripts/genera-icone.sh` (usa Chrome headless, nessuna dipendenza), poi `node scripts/bump.mjs`.
+### Icone PWA — FATTE (v31)
+Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illustrazione AI). `scripts/ritaglia-icona.mjs` (Node, Chrome headless, zero dipendenze) la **ritaglia quadrata** — esclude la scritta "PVL" — e genera i PNG:
+- `icon-512.png` / `icon-192.png` / `icon-180.png` (apple-touch) — ritaglio standard (pallone ~84% del frame)
+- `icon-maskable.png` — stesso ritaglio all'80% su fondo navy `#101B33` (safe zone Android)
+- `icon-32.png` — favicon del tab (downscale del ritaglio; a 16-32px è un badge navy, accettabile)
+
+`<link rel="icon">` punta ai PNG (niente più `icon.svg`). Per cambiare il ritaglio: `STD` / `MASK_SCALE` in cima allo script, poi `node scripts/ritaglia-icona.mjs` + `node scripts/bump.mjs`.
 
 ---
 
@@ -74,7 +77,7 @@ Rigenerare dopo una modifica ai `.svg`: `bash scripts/genera-icone.sh` (usa Chro
 `tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`)
 
 ### Altro
-`index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `icon.svg` / `icon-maskable.svg` + i 4 PNG · `scripts/bump.mjs` (cache-busting) · `scripts/genera-icone.sh` (SVG→PNG via Chrome headless)
+`index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `mockup-src.jpg` + i 5 PNG icona · `scripts/bump.mjs` (cache-busting) · `scripts/ritaglia-icona.mjs` (crop mockup → PNG via Chrome headless)
 
 ---
 
@@ -219,7 +222,7 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 10. `impostaStatoPartita` re-invia la partita con campi locali possibilmente stale → può clobberare modifiche fatte sul foglio.
 11. Minuti/± dipendono ancora dalla disciplina del segnapunti (aprire i CAMBI ai cambi reali) — **migliorato in v26**: `stintsDaEventi` non miscredita più la giocata di transizione (usa `prevSc`), e `passaAlPeriodo` apre i CAMBI in automatico a ogni quarto.
 12. **Zero test.** Priorità: test node di `stintsDaEventi`/`calcolaBox` (motore ± e box score).
-13. ~~Icone PWA PNG mancanti~~ — **FATTE in v22** (`icon.svg` + `icon-maskable.svg` + 4 PNG, palette PVL; `scripts/genera-icone.sh` per rigenerare).
+13. ~~Icone PWA PNG mancanti~~ — **FATTE (v31)**: ritagliate da `mockup-src.jpg` con `scripts/ritaglia-icona.mjs`.
 
 ### Backlog consigliato (ordine)
 test node del motore stat (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`).

@@ -1,6 +1,6 @@
 /* Service worker — network-first (sempre fresco online, funziona offline) */
-const CACHE = "bsp-v30";
-const CORE = ["./", "./index.html", "./icon.svg", "./manifest.webmanifest"];
+const CACHE = "bsp-v32";
+const CORE = ["./", "./index.html", "./manifest.webmanifest"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
