@@ -1,15 +1,18 @@
 /* ==========================================================================
-   fallo-subito.js — Logica della modalina "Fallo Subito"
+   fallo-subito.js — Flusso "Fallo Subito / Fallo Fatto"
+   Tutto nell'overlay contestuale del pannello destro (#action-overlay), a passi,
+   con "← indietro" ad ogni step → un mis-tap si corregge senza rifare tutto,
+   e il CAMBI resta raggiungibile (cambio prima dei liberi).
    ========================================================================== */
 
-let fsOpzione = null;
-let fsEsitiTl = [];
+let ffsNum = null;      // giocatore che ha subito il fallo
+let ffsAnd1 = false;    // aveva appena segnato → and-1 probabile
 
 function apriFalloSubito() {
   if (state.partitaFinita) { mostraToast("Partita terminata"); return; }
   // FALLO SUBITO = il selezionato ha SUBITO un fallo
   if (state.selezione?.squadra === "MIA" && state.selezione.num != null) {
-    apriModaleFalloSubito();
+    avviaFalloSubito(state.selezione.num);
   } else if (state.selezione?.squadra === "OPP") {
     apriOverlayAvversariSubito();
   } else {
@@ -63,8 +66,7 @@ function chiediGiocatoreMiaFallo() {
     state.selezione = { squadra: "MIA", num: n };
     salvaStato();
     renderPartita();
-    chiudiActionOverlay();
-    apriModaleFalloSubito();
+    avviaFalloSubito(n);
   }));
   mostraActionOverlay("Chi ha subito il fallo?", bottoni, 0);
 }
@@ -158,9 +160,13 @@ function apriTlAvversari(num) {
 function faseEsitiTlAvv(n, esiti) {
   if (esiti.length >= n) { finalizzaFalloFatto(n + "TL", esiti); return; }
   const i = esiti.length + 1;
+  const back = esiti.length > 0
+    ? () => faseEsitiTlAvv(n, esiti.slice(0, -1))
+    : () => apriTlAvversari(ffNum);
   mostraActionOverlay("TL avversario " + i + "/" + n + " — realizzato?", [
     aoBottone("SÌ", () => faseEsitiTlAvv(n, esiti.concat("SI"))),
-    aoBottone("NO", () => faseEsitiTlAvv(n, esiti.concat("NO")), true)
+    aoBottone("NO", () => faseEsitiTlAvv(n, esiti.concat("NO")), true),
+    aoBottone("← indietro", back)
   ], 0);
 }
 
@@ -208,29 +214,94 @@ function registraDoppioFallo(num, sottotipo) {
      sottotipo.replace(/_/g, " ").toLowerCase() + " (compensato)");
 }
 
-function apriModaleFalloSubito() {
-  fsOpzione = null;
-  fsEsitiTl = [];
-  document.getElementById("fs-contesto").textContent =
-    etichettaNum(state.selezione.num) + " " + CONFIG.NOME_SQUADRA_MIA;
-  document.getElementById("fs-tecnico").checked = false;
-  document.getElementById("fs-antisportivo").checked = false;
-  document.querySelectorAll("#overlay-fallo-subito .opzione-modale")
-    .forEach(b => b.classList.remove("selezionata"));
-  document.getElementById("fs-righe-tl").innerHTML = "";
-  document.getElementById("fs-conferma").disabled = true;
-  document.getElementById("overlay-fallo-subito").classList.add("visibile");
-
-  // And-1 probabile (il selezionato ha appena segnato) → preseleziona 1 TL
-  if (ultimaAzioneEraCanestro()) selezionaOpzioneFs("1TL");
+/* ==========================================================================
+   FALLO SUBITO da un nostro giocatore — macchina a stati nell'overlay destro
+   ========================================================================== */
+function avviaFalloSubito(num) {
+  ffsNum = num;
+  ffsAnd1 = ultimaAzioneEraCanestro(num);
+  // And-1 = 1 solo TL: salta il menu conteggio (si torna indietro col ←)
+  if (ffsAnd1) faseEsitiFalloSubito(1, [], "NESSUNO");
+  else faseCountFalloSubito("NESSUNO");
 }
 
-/* And-1: il giocatore selezionato ha segnato da 2/3 poco fa. Si guarda indietro
-   saltando ASSIST/ANNULLA, così l'assist registrato in mezzo non lo nasconde. */
-function ultimaAzioneEraCanestro() {
-  const num = String(state.selezione?.num);
+function faseCountFalloSubito(fs) {
+  const speciale = fs !== "NESSUNO";
+  const btns = [];
+  if (!speciale) {
+    btns.push(aoBottone("Nessun TL · rimessa", () => finalizzaFalloSubito("RIMESSA", [], "NESSUNO"), true));
+  }
+  btns.push(aoBottone("1 TL" + (ffsAnd1 && !speciale ? "  · and-1" : ""), () => faseEsitiFalloSubito(1, [], fs)));
+  btns.push(aoBottone("2 TL", () => faseEsitiFalloSubito(2, [], fs)));
+  btns.push(aoBottone("3 TL", () => faseEsitiFalloSubito(3, [], fs)));
+  btns.push(speciale
+    ? aoBottone("← indietro", () => faseCountFalloSubito("NESSUNO"))
+    : aoBottone("Tecnico / Antisportivo →", () => faseSpecialeFalloSubito()));
+
+  const et = fs === "NESSUNO" ? "" : " · " + fs.replace("+", " + ").toLowerCase();
+  mostraActionOverlay("Fallo subito · " + etichettaNum(ffsNum) + et + " — quanti TL?", btns, 0);
+}
+
+function faseSpecialeFalloSubito() {
+  mostraActionOverlay("Fallo speciale su " + etichettaNum(ffsNum), [
+    aoBottone("Tecnico", () => faseCountFalloSubito("TECNICO")),
+    aoBottone("Antisportivo", () => faseCountFalloSubito("ANTISPORTIVO")),
+    aoBottone("Tecnico + Antisportivo", () => faseCountFalloSubito("TECNICO+ANTISPORTIVO")),
+    aoBottone("← indietro", () => faseCountFalloSubito("NESSUNO"), true)
+  ], 0);
+}
+
+function faseEsitiFalloSubito(n, esiti, fs) {
+  if (esiti.length >= n) { finalizzaFalloSubito(n + "TL", esiti, fs); return; }
+  const i = esiti.length + 1;
+  const back = esiti.length > 0
+    ? () => faseEsitiFalloSubito(n, esiti.slice(0, -1), fs)
+    : () => faseCountFalloSubito(fs);
+  mostraActionOverlay("TL " + i + "/" + n + " di " + etichettaNum(ffsNum) + " — realizzato?", [
+    aoBottone("SÌ", () => faseEsitiFalloSubito(n, esiti.concat("SI"), fs)),
+    aoBottone("NO", () => faseEsitiFalloSubito(n, esiti.concat("NO"), fs), true),
+    aoBottone("← indietro", back)
+  ], 0);
+}
+
+function finalizzaFalloSubito(opzione, esiti, fs) {
+  const num = ffsNum;
+  const qi = indiceFalli();
+  const puntiTl = esiti.filter(v => v === "SI").length;
+  let dettaglio = opzione;
+  if (opzione === "1TL" && ffsAnd1 && fs === "NESSUNO") dettaglio = "1TL_AND1";
+
+  state.punteggio.MIA += puntiTl;
+  state.falliSquadraPerQuarto.OPP[qi] += 1;
+  const inverti = () => {
+    state.punteggio.MIA -= puntiTl;
+    state.falliSquadraPerQuarto.OPP[qi] = Math.max(0, state.falliSquadraPerQuarto.OPP[qi] - 1);
+  };
+
+  registraEvento({
+    squadra: "MIA",
+    giocatore_num: numValido(num) ? String(num) : "",
+    tipo_evento: "FALLO_SUBITO",
+    dettaglio: dettaglio,
+    punti_segnati: puntiTl,
+    esito_tl: esiti.slice(),
+    fallo_speciale: fs
+  }, inverti, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · fallo subito (" +
+     dettaglio + (esiti.length ? " " + puntiTl + "/" + esiti.length : "") + ")");
+
+  chiudiActionOverlay();
+  // ultimo TL sbagliato (serie standard) → rimbalzo
+  if (fs === "NESSUNO" && opzione !== "RIMESSA" && esiti.length && esiti[esiti.length - 1] === "NO") {
+    avviaOverlayRimbalzo();
+  }
+}
+
+/* And-1: il giocatore ha segnato da 2/3 poco fa. Si guarda indietro saltando
+   ASSIST/ANNULLA, così l'assist registrato in mezzo non lo nasconde. */
+function ultimaAzioneEraCanestro(numArg) {
+  const num = String(numArg != null ? numArg : state.selezione?.num);
   if (num === "undefined" || num === "null" || num === "") return false;
-  const log = state.eventLog;
+  const log = state.eventLog || [];
   for (let i = log.length - 1, k = 0; i >= 0 && k < 4; i--, k++) {
     const ev = log[i].evento;
     if (ev.tipo_evento === "ASSIST" || ev.tipo_evento === "ANNULLA") continue;
@@ -240,89 +311,4 @@ function ultimaAzioneEraCanestro() {
       (ev.dettaglio === "2P_SEGNATO" || ev.dettaglio === "3P_SEGNATO");
   }
   return false;
-}
-
-function selezionaOpzioneFs(opz) {
-  fsOpzione = opz;
-  fsEsitiTl = [];
-  document.querySelectorAll("#overlay-fallo-subito .opzione-modale")
-    .forEach(b => b.classList.toggle("selezionata", b.dataset.opz === opz));
-
-  const container = document.getElementById("fs-righe-tl");
-  container.innerHTML = "";
-
-  if (opz === "RIMESSA") {
-    document.getElementById("fs-conferma").disabled = false;
-    return;
-  }
-
-  const nTiri = opz === "1TL" ? 1 : opz === "2TL" ? 2 : 3;
-  for (let i = 0; i < nTiri; i++) {
-    fsEsitiTl.push(null);
-    const isAnd1 = opz === "1TL" && ultimaAzioneEraCanestro();
-    const riga = document.createElement("div");
-    riga.className = "riga-tl";
-    riga.innerHTML =
-      `<span>Tiro libero ${i + 1}${isAnd1 ? ' <span style="color:var(--color-state-positive);font-size:11px;font-weight:700;">AND-1</span>' : ""}</span>` +
-      `<span class="toggle-si-no">
-        <button class="si" data-idx="${i}">SI</button>
-        <button class="no" data-idx="${i}">NO</button>
-      </span>`;
-    container.appendChild(riga);
-  }
-  document.getElementById("fs-conferma").disabled = true;
-}
-
-function impostaEsitoTl(idx, esito) {
-  fsEsitiTl[idx] = esito;
-  const riga = document.querySelectorAll("#fs-righe-tl .riga-tl")[idx];
-  riga.querySelector(".si").classList.toggle("attivo", esito === "SI");
-  riga.querySelector(".no").classList.toggle("attivo", esito === "NO");
-  document.getElementById("fs-conferma").disabled = fsEsitiTl.some(v => v === null);
-}
-
-function confermaFalloSubito() {
-  if (!fsOpzione) return;
-  const num = state.selezione.num;
-  const tecnico = document.getElementById("fs-tecnico").checked;
-  const antisportivo = document.getElementById("fs-antisportivo").checked;
-  let falloSpeciale = "NESSUNO";
-  if (tecnico && antisportivo) falloSpeciale = "TECNICO+ANTISPORTIVO";
-  else if (tecnico) falloSpeciale = "TECNICO";
-  else if (antisportivo) falloSpeciale = "ANTISPORTIVO";
-
-  const puntiTl = fsEsitiTl.filter(v => v === "SI").length;
-  let dettaglio = fsOpzione;
-  if (fsOpzione === "1TL" && ultimaAzioneEraCanestro()) dettaglio = "1TL_AND1";
-
-  const qi = indiceFalli();
-  state.punteggio.MIA += puntiTl;
-  state.falliSquadraPerQuarto.OPP[qi] += 1;
-
-  const inverti = () => {
-    state.punteggio.MIA -= puntiTl;
-    state.falliSquadraPerQuarto.OPP[qi] = Math.max(0, state.falliSquadraPerQuarto.OPP[qi] - 1);
-  };
-
-  registraEvento({
-    squadra: "MIA",
-    giocatore_num: String(num),
-    tipo_evento: "FALLO_SUBITO",
-    dettaglio,
-    punti_segnati: puntiTl,
-    esito_tl: fsEsitiTl.slice(),
-    fallo_speciale: falloSpeciale
-  }, inverti, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · fallo subito (" + dettaglio + ")");
-
-  const rimbalzoLive = falloSpeciale === "NESSUNO" &&
-    fsOpzione !== "RIMESSA" &&
-    fsEsitiTl.length > 0 &&
-    fsEsitiTl[fsEsitiTl.length - 1] === "NO";
-
-  chiudiFalloSubito();
-  if (rimbalzoLive) avviaOverlayRimbalzo();
-}
-
-function chiudiFalloSubito() {
-  document.getElementById("overlay-fallo-subito").classList.remove("visibile");
 }

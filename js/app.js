@@ -23,18 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", () => registraTiro(btn.dataset.tiro, btn.dataset.esito));
   });
 
-  /* -------- MODALINA FALLO SUBITO -------- */
-  document.querySelectorAll("#overlay-fallo-subito .opzione-modale").forEach(btn => {
-    btn.addEventListener("click", () => selezionaOpzioneFs(btn.dataset.opz));
-  });
-  document.getElementById("fs-righe-tl").addEventListener("click", e => {
-    const b = e.target.closest("button[data-idx]");
-    if (!b) return;
-    impostaEsitoTl(parseInt(b.dataset.idx, 10), b.classList.contains("si") ? "SI" : "NO");
-  });
-  document.getElementById("fs-conferma").addEventListener("click", confermaFalloSubito);
-  document.getElementById("fs-chiudi").addEventListener("click", chiudiFalloSubito);
-
   /* -------- CAMBI -------- */
   document.getElementById("cambi-conferma").addEventListener("click", confermaCambi);
   document.getElementById("cambi-chiudi").addEventListener("click", chiudiCambi);

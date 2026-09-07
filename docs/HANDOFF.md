@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=28` · SW `bsp-v28` · backend V4.9.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=29` · SW `bsp-v29` · backend V4.9.
 
 ---
 
@@ -62,7 +62,7 @@ Rigenerare dopo una modifica ai `.svg`: `bash scripts/genera-icone.sh` (usa Chro
 | `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (POST `azione:"VERIFICA_LOGIN"`, risposta JSON), `riconciliaCoda` (pull `getEventi` + re-invio mancanti), `svuotaEventiServer` (POST `SVUOTA_EVENTI`) |
 | `timer.js` | gestione periodi (**non c'è cronometro**): `avanzaQuarto`, `passaAlPeriodo`, OT, `terminaPartita` (emette evento `FINE`), `nuovaPartita` |
 | `azioni.js` | `registraEvento` (costruisce il payload evento + feed banner), tiri, recupero, palla persa, fallo fatto; macchina a stati overlay Assist/Rimbalzo; helper `etichettaSquadra/etichettaSquadraEstesa/etichettaNum/feed` |
-| `fallo-subito.js` | modale TL "fallo subito"; overlay fallo avversario (fatto/subito), tecnici, doppio/compensati; `apriTlAvversari` (0/1/2/3 TL avversari) |
+| `fallo-subito.js` | **flusso fallo a passi** nell'overlay destro (`#action-overlay`), con "← indietro" ad ogni step: `avviaFalloSubito` (PVL subisce), `apriTlAvversari`/`finalizzaFalloFatto` (PVL commette), overlay fallo avversario, tecnici, doppio/compensati; `ultimaAzioneEraCanestro(num)` (and-1) |
 | `calendario.js` | `CALENDARIO_DR1` (26 gare seed offline), cache/pending partite (`bsp_partite_cache`/`bsp_partite_pending`), `scaricaPartite` (JSONP), `salvaPartitaCloud`, `impostaStatoPartita`, `renderCalendario`, `iniziaPartita`, `apriStatistichePartita`, modale "aggiungi partita"; **`ricostruisciStatoDaEventi` / `riprendiComeSegnapunti`** (subentro segnapunti da foglio), `avversarioBreveAuto` / `nomePartitaDaCalendario`, `apriResetDati` (Altro → Manutenzione → azzera eventi) |
 | `giocatori.js` | anagrafica giocatori (`bsp_giocatori`, sync JSONP `getGiocatori` + POST `SALVA_GIOCATORE`), CRUD UI (nickname max 6); **flusso pre-partita 2 step** (convocati tap-riga → quintetto base → avvio); **`apriConvocatiLive` / `salvaConvocatiLive` / `haGiocatoEventi`** (modifica convocati in partita) |
 | `stats.js` | motore stat: `statsContesto`, `eventiPuliti` (dedup + drop ANNULLA/valido=FALSE), `calcolaBox`, `stintsDaEventi`, `calcolaAdvanced`; render Stats (tabellino/andamento/tiri/**PBP** = play-by-play, `descriviEvento`) e Adv (squadra/giocatori); **Segui Live** (`avviaModalitaSegui`, `pollSeguiLive` ogni 20s); `barraPunteggio`; fetch storico `scaricaEventiPartita` |
@@ -149,6 +149,8 @@ fallo_speciale, esito_tl ("SI,NO"), valido (true/false), id_evento_target
 ### Registrazione evento
 Seleziona giocatore PVL o AVVERSARI → tap azione → `registra*()` in `azioni.js`/`fallo-subito.js` → `registraEvento(campi, delta, testoFeed)` → push in `state.eventLog`, aggiorna `#ultimo-evento-banner`, **azzera `state.selezione`** (v26: ogni azione richiede un nuovo tap → niente doppio-evento / mis-attribuzione), `salvaStato()`, `inviaEvento()`, `renderPartita()`.
 - Tiro sbagliato / TL finale sbagliato → overlay **Rimbalzo** (con "Di squadra → di chi?"). Canestro PVL → overlay **Assist** (timeout 4s).
+- **Fallo** (subito/fatto): flusso a passi nell'`#action-overlay` (v29) — non un modale a schermo intero → il **CAMBI resta raggiungibile** (cambio prima dei liberi) e ogni step ha "← indietro" (un mis-tap non fa rifare tutto). And-1: se il giocatore ha appena segnato si salta al singolo TL.
+- **± dei tiri liberi dopo un cambio**: l'evento `FALLO_SUBITO` si registra a fine flusso → porta il quintetto *di quel momento*. Se il cambio è stato fatto prima dei liberi, i punti TL vanno al **quintetto entrante** (convenzione play-by-play standard: chi è in campo quando i punti entrano).
 - **And-1** (v26): se il selezionato ha appena segnato da 2/3 (`ultimaAzioneEraCanestro`, guarda indietro saltando ASSIST/ANNULLA) → `apriModaleFalloSubito` preseleziona **1 TL** con badge AND-1.
 - **Recupero ⇒ palla persa avversaria**: derivata in `calcolaBox` (`team[altra].pp++`), non registrata come evento. Non registrare anche la PALLA_PERSA speculare.
 - **Numero 0** lecito (`numValido()` sostituisce `if (num)`).

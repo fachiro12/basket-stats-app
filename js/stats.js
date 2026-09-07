@@ -519,7 +519,9 @@ function descriviEvento(e, prevLuStr, opp) {
   if (t === "FALLO_SUBITO") {
     const es = esitiArray(e.esito_tl);
     const tl = es.length ? " · " + es.filter(x => x === "SI").length + "/" + es.length + " TL " + noi : "";
-    return av + " · fallo su " + (/^\d+$/.test(n) ? chi(n) : noi) + tl;
+    const sp = e.fallo_speciale && String(e.fallo_speciale) !== "NESSUNO"
+      ? " (" + String(e.fallo_speciale).replace(/\+/g, " + ").toLowerCase() + ")" : "";
+    return av + " · fallo su " + (/^\d+$/.test(n) ? chi(n) : noi) + sp + tl;
   }
   if (t === "CAMBIO") {
     const set = str => new Set(String(str || "").split(",").map(x => x.trim()).filter(Boolean));
