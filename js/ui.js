@@ -88,7 +88,7 @@ function renderPartita() {
   aggiornaBadgeOffline();
 }
 
-/* ---------- MODALE CAMBI — checkpoint tempo / quintetto / stint ---------- */
+/* ---------- MODALE CAMBI — checkpoint tempo / quintetto ---------- */
 function durataQuartoMin() {
   return Math.round(
     (state.quartoIndice < CONFIG.QUARTI_REGOLAMENTARI ? CONFIG.DURATA_QUARTO_SEC : CONFIG.DURATA_OT_SEC) / 60
@@ -169,19 +169,17 @@ function apriCambi() {
 }
 
 function confermaCambi() {
-  if (!Array.isArray(state.stints)) state.stints = [];
   const quintettoPrec = state.roster.slice();
 
-  /* Snapshot per l'UNDO: il CAMBIO muta roster/inCampo/tempo/checkpoint/stint
-     e aggiunge chiavi a falliGiocatori. La delta ripristina tutto. */
+  /* Snapshot per l'UNDO: il CAMBIO muta roster/inCampo/tempo/checkpoint
+     e aggiunge chiavi a falliGiocatori. La delta ripristina tutto.
+     (Gli stint per le stat sono ricostruiti a parte da stintsDaEventi().) */
   const snap = {
     roster: state.roster.slice(),
     inCampo: (state.inCampo || state.roster).slice(),
     tempoPartita: state.tempoPartita,
     ultimoCheckpoint: state.ultimoCheckpoint ? Object.assign({}, state.ultimoCheckpoint) : null,
-    falliKeys: Object.keys(state.falliGiocatori),
-    stints: (state.stints || []).slice(),
-    stintCorrente: state.stintCorrente ? JSON.parse(JSON.stringify(state.stintCorrente)) : null
+    falliKeys: Object.keys(state.falliGiocatori)
   };
   const ripristinaCambio = () => {
     state.roster = snap.roster.slice();
@@ -191,8 +189,6 @@ function confermaCambi() {
     Object.keys(state.falliGiocatori).forEach(k => {
       if (snap.falliKeys.indexOf(k) === -1) delete state.falliGiocatori[k];
     });
-    state.stints = snap.stints.slice();
-    state.stintCorrente = snap.stintCorrente ? JSON.parse(JSON.stringify(snap.stintCorrente)) : null;
   };
 
   const mm = parseInt(document.getElementById("cambi-min").value, 10) || 0;
@@ -232,9 +228,6 @@ function confermaCambi() {
   state.tempoPartita = tempo;
   state.ultimoCheckpoint = { quarto: nomeQuarto(), mm: mm, ss: ss };
 
-  chiudiStint(checkpoint);
-  apriStint(state.inCampo.slice(), checkpoint);
-
   const usciti = quintettoPrec.filter(n => !state.roster.includes(n));
   const entrati = state.roster.filter(n => !quintettoPrec.includes(n));
   const descr = (usciti.length || entrati.length)
@@ -255,60 +248,52 @@ function confermaCambi() {
   mostraToast("Quintetto e checkpoint salvati");
 }
 
-function apriStint(quintetto, checkpoint) {
-  state.stintCorrente = {
-    quarto: checkpoint.quarto,
-    inizio: checkpoint,
-    quintetto: quintetto.slice()
-  };
-}
-
-function chiudiStint(checkpoint) {
-  const s = state.stintCorrente;
-  if (!s) return;
-  const pm = (checkpoint.punteggio.MIA - s.inizio.punteggio.MIA) -
-             (checkpoint.punteggio.OPP - s.inizio.punteggio.OPP);
-  state.stints.push({
-    quarto: s.quarto,
-    quintetto: s.quintetto,
-    inizio: s.inizio,
-    fine: checkpoint,
-    plusMinus: pm
-  });
-}
-
 function chiudiCambi() {
   document.getElementById("overlay-cambi").classList.remove("visibile");
 }
 
 /* ---------- MODALE RECAP ---------- */
 function apriRecap() {
-  const ctx = statsContesto(true);   // sempre la partita live
-  const box = calcolaBox(ctx);
-  const conv = state.convocati || [];
-  const numeri = conv.length
-    ? conv.map(c => c.numero)
-    : Object.keys(box.pg).map(Number).sort((a, b) => a - b);
-  const s = (x, y) => (y ? x / y : 0);
+  const tab = document.getElementById("recap-tabella");
+  const overlay = document.getElementById("overlay-recap");
+  const nomeG = n => (typeof nomeGiocatore === "function" ? nomeGiocatore(n) : "");
 
-  let html = "<tr><th>#</th><th>G</th><th>PT</th><th>+/-</th><th>eFG%</th><th>Net/40</th><th>FF</th></tr>";
-  numeri.forEach(n => {
-    const g = box.pg[n] || {};
-    const fga = (g.a2 || 0) + (g.a3 || 0), fgm = (g.m2 || 0) + (g.m3 || 0);
-    const efg = fga ? Math.round(s(fgm + 0.5 * (g.m3 || 0), fga) * 100) + "%" : "–";
-    const pm = Math.round(g.pm || 0);
-    const net = g.min ? Math.round((g.pm || 0) / g.min * 40) : 0;
-    html += `<tr>
-      <td>#${esc(n)}</td><td style="text-align:left">${esc(nomeGiocatore(n))}</td>
-      <td>${g.pt || 0}</td>
-      <td class="${pm >= 0 ? "pos" : "neg"}">${pm > 0 ? "+" : ""}${pm}</td>
-      <td>${efg}</td>
-      <td class="${net >= 0 ? "pos" : "neg"}">${net > 0 ? "+" : ""}${net}</td>
-      <td>${g.ff || 0}</td>
-    </tr>`;
-  });
-  document.getElementById("recap-tabella").innerHTML = html;
-  document.getElementById("overlay-recap").classList.add("visibile");
+  if (typeof statsContesto !== "function" || typeof calcolaBox !== "function") {
+    tab.innerHTML = '<tr><td>Statistiche non disponibili: modulo <code>stats.js</code> non caricato.</td></tr>';
+    overlay.classList.add("visibile");
+    return;
+  }
+
+  try {
+    const ctx = statsContesto(true);   // sempre la partita live
+    const box = calcolaBox(ctx);
+    const conv = state.convocati || [];
+    const numeri = conv.length
+      ? conv.map(c => c.numero)
+      : Object.keys(box.pg).map(Number).sort((a, b) => a - b);
+    const s = (x, y) => (y ? x / y : 0);
+
+    let html = "<tr><th>#</th><th>G</th><th>PT</th><th>+/-</th><th>eFG%</th><th>Net/40</th><th>FF</th></tr>";
+    numeri.forEach(n => {
+      const g = box.pg[n] || {};
+      const fga = (g.a2 || 0) + (g.a3 || 0), fgm = (g.m2 || 0) + (g.m3 || 0);
+      const efg = fga ? Math.round(s(fgm + 0.5 * (g.m3 || 0), fga) * 100) + "%" : "–";
+      const pm = Math.round(g.pm || 0);
+      const net = g.min ? Math.round((g.pm || 0) / g.min * 40) : 0;
+      html += `<tr>
+        <td>#${esc(n)}</td><td style="text-align:left">${esc(nomeG(n))}</td>
+        <td>${g.pt || 0}</td>
+        <td class="${pm >= 0 ? "pos" : "neg"}">${pm > 0 ? "+" : ""}${pm}</td>
+        <td>${efg}</td>
+        <td class="${net >= 0 ? "pos" : "neg"}">${net > 0 ? "+" : ""}${net}</td>
+        <td>${g.ff || 0}</td>
+      </tr>`;
+    });
+    tab.innerHTML = html;
+  } catch (e) {
+    tab.innerHTML = '<tr><td>Errore nel recap: ' + esc(e && e.message || e) + '</td></tr>';
+  }
+  overlay.classList.add("visibile");
 }
 
 function chiudiRecap() {

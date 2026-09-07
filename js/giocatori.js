@@ -426,11 +426,6 @@ function confermaQuintetto() {
   numeri.forEach(n => { state.falliGiocatori[n] = 0; });
   state.tempoPartita = formatTempo(CONFIG.DURATA_QUARTO_SEC);
   state.ultimoCheckpoint = { quarto: "Q1", mm: durataMin, ss: 0 };
-  state.stintCorrente = {
-    quarto: "Q1",
-    inizio: { quarto: "Q1", tempo: state.tempoPartita, punteggio: { MIA: 0, OPP: 0 } },
-    quintetto: quintettoSel.slice()
-  };
   state.ultimoTestoFeed = state.nomePartita + " — palla a due";
   salvaStato();
   localStorage.setItem(STORAGE_KEYS.segnapunti, String(p.id_partita));   // questo device è il segnapunti

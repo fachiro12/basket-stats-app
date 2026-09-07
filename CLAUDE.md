@@ -40,4 +40,5 @@ PR body: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 4. ~~"Riprendi come segnapunti"~~ — **FATTO (v20)**: `ricostruisciStatoDaEventi()` in `calendario.js`.
 5. ~~`esc()` HTML sui nomi interpolati in `innerHTML`~~ — **FATTO (v20)**.
 6. ~~`delta` reale per l'evento CAMBIO~~ — **FATTO (v20)**.
-7. Rimuovere `state.stints`/`stintCorrente` (codice morto: le stat usano `stintsDaEventi()`).
+7. ~~Rimuovere `state.stints`/`stintCorrente`~~ — **FATTO (v20)**.
+8. Test node del motore statistiche · automatizzare il cache-busting `?v=N`.

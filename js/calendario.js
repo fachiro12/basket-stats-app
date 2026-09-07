@@ -344,8 +344,6 @@ function ricostruisciStatoDaEventi(partita, eventiRaw) {
     quarto: ultimoPeriodo ? ultimoPeriodo.quarto : "Q1",
     mm: parseInt(tp[0], 10) || 0, ss: parseInt(tp[1], 10) || 0
   };
-  s.stints = [];
-  s.stintCorrente = null;
   s.ultimoTestoFeed = "Ripreso come segnapunti · " + s.punteggio.MIA + "-" + s.punteggio.OPP;
   return s;
 }

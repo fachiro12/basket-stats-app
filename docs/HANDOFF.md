@@ -79,7 +79,7 @@ Finché mancano, iOS usa uno screenshot come icona home.
 
 - **`view-partita`** — HUD (punteggio PVL/AVV, quarto, Q+1/UNDO/RECAP, banner ultimo evento) + pannello sinistro (roster + AVVERSARI) + pannello destro (griglie TIRI/PALLA/FALLI + overlay contestuali) + barra CAMBI a piena larghezza + striscia "eventi in coda".
 - **`view-stats`** — topbar + tab `Tabellino` / `Andamento` / `Tiri`; barra punteggio nera; toggle `Numeri`/`%`.
-- **`view-adv`** — topbar + tab `Squadra` / `Giocatori`; barra punteggio; card metriche + migliori quintetti + stint.
+- **`view-adv`** — topbar + tab `Squadra` / `Giocatori`; barra punteggio; card metriche + migliori quintetti + stint (tutti ricostruiti da `stintsDaEventi()`).
 - **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, Roster (anagrafica), profilo attivo, Esci.
 - **`view-calendario`** — topbar (hamburger placeholder / select stagione / +) + lista 26 gare con stato e bottone contestuale.
 
@@ -104,8 +104,10 @@ falliSquadraPerQuarto { MIA: [..], OPP: [..] }   // esteso con push(0) per OT
 selezione { squadra: "MIA"|"OPP", num }  | null
 eventLog [ { evento, delta } ]   // delta = fn di UNDO
 ultimoTestoFeed
-stints / stintCorrente            // ⚠️ NON PIÙ USATI dalle stat (vedi §8.7)
 ```
+> `stints`/`stintCorrente` **rimossi in v20**. Gli stint (quintetti, minuti, ±) sono
+> ricostruiti al volo da `stintsDaEventi()` sugli eventi. Uno `state` vecchio in
+> localStorage può ancora contenerli come campi orfani: innocui, nessuno li legge.
 
 ### Evento (payload verso il foglio — colonne `COLONNE_EVENTI`)
 ```
@@ -188,10 +190,10 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 2. ~~**Perdita silenziosa eventi**~~ — **MITIGATO in v20**: `riconciliaCoda()` (`api.js`, ogni 45s + su `online`) confronta gli `id_evento` di `state.eventLog` col foglio (`getEventi`) e rimette in coda i mancanti più vecchi di 30s. Gira solo sul device segnapunti. Non copre gli `ANNULLA` (non sono in `eventLog`); eventuali duplicati da re-invio sono innocui perché `eventiPuliti()` deduplica lato stat. Resta il limite di fondo: `no-cors` non conferma nulla.
 3. ~~**Password**~~ — **RISOLTO in V4.8**: hash SHA-256 **con salt per-utente** (colonna `salt`, `SHA256(salt|password)`); righe legacy senza salt vengono aggiornate al primo login riuscito. Login ora via **POST** (`azione: "VERIFICA_LOGIN"`) → la password non passa più in query string GET (niente log di esecuzione / cronologia / proxy). Il GET `?action=verificaLogin` resta per compatibilità coi client non aggiornati.
 4. ~~**Partita viva solo in `localStorage`**~~ — **MITIGATO in v20**: `ricostruisciStatoDaEventi()` (`calendario.js`) ricostruisce `state` dagli eventi del foglio (punteggio, periodo, tempo, quintetto in campo, falli personali e di squadra, `eventLog` con `delta` best-effort). Entry point: bottone **"Riprendi come segnapunti"** sulla card calendario di una partita "In corso" non segnata da questo device, e **"Prendi controllo"** nella banner Segui Live. Limiti: si perde ciò che l'altro device non ha ancora sincronizzato; l'UNDO di eventi pre-subentro non ripristina i contatori falli; i panchinari mai entrati non rientrano nei convocati (aggiungibili dai cambi).
-5. ~~**UNDO di un CAMBIO**~~ — **RISOLTO in v20**: `confermaCambi` passa una `delta` reale (`ripristinaCambio`) che rimette `roster`/`inCampo`/`tempoPartita`/`ultimoCheckpoint`/`stints`/`stintCorrente` e rimuove le chiavi `falliGiocatori` appena aggiunte.
+5. ~~**UNDO di un CAMBIO**~~ — **RISOLTO in v20**: `confermaCambi` passa una `delta` reale (`ripristinaCambio`) che rimette `roster`/`inCampo`/`tempoPartita`/`ultimoCheckpoint` e rimuove le chiavi `falliGiocatori` appena aggiunte.
 6. ~~**XSS latente**~~ — **RISOLTO in v20**: helper globale `esc()` (`state.js`) applicato a tutte le interpolazioni di nomi/note in `innerHTML` — `renderCalendario`, `renderRoster`, `renderSlotCambi`, `renderPartita` (roster), `apriRecap`, `renderPrePartita`, `renderQuintetto`, `barraPunteggio`, `rigaSquadra`, `vistaTabellino`, `vistaAdvGiocatori`, `vistaTiri`, `vistaStint`, `miglioriQuintetti`, `vistaPbp`. I nomi squadra costanti (`CONFIG.NOME_SQUADRA_MIA`) non sono editabili → lasciati grezzi.
-7. **`state.stints`/`stintCorrente` = codice morto** — le stat usano solo `stintsDaEventi()`. Il bookkeeping in `ui.js`/`timer.js` è da rimuovere.
-8. `apriRecap` dipende da `stats.js` senza guardia `typeof`.
+7. ~~**`state.stints`/`stintCorrente` = codice morto**~~ — **RIMOSSO in v20**: eliminati da `statoIniziale()`, `confermaCambi`, `passaAlPeriodo`/`terminaPartita` (`timer.js`), `confermaQuintetto`, `ricostruisciStatoDaEventi`; con loro `apriStint`/`chiudiStint`/`chiudiStintPeriodo`. Le stat usano solo `stintsDaEventi()`.
+8. ~~`apriRecap` senza guardia~~ — **RISOLTO in v20**: guardia `typeof statsContesto/calcolaBox === "function"` + `try/catch` che mostrano un messaggio nella tabella invece di lanciare.
 9. **Cache-busting manuale** su ~19 riferimenti + nome SW.
 10. `impostaStatoPartita` re-invia la partita con campi locali possibilmente stale → può clobberare modifiche fatte sul foglio.
 11. Minuti/± dipendono dalla disciplina del segnapunti (checkpoint CAMBI + punteggio corretto ai checkpoint).
@@ -199,7 +201,7 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 13. Icone PWA PNG mancanti.
 
 ### Backlog consigliato (ordine)
-rimuovi `state.stints` (codice morto) → test node del motore stat → auto cache-bust → salt lato client se serve.
+test node del motore stat (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`) → automatizza il cache-busting.
 
 ---
 
