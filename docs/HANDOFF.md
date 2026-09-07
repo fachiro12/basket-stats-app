@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=22` · SW `bsp-v22` · backend V4.8.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=23` · SW `bsp-v23` · backend V4.8.
 
 ---
 
@@ -45,8 +45,8 @@ PWA per segnare le statistiche di una partita di basket **in tempo reale**, pens
 - Se cambia l'URL `/exec`, aggiorna `CONFIG.APPS_SCRIPT_URL` in `js/state.js`.
 - `setupSheet()` è **idempotente e non distruttivo** (crea fogli/intestazioni se mancano, semina l'admin solo se `Utenti` è vuoto). Sicuro da rilanciare.
 
-### Icone PWA — FATTE (v22)
-Sorgenti: `icon.svg` (tasso del miele stilizzato, palette PVL — cresta bianca, maschera scura, occhi ambra) e `icon-maskable.svg` (stesso disegno all'80%, dentro la safe zone Android).
+### Icone PWA — FATTE (v23)
+Sorgenti: `icon.svg` (muso del tasso, palette PVL — cresta bianca, maschera scura, canna del naso chiara, occhi ambra con pupilla, goccia di miele) e `icon-maskable.svg` (stesso disegno all'80%, dentro la safe zone Android — generato da `genera-icone.sh`).
 PNG in root: `icon-180.png` (apple-touch), `icon-192.png`, `icon-512.png`, `icon-maskable.png`.
 Rigenerare dopo una modifica ai `.svg`: `bash scripts/genera-icone.sh` (usa Chrome headless, nessuna dipendenza), poi `node scripts/bump.mjs`.
 

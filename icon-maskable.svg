@@ -1,13 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <title>Basket Stats Pro — icona maskable</title>
   <rect x="0" y="0" width="512" height="512" fill="#1E3C8C"/>
-  <g transform="translate(256 256) scale(0.8) translate(-256 -256)">
-    <path d="M196 108 C182 78 190 56 212 72 C224 86 220 108 196 108 Z" fill="#EEF3FC"/>
-    <path d="M316 108 C330 78 322 56 300 72 C288 86 292 108 316 108 Z" fill="#EEF3FC"/>
-    <path d="M256 210 C180 210 132 244 128 312 C126 356 146 396 190 414 C210 422 232 426 256 426 C280 426 302 422 322 414 C366 396 386 356 384 312 C380 244 332 210 256 210 Z" fill="#111C36"/>
-    <path d="M256 92 C180 92 130 138 128 210 C128 236 138 256 156 268 C200 250 224 244 256 262 C288 244 312 250 356 268 C374 256 384 236 384 210 C382 138 332 92 256 92 Z" fill="#EEF3FC"/>
-    <path d="M182 262 C194 248 224 246 236 258 C226 274 194 276 182 262 Z" fill="#E0951A"/>
-    <path d="M330 262 C318 248 288 246 276 258 C286 274 318 276 330 262 Z" fill="#E0951A"/>
-    <ellipse cx="256" cy="322" rx="14" ry="11" fill="#8FA0BE"/>
+  <g stroke-linejoin="round" stroke-linecap="round" transform="translate(256 256) scale(0.8) translate(-256 -256)">
+    <!-- testa bianca, arrotondata, orecchie piccole -->
+    <path d="M256 100 C214 100 198 76 168 74 C178 100 176 118 166 134 C140 154 120 190 120 240 C120 306 160 368 224 398 C234 402 246 404 256 404 C266 404 278 402 288 398 C352 368 392 306 392 240 C392 190 372 154 346 134 C336 118 334 100 344 74 C314 76 298 100 256 100 Z" fill="#F3F6FC"/>
+    <!-- maschera scura: metà bassa, due punte agli occhi, valle centrale (canna del naso chiara) -->
+    <path d="M120 244 C130 212 158 196 190 208 C206 214 216 230 222 250 C234 240 246 256 256 258 C266 256 278 240 290 250 C296 230 306 214 322 208 C354 196 382 212 392 244 C392 306 352 368 288 398 C278 402 266 404 256 404 C246 404 234 402 224 398 C160 368 120 306 120 244 Z" fill="#101B33"/>
+    <!-- canna del naso chiara, sopra la maschera -->
+    <path d="M242 150 L270 150 L274 306 C274 320 238 320 238 306 Z" fill="#F3F6FC"/>
+    <!-- occhi ambra socchiusi con pupilla, inclinati verso il centro -->
+    <path d="M158 236 C172 222 206 224 216 240 C208 258 172 258 158 244 Z" fill="#F2A81E"/>
+    <path d="M354 236 C340 222 306 224 296 240 C304 258 340 258 354 244 Z" fill="#F2A81E"/>
+    <ellipse cx="190" cy="240" rx="7" ry="10" fill="#101B33"/>
+    <ellipse cx="322" cy="240" rx="7" ry="10" fill="#101B33"/>
+    <!-- naso -->
+    <ellipse cx="256" cy="312" rx="17" ry="13" fill="#101B33"/>
+    <!-- goccia di miele -->
+    <path d="M256 326 C261 338 263 348 257 355 C252 359 249 355 249 348 C250 340 253 333 256 326 Z" fill="#F2A81E"/>
   </g>
 </svg>

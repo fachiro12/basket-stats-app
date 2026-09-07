@@ -12,23 +12,26 @@ CHROME="${CHROME:-/c/Program Files/Google/Chrome/Application/chrome.exe}"
 [ -x "$CHROME" ] || CHROME="/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 [ -x "$CHROME" ] || { echo "Chrome/Edge non trovato — imposta \$CHROME"; exit 1; }
 
-TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
-STYLE='<!doctype html><meta charset=utf-8><style>html,body{margin:0;padding:0}svg{display:block;width:100vw;height:100vh}</style>'
+# icon-maskable.svg = icon.svg col disegno rimpicciolito all'80% (safe zone Android)
+sed 's/Basket Stats Pro — Virtus Luino/Basket Stats Pro — icona maskable/; s#<g stroke-linejoin="round" stroke-linecap="round">#<g stroke-linejoin="round" stroke-linecap="round" transform="translate(256 256) scale(0.8) translate(-256 -256)">#' icon.svg > icon-maskable.svg
 
-wrap() {  # $1 = svg file, $2 = out html — toglie width/height solo dal tag <svg>
-  { printf '%s' "$STYLE"; sed '1,/<svg /s/<svg \([^>]*\) width="512" height="512">/<svg \1>/' "$1"; } > "$2"
-}
-shot() {  # $1 out png, $2 device-scale-factor, $3 wrapper html  (window 512, scala per le taglie < 512)
-  "$CHROME" --headless=new --hide-scrollbars --force-device-scale-factor="$2" \
-    --virtual-time-budget=2500 --screenshot="$1" --window-size=512,512 "$3" >/dev/null 2>&1
-}
-
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+mkdir -p "$TMP/prof"
+STYLE='<!doctype html><meta charset=utf-8><style>html,body{margin:0}svg{display:block;width:100vw;height:100vh}</style>'
+wrap() { { printf '%s' "$STYLE"; sed 's/ width="512" height="512">/>/' "$1"; } > "$2"; }
 wrap icon.svg "$TMP/w.html"
 wrap icon-maskable.svg "$TMP/wm.html"
 
-shot icon-180.png 0.3515625 "$TMP/w.html"   # 512 * 0.3515625 = 180
-shot icon-192.png 0.375     "$TMP/w.html"   # 512 * 0.375     = 192
+# window 512; le taglie < 512 si ottengono con device-scale-factor frazionario.
+# --screenshot su path ASSOLUTO (Chrome non usa la CWD della shell).
+shot() {
+  "$CHROME" --headless=new --no-sandbox --user-data-dir="$TMP/prof" --hide-scrollbars \
+    --force-device-scale-factor="$2" --virtual-time-budget=3000 \
+    --screenshot="$(cygpath -w "$TMP/$1")" --window-size=512,512 "$(cygpath -w "$3")" >/dev/null 2>&1
+  cp "$TMP/$1" "./$1"
+}
+shot icon-180.png 0.3515625 "$TMP/w.html"
+shot icon-192.png 0.375     "$TMP/w.html"
 shot icon-512.png 1         "$TMP/w.html"
 shot icon-maskable.png 1    "$TMP/wm.html"
 
