@@ -94,16 +94,23 @@ function renderPartita() {
   aggiornaBadgeOffline();
 }
 
-/* ---------- MODALE CAMBI — checkpoint tempo / quintetto ---------- */
-function durataQuartoMin() {
+/* ---------- MODALE CAMBI — checkpoint periodo / tempo / quintetto / punteggio ---------- */
+function periodoCambiSelezionato() {
+  const v = parseInt((document.getElementById("cambi-quarto") || {}).value, 10);
+  return isNaN(v) ? state.quartoIndice : v;
+}
+function durataPeriodoMin(idx) {
   return Math.round(
-    (state.quartoIndice < CONFIG.QUARTI_REGOLAMENTARI ? CONFIG.DURATA_QUARTO_SEC : CONFIG.DURATA_OT_SEC) / 60
+    (idx < CONFIG.QUARTI_REGOLAMENTARI ? CONFIG.DURATA_QUARTO_SEC : CONFIG.DURATA_OT_SEC) / 60
   );
 }
+/* checkpoint di riferimento per il periodo attualmente SCELTO nel select */
 function checkpointCorrente() {
+  const idx = periodoCambiSelezionato();
+  const nome = nomePeriodo(idx);
   const cp = state.ultimoCheckpoint;
-  if (cp && cp.quarto === nomeQuarto()) return { mm: cp.mm | 0, ss: cp.ss | 0 };
-  return { mm: durataQuartoMin(), ss: 0 };  // inizio periodo (tempo pieno)
+  if (cp && cp.quarto === nome) return { mm: cp.mm | 0, ss: cp.ss | 0 };
+  return { mm: durataPeriodoMin(idx), ss: 0 };   // inizio periodo (tempo pieno)
 }
 function opzioni(sel, valori, selezionato, etichetta) {
   sel.innerHTML = "";
@@ -115,15 +122,24 @@ function opzioni(sel, valori, selezionato, etichetta) {
     sel.appendChild(o);
   });
 }
+function popolaQuartoCambi() {
+  const cur = state.quartoIndice;
+  const maxSel = cur + 1;   // si può correggere all'indietro o avanzare di 1 periodo
+  const vals = [];
+  for (let i = 0; i <= maxSel; i++) vals.push(i);
+  opzioni(document.getElementById("cambi-quarto"), vals, cur, nomePeriodo);
+}
 function popolaSecondiCambi() {
   const cp = checkpointCorrente();
   const min = parseInt(document.getElementById("cambi-min").value, 10);
   const maxSec = (min === cp.mm) ? cp.ss : 59;
   const secs = [];
-  for (let s = 0; s <= maxSec; s++) secs.push(s);
+  for (let s = 0; s <= 55; s += 5) if (s <= maxSec) secs.push(s);   // passi di 5s: wheel corto su iPhone
+  if (maxSec % 5 !== 0 && maxSec <= 59) secs.push(maxSec);           // includi il limite esatto
   const sel = document.getElementById("cambi-sec");
-  const attuale = Math.min(parseInt(sel.value, 10) || (min === cp.mm ? cp.ss : 0), maxSec);
-  opzioni(sel, secs, attuale);
+  const prev = parseInt(sel.value, 10);
+  const attuale = secs.indexOf(prev) > -1 ? prev : (min === cp.mm ? cp.ss : 0);
+  opzioni(sel, secs, Math.min(attuale, maxSec));
 }
 function popolaTempoCambi() {
   const cp = checkpointCorrente();
@@ -164,13 +180,14 @@ function renderSlotCambi() {
 
 function apriCambi() {
   if (state.partitaFinita) { mostraToast("Partita terminata"); return; }
-  document.getElementById("cambi-quarto").textContent = nomeQuarto();
+  popolaQuartoCambi();
+  document.getElementById("cambi-quarto").onchange = popolaTempoCambi;
   popolaTempoCambi();
   document.getElementById("cambi-min").onchange = popolaSecondiCambi;
   document.getElementById("cambi-punti-label").textContent =
     "Punteggio (" + CONFIG.NOME_SQUADRA_MIA + " − " + (state.avversarioBreve || "AVV") + ")";
-  document.getElementById("cambi-punteggio").textContent =
-    state.punteggio.MIA + " − " + state.punteggio.OPP;
+  document.getElementById("cambi-punti-mia").value = state.punteggio.MIA;
+  document.getElementById("cambi-punti-opp").value = state.punteggio.OPP;
   renderSlotCambi();
   document.getElementById("overlay-cambi").classList.add("visibile");
 }
@@ -187,27 +204,37 @@ function confermaCambi() {
     inCampo: (state.inCampo || state.roster).slice(),
     tempoPartita: state.tempoPartita,
     ultimoCheckpoint: state.ultimoCheckpoint ? Object.assign({}, state.ultimoCheckpoint) : null,
-    falliKeys: Object.keys(state.falliGiocatori)
+    falliKeys: Object.keys(state.falliGiocatori),
+    quartoIndice: state.quartoIndice
   };
+  // La delta del CAMBIO NON tocca il punteggio: l'eventuale correzione ha un
+  // evento RETTIFICA proprio, con UNDO separato.
   const ripristinaCambio = () => {
     state.roster = snap.roster.slice();
     state.inCampo = snap.inCampo.slice();
     state.tempoPartita = snap.tempoPartita;
     state.ultimoCheckpoint = snap.ultimoCheckpoint ? Object.assign({}, snap.ultimoCheckpoint) : null;
+    state.quartoIndice = snap.quartoIndice;
     Object.keys(state.falliGiocatori).forEach(k => {
       if (snap.falliKeys.indexOf(k) === -1) delete state.falliGiocatori[k];
     });
   };
 
+  // --- periodo scelto ---
+  const qIdx = periodoCambiSelezionato();
+  const qCambiato = qIdx !== state.quartoIndice;
+
+  // --- tempo ---
   const mm = parseInt(document.getElementById("cambi-min").value, 10) || 0;
   const ss = parseInt(document.getElementById("cambi-sec").value, 10) || 0;
   const cp = checkpointCorrente();
-  if (mm * 60 + ss > cp.mm * 60 + cp.ss) {
-    mostraToast("Il tempo rimanente non può aumentare nello stesso quarto");
+  if (!qCambiato && mm * 60 + ss > cp.mm * 60 + cp.ss) {
+    mostraToast("Il tempo rimanente non può aumentare nello stesso periodo");
     return;
   }
   const tempo = String(mm).padStart(2, "0") + ":" + String(ss).padStart(2, "0");
 
+  // --- quintetto ---
   const nuovo = state.roster.slice();
   document.querySelectorAll("#cambi-slots .cambio-sel").forEach(sel => {
     const idx = parseInt(sel.dataset.idx, 10);
@@ -218,17 +245,35 @@ function confermaCambi() {
     if (inp.value.trim() && !isNaN(inp.value)) nuovo[idx] = parseInt(inp.value, 10);
   });
   if (new Set(nuovo).size !== nuovo.length) { mostraToast("Quintetto non valido: numeri duplicati"); return; }
+
+  // --- punteggio (correzione facoltativa) ---
+  const pMia = parseInt(document.getElementById("cambi-punti-mia").value, 10);
+  const pOpp = parseInt(document.getElementById("cambi-punti-opp").value, 10);
+  const nMia = isNaN(pMia) ? state.punteggio.MIA : Math.max(0, pMia);
+  const nOpp = isNaN(pOpp) ? state.punteggio.OPP : Math.max(0, pOpp);
+  const scoreCambiato = nMia !== state.punteggio.MIA || nOpp !== state.punteggio.OPP;
+
+  /* Ordine: 1) rettifica punteggio (periodo/quintetto ANCORA vecchi → l'evento
+     resta nel contesto giusto), 2) cambio periodo, 3) quintetto + evento CAMBIO. */
+  if (scoreCambiato) {
+    const vecchio = state.punteggio.MIA + "-" + state.punteggio.OPP;
+    const nuovoScore = nMia + "-" + nOpp;
+    state.punteggio.MIA = nMia;
+    state.punteggio.OPP = nOpp;
+    registraEvento({
+      squadra: "", giocatore_num: "",
+      tipo_evento: "RETTIFICA", dettaglio: "PUNTEGGIO " + vecchio + " → " + nuovoScore,
+      punti_segnati: 0
+    }, () => {
+      const m = vecchio.split("-");
+      state.punteggio.MIA = +m[0]; state.punteggio.OPP = +m[1];
+    }, "⚑ Rettifica punteggio → " + nuovoScore);
+  }
+
+  if (qCambiato) state.quartoIndice = qIdx;
+
   nuovo.forEach(n => { if (!(n in state.falliGiocatori)) state.falliGiocatori[n] = 0; });
   state.roster = nuovo;
-
-  // Il checkpoint usa il punteggio CORRENTE (non più editabile qui: le correzioni
-  // punteggio vanno fatte con UNDO/re-inserimento, non nella modale cambi).
-  const checkpoint = {
-    quarto: nomeQuarto(),
-    tempo,
-    punteggio: { MIA: state.punteggio.MIA, OPP: state.punteggio.OPP }
-  };
-
   state.inCampo = state.roster.slice();
   state.tempoPartita = tempo;
   state.ultimoCheckpoint = { quarto: nomeQuarto(), mm: mm, ss: ss };
@@ -236,21 +281,21 @@ function confermaCambi() {
   const usciti = quintettoPrec.filter(n => !state.roster.includes(n));
   const entrati = state.roster.filter(n => !quintettoPrec.includes(n));
   const descr = (usciti.length || entrati.length)
-    ? "Cambio " + tempo + " — OUT " + (usciti.map(n => "#" + n).join(",") || "—") +
+    ? "Cambio " + nomeQuarto() + " " + tempo + " — OUT " + (usciti.map(n => "#" + n).join(",") || "—") +
       " / IN " + (entrati.map(n => "#" + n).join(",") || "—")
-    : "Checkpoint " + tempo;
+    : "Checkpoint " + nomeQuarto() + " " + tempo;
 
   registraEvento({
     squadra: "MIA",
     giocatore_num: [...usciti, ...entrati].join(","),
     tipo_evento: "CAMBIO",
     dettaglio: "STINT",
-    punti_segnati: 0,
-    punteggio_progressivo: checkpoint.punteggio.MIA + "-" + checkpoint.punteggio.OPP
+    punti_segnati: 0
+    // punteggio_progressivo lo mette registraEvento dal punteggio corrente
   }, ripristinaCambio, descr);
 
   chiudiCambi();
-  mostraToast("Quintetto e checkpoint salvati");
+  mostraToast(qCambiato || scoreCambiato ? "Checkpoint aggiornato" : "Quintetto e checkpoint salvati");
 }
 
 function chiudiCambi() {

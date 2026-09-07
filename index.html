@@ -13,14 +13,14 @@
 <meta name="apple-mobile-web-app-title" content="Basket Stats">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="stylesheet" href="css/tokens.css?v=27">
-<link rel="stylesheet" href="css/base.css?v=27">
-<link rel="stylesheet" href="css/shell.css?v=27">
-<link rel="stylesheet" href="css/partita.css?v=27">
-<link rel="stylesheet" href="css/altro.css?v=27">
-<link rel="stylesheet" href="css/calendario.css?v=27">
-<link rel="stylesheet" href="css/roster.css?v=27">
-<link rel="stylesheet" href="css/stats.css?v=27">
+<link rel="stylesheet" href="css/tokens.css?v=28">
+<link rel="stylesheet" href="css/base.css?v=28">
+<link rel="stylesheet" href="css/shell.css?v=28">
+<link rel="stylesheet" href="css/partita.css?v=28">
+<link rel="stylesheet" href="css/altro.css?v=28">
+<link rel="stylesheet" href="css/calendario.css?v=28">
+<link rel="stylesheet" href="css/roster.css?v=28">
+<link rel="stylesheet" href="css/stats.css?v=28">
 </head>
 <body>
 
@@ -401,20 +401,25 @@
     <div class="cambi-checkpoint">
       <div class="cc-riga">
         <span class="cc-label">Periodo</span>
-        <span class="cc-valore" id="cambi-quarto">Q1</span>
+        <select id="cambi-quarto" class="cc-select"></select>
       </div>
       <div class="cc-riga">
         <span class="cc-label">Tempo rimanente</span>
         <span class="cc-campi">
-          <select id="cambi-min"></select>
+          <select id="cambi-min" class="cc-select"></select>
           <span>:</span>
-          <select id="cambi-sec"></select>
+          <select id="cambi-sec" class="cc-select"></select>
         </span>
       </div>
       <div class="cc-riga">
         <span class="cc-label" id="cambi-punti-label">Punteggio</span>
-        <span class="cc-valore" id="cambi-punteggio">0 − 0</span>
+        <span class="cc-campi">
+          <input type="tel" inputmode="numeric" maxlength="3" id="cambi-punti-mia" class="cc-num">
+          <span>−</span>
+          <input type="tel" inputmode="numeric" maxlength="3" id="cambi-punti-opp" class="cc-num">
+        </span>
       </div>
+      <div class="cc-hint" id="cambi-punti-hint">Correggi il punteggio solo se il tabellone è sbagliato · revisione a fine partita.</div>
     </div>
 
     <div id="cambi-slots"></div>
@@ -552,18 +557,18 @@
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=27"></script>
-<script src="js/tema.js?v=27"></script>
-<script src="js/api.js?v=27"></script>
-<script src="js/timer.js?v=27"></script>
-<script src="js/azioni.js?v=27"></script>
-<script src="js/fallo-subito.js?v=27"></script>
-<script src="js/calendario.js?v=27"></script>
-<script src="js/giocatori.js?v=27"></script>
-<script src="js/stats.js?v=27"></script>
-<script src="js/ui.js?v=27"></script>
-<script src="js/pin.js?v=27"></script>
-<script src="js/app.js?v=27"></script>
+<script src="js/state.js?v=28"></script>
+<script src="js/tema.js?v=28"></script>
+<script src="js/api.js?v=28"></script>
+<script src="js/timer.js?v=28"></script>
+<script src="js/azioni.js?v=28"></script>
+<script src="js/fallo-subito.js?v=28"></script>
+<script src="js/calendario.js?v=28"></script>
+<script src="js/giocatori.js?v=28"></script>
+<script src="js/stats.js?v=28"></script>
+<script src="js/ui.js?v=28"></script>
+<script src="js/pin.js?v=28"></script>
+<script src="js/app.js?v=28"></script>
 
 </body>
 </html>

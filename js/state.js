@@ -81,6 +81,12 @@ function nomeQuarto() {
   return "OT" + (state.quartoIndice - reg + 1);
 }
 
+/* Nome di un periodo dato l'indice 0-based (per il select "Periodo" dei cambi). */
+function nomePeriodo(i) {
+  const reg = CONFIG.QUARTI_REGOLAMENTARI;
+  return i < reg ? "Q" + (i + 1) : "OT" + (i - reg + 1);
+}
+
 /* Indice per i FALLI di squadra: nei supplementari contano come 4° quarto
    (FIBA Art. 41) → mai oltre l'ultimo quarto regolamentare. */
 function indiceFalli() {

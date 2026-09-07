@@ -611,16 +611,36 @@ main.corpo-partita {
   border: 1.5px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
 }
+.cc-select,
 .cc-campi select {
-  min-height: 40px;
-  padding: 4px 8px;
-  font-size: 15px;
+  min-height: 44px;
+  padding: 6px 10px;
+  font-size: 16px;
   font-weight: 800;
   text-align: center;
   color: var(--color-text-primary);
   background: var(--color-surface-raised);
   border: 1.5px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
+}
+#cambi-quarto.cc-select { min-width: 96px; }
+.cc-num {
+  width: 58px;
+  min-height: 44px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 16px;
+  padding: 4px;
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+.cc-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  margin-top: 4px;
 }
 
 .cambi-checkpoint {

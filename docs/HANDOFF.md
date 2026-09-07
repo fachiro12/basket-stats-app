@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=27` · SW `bsp-v27` · backend V4.9.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=28` · SW `bsp-v28` · backend V4.9.
 
 ---
 
@@ -120,7 +120,7 @@ tipo_evento, dettaglio, punti_segnati,
 punteggio_progressivo ("MIA-OPP"), quintetto_mia ("5,8,12,23,33"),
 fallo_speciale, esito_tl ("SI,NO"), valido (true/false), id_evento_target
 ```
-`tipo_evento`: `TIRO` (dett. `2P_SEGNATO`/`2P_ERRATO`/`3P_...`), `FALLO_SUBITO` (dett. `RIMESSA`/`1TL`/`2TL`/`3TL`/`1TL_AND1`/`SENZA_TL`/`TECNICO_1TL`), `FALLO_FATTO` (dett. `PERSONALE`/`1TL`/`2TL`/`3TL`/`DOPPIO_PERSONALE`/`TECNICI_COMPENSATI`/`ANTISPORTIVI_COMPENSATI`/`TECNICO_PANCHINA`), `RECUPERO`, `PALLA_PERSA`, `ASSIST` (dett. `AST_A_<num>`), `RIMBALZO` (dett. `OFFENSIVO`/`DIFENSIVO`/`SQUADRA`), `CAMBIO` (dett. `STINT`), `ANNULLA`, `FINE`.
+`tipo_evento`: `TIRO` (dett. `2P_SEGNATO`/`2P_ERRATO`/`3P_...`), `FALLO_SUBITO` (dett. `RIMESSA`/`1TL`/`2TL`/`3TL`/`1TL_AND1`/`SENZA_TL`/`TECNICO_1TL`), `FALLO_FATTO` (dett. `PERSONALE`/`1TL`/`2TL`/`3TL`/`DOPPIO_PERSONALE`/`TECNICI_COMPENSATI`/`ANTISPORTIVI_COMPENSATI`/`TECNICO_PANCHINA`), `RECUPERO`, `PALLA_PERSA`, `ASSIST` (dett. `AST_A_<num>`), `RIMBALZO` (dett. `OFFENSIVO`/`DIFENSIVO`/`SQUADRA`, `squadra` = di chi è il rimbalzo di squadra), `CAMBIO` (dett. `STINT`), `RETTIFICA` (dett. `PUNTEGGIO <old> → <new>`, correzione punteggio dai cambi), `ANNULLA`, `FINE`.
 
 ⚠️ `esito_tl` di un `FALLO_FATTO` = i TL **degli avversari**; `punti_segnati` di `FALLO_FATTO` = punti concessi agli avversari.
 
@@ -155,7 +155,14 @@ Seleziona giocatore PVL o AVVERSARI → tap azione → `registra*()` in `azioni.
 - A **partita finita** ogni inserimento è bloccato (roster/AVVERSARI/CAMBI/falli disabilitati); resta solo UNDO.
 
 ### Cambi / checkpoint (`apriCambi`/`confermaCambi` in `ui.js`)
-Modale: periodo, **tempo rimanente** (2 `<select>` MM/SS — vincolo: non può aumentare nello stesso quarto), **punteggio corrente in sola lettura** (v26: non più editabile — le correzioni si fanno con UNDO), e per ognuno dei 5 in campo un `<select>` per scambiarlo con un panchinaro. Alla conferma registra un evento `CAMBIO` e aggiorna `state.roster`/`inCampo`/`tempoPartita`/`ultimoCheckpoint`. **Al cambio quarto `passaAlPeriodo` apre `apriCambi` in automatico** per confermare il quintetto (checkpoint a tempo pieno).
+Modale-checkpoint, tutto correggibile (v28):
+- **Periodo** — `<select>` Q1..(corrente+1). Cambiarlo aggiorna `state.quartoIndice`.
+- **Tempo rimanente** — `<select>` MM + `<select>` SS a **passi di 5s** (wheel corto su iPhone). Vincolo "non aumenta" solo se il periodo non cambia.
+- **Punteggio** — 2 `<input>` MIA/OPP **editabili**: se diversi dal corrente → aggiorna `state.punteggio` + registra un evento **`RETTIFICA`** (`dettaglio: "PUNTEGGIO 22-20 → 24-20"`, UNDO separato). Attribuito allo stint corrente; revisione a fine partita.
+- **Quintetto** — per ognuno dei 5 un `<select>` verso un panchinaro.
+
+Alla conferma: eventuale `RETTIFICA` (contesto vecchio), poi cambio periodo, poi `CAMBIO` + aggiorna `roster`/`inCampo`/`tempoPartita`/`ultimoCheckpoint`. Lo `snap` dell'UNDO ora include anche `quartoIndice` e `punteggio`.
+**Al cambio quarto `passaAlPeriodo` apre `apriCambi` in automatico.**
 
 ### Modifica convocati in partita (v27, `giocatori.js`)
 Bottone **"✎ Modifica convocati"** nella modale CAMBI → `#overlay-convocati-live` (`apriConvocatiLive`). Modifica **solo** `state.convocati`: correggi maglia/nick, aggiungi un dimenticato (da anagrafica o manuale), rimuovi. **Nessun evento riscritto.** Un convocato è **bloccato** (numero non editabile, non rimovibile) se `haGiocatoEventi(num)` → compare come `giocatore_num` o in un `quintetto_mia` di un evento. I rari cambi-numero validi si propagano a `roster`/`inCampo`/`falliGiocatori`.

@@ -531,6 +531,7 @@ function descriviEvento(e, prevLuStr, opp) {
            " / OUT " + (out.map(chi).join(", ") || "—");
   }
   if (t === "FINE") return "— Fine partita —";
+  if (t === "RETTIFICA") return "⚑ " + String(d).replace(/^PUNTEGGIO /i, "rettifica punteggio ").toLowerCase();
   return lato + " · " + t.replace(/_/g, " ").toLowerCase();
 }
 
