@@ -106,3 +106,8 @@
 }
 .riga-switch .switch { flex-shrink: 0; }
 .riga-switch .switch input:checked + .switch-slider { background: var(--color-brand); }
+
+/* ---------- Riga pericolo (es. Azzera dati) ---------- */
+.riga-altro.riga-pericolo .ico-riga,
+.riga-altro.riga-pericolo .titolo-altro { color: var(--color-state-negative); }
+.riga-altro.riga-pericolo:active { background: var(--color-state-negative-soft); }

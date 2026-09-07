@@ -134,6 +134,23 @@ function riconciliaCoda() {
   });
 }
 
+/* Svuota il foglio Eventi (manutenzione fine-test). POST con risposta JSON
+   leggibile: doppia protezione lato server (token scrittura + conferma:"SVUOTA"). */
+function svuotaEventiServer(callback) {
+  const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
+  if (!base || base.indexOf("INCOLLA_QUI") === 0) { callback(false); return; }
+  fetch(base, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      azione: "SVUOTA_EVENTI", conferma: "SVUOTA", reset_stati: true, token: tokenScrittura()
+    })
+  })
+    .then(r => r.json())
+    .then(r => callback(!!(r && r.ok && r.azione === "eventi_svuotati")))
+    .catch(() => callback(false));
+}
+
 window.addEventListener("online", processaCoda);
 window.addEventListener("online", riconciliaCoda);
 setInterval(processaCoda, CONFIG.RETRY_CODA_MS);

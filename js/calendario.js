@@ -375,6 +375,50 @@ function riprendiComeSegnapuntiId(id) {
   riprendiComeSegnapunti(elencoPartite().find(x => String(x.id_partita) === String(id)));
 }
 
+/* ==========================================================================
+   MANUTENZIONE — Azzera dati partite (svuota Eventi, tiene roster + calendario)
+   Solo Admin · doppia conferma (password + parola "SVUOTA").
+   ========================================================================== */
+function apriResetDati() {
+  const u = (typeof utenteCorrente === "function") ? utenteCorrente() : null;
+  if (!u || u.ruolo !== "Admin") { mostraToast("Riservato agli Admin"); return; }
+
+  if (!confirm(
+    "ATTENZIONE — cancella TUTTI gli eventi partita dal foglio e rimette le gare a \"Da giocare\".\n\n" +
+    "Roster (anagrafica) e calendario NON vengono toccati.\n" +
+    "Operazione irreversibile. Continuare?"
+  )) return;
+
+  const pwd = prompt("Password di \"" + u.username + "\" per confermare:");
+  if (!pwd) return;
+  if (prompt('Scrivi SVUOTA (in maiuscolo) per confermare:') !== "SVUOTA") {
+    mostraToast("Annullato");
+    return;
+  }
+
+  mostraToast("Verifica credenziali…");
+  verificaLoginServer(u.username, pwd, (utente, ok) => {
+    if (!ok) { mostraToast("Password errata — annullato"); return; }
+    mostraToast("Azzeramento in corso…");
+    svuotaEventiServer(esito => {
+      if (!esito) { mostraToast("Azzeramento non riuscito"); return; }
+      // pulizia locale — tiene bsp_giocatori, bsp_current_user, bsp_pin_ok, bsp_tema
+      [STORAGE_KEYS.stato, STORAGE_KEYS.coda, STORAGE_KEYS.segnapunti,
+       KEY_PARTITE_PENDING, KEY_PARTITE_CACHE].forEach(k => localStorage.removeItem(k));
+      codaInvio = [];
+      state = statoIniziale();
+      statsEventiRemoti = null;
+      if (typeof fermaSeguiLive === "function") fermaSeguiLive();
+      salvaStato();
+      if (typeof aggiornaBadgeOffline === "function") aggiornaBadgeOffline();
+      scaricaPartite(() => { renderCalendario(); });
+      renderCalendario();
+      if (typeof renderPartita === "function") renderPartita();
+      mostraToast("Dati partite azzerati");
+    });
+  });
+}
+
 /* ---------- Modale "Aggiungi partita" ---------- */
 function apriAggiungiPartita() {
   document.getElementById("ap-tipo").value = "Amichevole";

@@ -36,6 +36,7 @@ PR body: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 
 1. ~~Token di scrittura sui POST~~ — **FATTO (V4.7)**. Da attivare impostando la Script Property `WRITE_TOKEN`.
 2. ~~Password con salt + login via POST~~ — **FATTO (V4.8)**.
+   Backend attuale = **V4.9** (aggiunge `SVUOTA_EVENTI` per "Altro → Manutenzione → Azzera dati partite").
 3. ~~Riconciliazione coda eventi~~ — **FATTO (v20)**: `riconciliaCoda()` in `api.js`.
 4. ~~"Riprendi come segnapunti"~~ — **FATTO (v20)**: `ricostruisciStatoDaEventi()` in `calendario.js`.
 5. ~~`esc()` HTML sui nomi interpolati in `innerHTML`~~ — **FATTO (v20)**.

@@ -44,6 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* -------- PROFILO / LOGOUT -------- */
   document.getElementById("btn-logout").addEventListener("click", logout);
+  const btnReset = document.getElementById("btn-reset-dati");
+  if (btnReset && typeof apriResetDati === "function") btnReset.addEventListener("click", apriResetDati);
 
   /* -------- ROSTER / ANAGRAFICA GIOCATORI -------- */
   document.querySelectorAll('[data-apri="roster"]').forEach(el =>
