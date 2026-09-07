@@ -234,7 +234,9 @@ function apriPrePartita(partita) {
     partita.avversario + " · " + partita.luogo + " · " + partita.tipo +
     (amichevole ? "  ·  nessun limite convocati" : "  ·  max " + MAX_REFERTO + " a referto");
 
-  const breve = String(partita.avversario || "").slice(0, CONFIG.MAX_LABEL_AVVERSARIO);
+  const breve = (typeof avversarioBreveAuto === "function")
+    ? avversarioBreveAuto(partita.avversario)
+    : String(partita.avversario || "").slice(0, CONFIG.MAX_LABEL_AVVERSARIO);
   document.getElementById("pp-avv-breve").value = breve;
   aggiornaAnteprimaNome();
 
@@ -255,6 +257,7 @@ function renderPrePartita() {
     const nome = ((g.cognome || "") + " " + (g.nome || "")).trim() || ("#" + g.numGara);
     const row = document.createElement("div");
     row.className = "pp-riga" + (g.convocato ? " on" : "");
+    row.dataset.idx = idx;
     row.innerHTML =
       '<input type="checkbox" class="pp-check" data-idx="' + idx + '"' + (g.convocato ? " checked" : "") + '>' +
       '<span class="pp-nome">' + esc(nome) + (g.nickname ? ' (' + esc(g.nickname) + ')' : "") +
@@ -275,12 +278,16 @@ function contaConvocati() { return prePartitaPool.filter(g => g.convocato).lengt
 function ppToggle(idx, checked) {
   if (checked && contaConvocati() >= prePartitaMax) {
     mostraToast("Massimo " + prePartitaMax + " convocati (Campionato)");
-    renderPrePartita();
     return;
   }
+  if (!prePartitaPool[idx]) return;
   prePartitaPool[idx].convocato = checked;
-  const riga = document.querySelectorAll("#pp-lista .pp-riga")[idx];
-  if (riga) riga.classList.toggle("on", checked);
+  const riga = document.querySelector('#pp-lista .pp-riga[data-idx="' + idx + '"]');
+  if (riga) {
+    riga.classList.toggle("on", checked);
+    const chk = riga.querySelector(".pp-check");
+    if (chk) chk.checked = checked;
+  }
   aggiornaContatorePrePartita();
 }
 function ppNumero(idx, val) { if (prePartitaPool[idx]) prePartitaPool[idx].numGara = val.trim(); }
@@ -296,7 +303,7 @@ function aggiungiConvocatoManuale() {
     id: "",
     nome: "",
     cognome: (parti[1] || "").trim() || ("#" + numero),
-    nickname: (parti[2] || "").trim().toUpperCase().slice(0, 4),
+    nickname: (parti[2] || "").trim().toUpperCase().slice(0, 6),
     ruolo: "",
     numero_maglia: numero,
     convocato: contaConvocati() < prePartitaMax,
@@ -372,8 +379,8 @@ function renderQuintetto() {
   cont.innerHTML = "";
   prePartitaConvocatiTemp.forEach(c => {
     const on = quintettoSel.indexOf(c.numero) > -1;
-    const row = document.createElement("div");
-    row.className = "pp-riga" + (on ? " on" : "");
+    const row = document.createElement("label");   // tutta la riga tocca la checkbox
+    row.className = "pp-riga q-riga" + (on ? " on" : "");
     row.innerHTML =
       '<input type="checkbox" class="q-check" data-num="' + esc(c.numero) + '"' + (on ? " checked" : "") + '>' +
       '<span class="pp-nome">' + esc(etichettaGiocatore(c)) +
@@ -438,4 +445,157 @@ function confermaQuintetto() {
   navigaA("partita");
   renderPartita();
   mostraToast(state.nomePartita + " avviata");
+}
+
+/* ==========================================================================
+   MODIFICA CONVOCATI DURANTE LA PARTITA
+   Solo la lista `state.convocati`: aggiungi un dimenticato, correggi maglia/nick.
+   Chi ha già una voce a referto (giocatore_num o quintetto_mia in un evento)
+   è BLOCCATO → gli eventi non vanno mai riscritti. Nessun evento toccato.
+   ========================================================================== */
+function haGiocatoEventi(num) {
+  const s = String(num);
+  return (state.eventLog || []).some(x => {
+    const e = x.evento || x;
+    if (String(e.giocatore_num) === s) return true;
+    return String(e.quintetto_mia || "").split(",").map(v => v.trim()).indexOf(s) > -1;
+  });
+}
+
+function apriConvocatiLive() {
+  if (state.partitaFinita) { mostraToast("Partita terminata"); return; }
+  if (typeof chiudiCambi === "function") chiudiCambi();
+  renderConvocatiLive();
+  document.getElementById("overlay-convocati-live").classList.add("visibile");
+}
+function chiudiConvocatiLive(riapriCambi) {
+  document.getElementById("overlay-convocati-live").classList.remove("visibile");
+  if (riapriCambi && typeof apriCambi === "function" && !state.partitaFinita) apriCambi();
+}
+
+function renderConvocatiLive() {
+  const cont = document.getElementById("cl-lista");
+  cont.innerHTML = "";
+  (state.convocati || []).forEach((c, idx) => {
+    const locked = haGiocatoEventi(c.numero);
+    const inCampo = (state.roster || []).indexOf(Number(c.numero)) > -1;
+    const nome = (c.cognome || c.nome || ("#" + c.numero));
+    const row = document.createElement("div");
+    row.className = "pp-riga" + (locked ? " cl-lock" : "");
+    row.innerHTML =
+      '<input type="tel" inputmode="numeric" maxlength="2" class="cl-num" data-idx="' + idx + '" value="' +
+        esc(c.numero) + '"' + (locked ? " disabled" : "") + '>' +
+      '<span class="pp-nome">' + esc(nome) +
+        '<small>' + esc(c.ruolo || "—") +
+        (locked ? " · a referto" : (inCampo ? " · in campo" : "")) + '</small></span>' +
+      '<input type="text" class="cl-nick" data-idx="' + idx + '" maxlength="6" placeholder="NICK" value="' +
+        esc(c.nickname || "") + '">' +
+      (locked ? '' : '<button type="button" class="pp-del cl-del" data-idx="' + idx + '" aria-label="Rimuovi">&times;</button>');
+    cont.appendChild(row);
+  });
+
+  const sel = document.getElementById("cl-add-select");
+  const giaNum = new Set((state.convocati || []).map(c => String(c.numero)));
+  const giaId = new Set((state.convocati || []).map(c => c.id).filter(Boolean));
+  sel.innerHTML = '<option value="">— aggiungi da anagrafica —</option>';
+  caricaGiocatori()
+    .filter(g => g.numero_maglia !== "" && g.numero_maglia != null &&
+                 !giaNum.has(String(g.numero_maglia)) && !(g.id && giaId.has(g.id)))
+    .sort((a, b) => (Number(a.numero_maglia) || 99) - (Number(b.numero_maglia) || 99))
+    .forEach(g => {
+      const o = document.createElement("option");
+      o.value = g.id;
+      o.textContent = "#" + g.numero_maglia + " " + (g.cognome || g.nome || "");
+      sel.appendChild(o);
+    });
+}
+
+function clAggiungiDaAnagrafica() {
+  const g = caricaGiocatori().find(x => x.id === document.getElementById("cl-add-select").value);
+  if (!g) { mostraToast("Scegli un giocatore"); return; }
+  clAggiungiConvocato({
+    id: g.id || "", nome: g.nome || "", cognome: g.cognome || "",
+    nickname: (g.nickname || "").toUpperCase(), ruolo: g.ruolo || "",
+    numero: parseInt(g.numero_maglia, 10)
+  });
+}
+function clAggiungiManuale() {
+  const raw = prompt("Nuovo convocato — numero;Cognome;NICK  (es. 47;Rossi;ROS)");
+  if (!raw) return;
+  const p = raw.split(/[;,]/);
+  clAggiungiConvocato({
+    id: "", nome: "", cognome: (p[1] || "").trim() || ("#" + (p[0] || "").trim()),
+    nickname: (p[2] || "").trim().toUpperCase().slice(0, 6), ruolo: "",
+    numero: parseInt((p[0] || "").trim(), 10)
+  });
+}
+function clAggiungiConvocato(c) {
+  if (isNaN(c.numero)) { mostraToast("Numero di maglia non valido"); return; }
+  if ((state.convocati || []).some(x => Number(x.numero) === c.numero)) {
+    mostraToast("Numero #" + c.numero + " già presente"); return;
+  }
+  if (c.id && (state.convocati || []).some(x => x.id === c.id)) {
+    mostraToast("Giocatore già convocato (con altro numero)"); return;
+  }
+  state.convocati = (state.convocati || []).concat([c]);
+  if (!(c.numero in state.falliGiocatori)) state.falliGiocatori[c.numero] = 0;
+  salvaStato();
+  renderConvocatiLive();
+  mostraToast("Aggiunto #" + c.numero);
+}
+
+function clRimuovi(idx) {
+  const c = state.convocati[idx];
+  if (!c) return;
+  if (haGiocatoEventi(c.numero)) { mostraToast("Ha voci a referto — non rimovibile"); return; }
+  if ((state.roster || []).indexOf(Number(c.numero)) > -1) {
+    mostraToast("È in quintetto — sostituiscilo dai CAMBI"); return;
+  }
+  state.convocati.splice(idx, 1);
+  delete state.falliGiocatori[c.numero];
+  salvaStato();
+  renderConvocatiLive();
+}
+
+function salvaConvocatiLive() {
+  const conv = (state.convocati || []).map(c => Object.assign({}, c));
+
+  document.querySelectorAll("#cl-lista .cl-nick").forEach(inp => {
+    const i = +inp.dataset.idx;
+    if (conv[i]) conv[i].nickname = inp.value.trim().toUpperCase().slice(0, 6);
+  });
+
+  const rimappa = {};
+  document.querySelectorAll("#cl-lista .cl-num:not([disabled])").forEach(inp => {
+    const i = +inp.dataset.idx;
+    const nuovo = parseInt(inp.value, 10);
+    if (conv[i] && !isNaN(nuovo) && nuovo !== Number(conv[i].numero)) {
+      rimappa[conv[i].numero] = nuovo;
+      conv[i].numero = nuovo;
+    }
+  });
+
+  const nums = conv.map(c => Number(c.numero));
+  if (new Set(nums).size !== nums.length) { mostraToast("Numeri di maglia duplicati"); return; }
+  if (conv.some(c => isNaN(Number(c.numero)))) { mostraToast("Numero di maglia mancante"); return; }
+
+  state.convocati = conv;
+  // propaga i (rari) cambi numero a roster/inCampo/falliGiocatori
+  Object.keys(rimappa).forEach(vecchio => {
+    const nuovo = rimappa[vecchio];
+    ["roster", "inCampo"].forEach(k => {
+      const arr = state[k]; if (!arr) return;
+      const j = arr.indexOf(Number(vecchio));
+      if (j > -1) arr[j] = nuovo;
+    });
+    if (vecchio in state.falliGiocatori) {
+      state.falliGiocatori[nuovo] = state.falliGiocatori[vecchio];
+      delete state.falliGiocatori[vecchio];
+    }
+  });
+
+  salvaStato();
+  chiudiConvocatiLive(true);
+  if (typeof renderPartita === "function") renderPartita();
+  mostraToast("Convocati aggiornati");
 }

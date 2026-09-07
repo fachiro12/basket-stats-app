@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=26` · SW `bsp-v26` · backend V4.9.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=27` · SW `bsp-v27` · backend V4.9.
 
 ---
 
@@ -64,7 +64,7 @@ Rigenerare dopo una modifica ai `.svg`: `bash scripts/genera-icone.sh` (usa Chro
 | `azioni.js` | `registraEvento` (costruisce il payload evento + feed banner), tiri, recupero, palla persa, fallo fatto; macchina a stati overlay Assist/Rimbalzo; helper `etichettaSquadra/etichettaSquadraEstesa/etichettaNum/feed` |
 | `fallo-subito.js` | modale TL "fallo subito"; overlay fallo avversario (fatto/subito), tecnici, doppio/compensati; `apriTlAvversari` (0/1/2/3 TL avversari) |
 | `calendario.js` | `CALENDARIO_DR1` (26 gare seed offline), cache/pending partite (`bsp_partite_cache`/`bsp_partite_pending`), `scaricaPartite` (JSONP), `salvaPartitaCloud`, `impostaStatoPartita`, `renderCalendario`, `iniziaPartita`, `apriStatistichePartita`, modale "aggiungi partita"; **`ricostruisciStatoDaEventi` / `riprendiComeSegnapunti`** (subentro segnapunti da foglio), `avversarioBreveAuto` / `nomePartitaDaCalendario`, `apriResetDati` (Altro → Manutenzione → azzera eventi) |
-| `giocatori.js` | anagrafica giocatori (`bsp_giocatori`, sync JSONP `getGiocatori` + POST `SALVA_GIOCATORE`), CRUD UI; **flusso pre-partita 2 step**: convocati → quintetto base → avvio |
+| `giocatori.js` | anagrafica giocatori (`bsp_giocatori`, sync JSONP `getGiocatori` + POST `SALVA_GIOCATORE`), CRUD UI (nickname max 6); **flusso pre-partita 2 step** (convocati tap-riga → quintetto base → avvio); **`apriConvocatiLive` / `salvaConvocatiLive` / `haGiocatoEventi`** (modifica convocati in partita) |
 | `stats.js` | motore stat: `statsContesto`, `eventiPuliti` (dedup + drop ANNULLA/valido=FALSE), `calcolaBox`, `stintsDaEventi`, `calcolaAdvanced`; render Stats (tabellino/andamento/tiri/**PBP** = play-by-play, `descriviEvento`) e Adv (squadra/giocatori); **Segui Live** (`avviaModalitaSegui`, `pollSeguiLive` ogni 20s); `barraPunteggio`; fetch storico `scaricaEventiPartita` |
 | `ui.js` | `renderPartita` (HUD, roster, selezione), `mostraToast`, `aggiornaBadgeOffline`, modale CAMBI (`apriCambi`/`confermaCambi` + select tempo con vincolo), `apriRecap`, `navigaA` (router viste + hook render) |
 | `pin.js` | login gate (`inizializzaPinGate`, `tentaLogin`, fallback offline, `logout`, `aggiornaProfiloAttivo`) |
@@ -156,6 +156,9 @@ Seleziona giocatore PVL o AVVERSARI → tap azione → `registra*()` in `azioni.
 
 ### Cambi / checkpoint (`apriCambi`/`confermaCambi` in `ui.js`)
 Modale: periodo, **tempo rimanente** (2 `<select>` MM/SS — vincolo: non può aumentare nello stesso quarto), **punteggio corrente in sola lettura** (v26: non più editabile — le correzioni si fanno con UNDO), e per ognuno dei 5 in campo un `<select>` per scambiarlo con un panchinaro. Alla conferma registra un evento `CAMBIO` e aggiorna `state.roster`/`inCampo`/`tempoPartita`/`ultimoCheckpoint`. **Al cambio quarto `passaAlPeriodo` apre `apriCambi` in automatico** per confermare il quintetto (checkpoint a tempo pieno).
+
+### Modifica convocati in partita (v27, `giocatori.js`)
+Bottone **"✎ Modifica convocati"** nella modale CAMBI → `#overlay-convocati-live` (`apriConvocatiLive`). Modifica **solo** `state.convocati`: correggi maglia/nick, aggiungi un dimenticato (da anagrafica o manuale), rimuovi. **Nessun evento riscritto.** Un convocato è **bloccato** (numero non editabile, non rimovibile) se `haGiocatoEventi(num)` → compare come `giocatore_num` o in un `quintetto_mia` di un evento. I rari cambi-numero validi si propagano a `roster`/`inCampo`/`falliGiocatori`.
 
 ### Fine partita
 `avanzaQuarto` Q1→Q3 chiede conferma; su Q4 → `confirm()` OK=OT / Annulla=`terminaPartita()`. `terminaPartita` emette evento `FINE`, `partitaFinita=true`, `impostaStatoPartita("Terminata")`, mostra `#end-game-panel`.

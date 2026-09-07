@@ -38,6 +38,17 @@ document.addEventListener("DOMContentLoaded", () => {
   /* -------- CAMBI -------- */
   document.getElementById("cambi-conferma").addEventListener("click", confermaCambi);
   document.getElementById("cambi-chiudi").addEventListener("click", chiudiCambi);
+  document.getElementById("cambi-convocati").addEventListener("click", apriConvocatiLive);
+
+  /* -------- CONVOCATI IN PARTITA -------- */
+  document.getElementById("cl-salva").addEventListener("click", salvaConvocatiLive);
+  document.getElementById("cl-chiudi").addEventListener("click", () => chiudiConvocatiLive(true));
+  document.getElementById("cl-add-btn").addEventListener("click", clAggiungiDaAnagrafica);
+  document.getElementById("cl-add-manuale").addEventListener("click", clAggiungiManuale);
+  document.getElementById("cl-lista").addEventListener("click", e => {
+    const b = e.target.closest(".cl-del");
+    if (b) clRimuovi(+b.dataset.idx);
+  });
 
   /* -------- RECAP -------- */
   document.getElementById("recap-chiudi").addEventListener("click", chiudiRecap);
@@ -61,15 +72,17 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("pp-annulla").addEventListener("click", chiudiPrePartita);
   document.getElementById("pp-aggiungi").addEventListener("click", aggiungiConvocatoManuale);
   const ppLista = document.getElementById("pp-lista");
-  ppLista.addEventListener("change", e => {
-    if (e.target.classList.contains("pp-check")) ppToggle(+e.target.dataset.idx, e.target.checked);
-  });
   ppLista.addEventListener("input", e => {
     if (e.target.classList.contains("pp-num")) ppNumero(+e.target.dataset.idx, e.target.value);
   });
   ppLista.addEventListener("click", e => {
-    const b = e.target.closest(".pp-del");
-    if (b) ppRimuovi(+b.dataset.idx);
+    const del = e.target.closest(".pp-del");
+    if (del) { ppRimuovi(+del.dataset.idx); return; }
+    if (e.target.closest(".pp-num")) return;                 // scrivere il numero non convoca
+    const riga = e.target.closest(".pp-riga");
+    if (!riga || riga.dataset.idx == null) return;
+    const idx = +riga.dataset.idx;
+    ppToggle(idx, !(prePartitaPool[idx] && prePartitaPool[idx].convocato));
   });
   document.getElementById("pp-avv-breve").addEventListener("input", aggiornaAnteprimaNome);
 

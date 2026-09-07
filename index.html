@@ -13,14 +13,14 @@
 <meta name="apple-mobile-web-app-title" content="Basket Stats">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="stylesheet" href="css/tokens.css?v=26">
-<link rel="stylesheet" href="css/base.css?v=26">
-<link rel="stylesheet" href="css/shell.css?v=26">
-<link rel="stylesheet" href="css/partita.css?v=26">
-<link rel="stylesheet" href="css/altro.css?v=26">
-<link rel="stylesheet" href="css/calendario.css?v=26">
-<link rel="stylesheet" href="css/roster.css?v=26">
-<link rel="stylesheet" href="css/stats.css?v=26">
+<link rel="stylesheet" href="css/tokens.css?v=27">
+<link rel="stylesheet" href="css/base.css?v=27">
+<link rel="stylesheet" href="css/shell.css?v=27">
+<link rel="stylesheet" href="css/partita.css?v=27">
+<link rel="stylesheet" href="css/altro.css?v=27">
+<link rel="stylesheet" href="css/calendario.css?v=27">
+<link rel="stylesheet" href="css/roster.css?v=27">
+<link rel="stylesheet" href="css/stats.css?v=27">
 </head>
 <body>
 
@@ -418,8 +418,28 @@
     </div>
 
     <div id="cambi-slots"></div>
+    <button class="btn-annulla-modale" id="cambi-convocati">✎ Modifica convocati (aggiungi / correggi maglia)</button>
     <button class="btn-conferma" id="cambi-conferma">CONFERMA CAMBI</button>
     <button class="btn-annulla-modale" id="cambi-chiudi">Annulla</button>
+  </div>
+</div>
+
+<!-- Modifica convocati durante la partita -->
+<div class="overlay" id="overlay-convocati-live">
+  <div class="modale">
+    <h2><svg class="ico" aria-hidden="true"><use href="#i-clipboard"></use></svg> Convocati · in partita</h2>
+    <div class="pp-contesto">
+      Correggi <b>maglia</b> o <b>nick</b>, aggiungi un giocatore dimenticato.
+      Chi ha già voci a referto è <b>bloccato</b> (usa UNDO per correggere).
+    </div>
+    <div id="cl-lista"></div>
+    <div class="cl-add">
+      <select id="cl-add-select"></select>
+      <button type="button" id="cl-add-btn">+ Aggiungi</button>
+    </div>
+    <button class="btn-annulla-modale" id="cl-add-manuale">+ Aggiungi manuale</button>
+    <button class="btn-conferma" id="cl-salva">SALVA CONVOCATI</button>
+    <button class="btn-annulla-modale" id="cl-chiudi">Annulla</button>
   </div>
 </div>
 
@@ -442,8 +462,8 @@
       <input type="text" id="gioc-nome" autocomplete="off"></label>
     <label class="ap-campo"><span>Cognome</span>
       <input type="text" id="gioc-cognome" autocomplete="off"></label>
-    <label class="ap-campo"><span>Nickname / iniziali (max 4)</span>
-      <input type="text" id="gioc-nickname" maxlength="4" autocomplete="off"
+    <label class="ap-campo"><span>Nickname / iniziali (max 6)</span>
+      <input type="text" id="gioc-nickname" maxlength="6" autocomplete="off"
              autocapitalize="characters" placeholder="es. MRC"></label>
     <label class="ap-campo"><span>Ruolo</span>
       <select id="gioc-ruolo">
@@ -532,18 +552,18 @@
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=26"></script>
-<script src="js/tema.js?v=26"></script>
-<script src="js/api.js?v=26"></script>
-<script src="js/timer.js?v=26"></script>
-<script src="js/azioni.js?v=26"></script>
-<script src="js/fallo-subito.js?v=26"></script>
-<script src="js/calendario.js?v=26"></script>
-<script src="js/giocatori.js?v=26"></script>
-<script src="js/stats.js?v=26"></script>
-<script src="js/ui.js?v=26"></script>
-<script src="js/pin.js?v=26"></script>
-<script src="js/app.js?v=26"></script>
+<script src="js/state.js?v=27"></script>
+<script src="js/tema.js?v=27"></script>
+<script src="js/api.js?v=27"></script>
+<script src="js/timer.js?v=27"></script>
+<script src="js/azioni.js?v=27"></script>
+<script src="js/fallo-subito.js?v=27"></script>
+<script src="js/calendario.js?v=27"></script>
+<script src="js/giocatori.js?v=27"></script>
+<script src="js/stats.js?v=27"></script>
+<script src="js/ui.js?v=27"></script>
+<script src="js/pin.js?v=27"></script>
+<script src="js/app.js?v=27"></script>
 
 </body>
 </html>

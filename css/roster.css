@@ -61,13 +61,23 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
+  padding: 10px 12px;
+  min-height: 46px;
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
+  cursor: pointer;                 /* tutta la riga tocca la checkbox */
+  user-select: none;
+  -webkit-user-select: none;
 }
 .pp-riga.on { border-color: var(--color-brand-ink); background: var(--color-brand-soft); }
-.pp-riga .pp-check { width: 20px; height: 20px; flex-shrink: 0; }
+/* la checkbox è solo un indicatore: il tap lo gestisce la riga */
+.pp-riga .pp-check, .pp-riga .q-check {
+  width: 22px; height: 22px; flex-shrink: 0;
+  pointer-events: none;
+  accent-color: var(--color-brand);
+}
+.pp-riga .pp-num, .pp-riga .cl-nick { cursor: text; }
 .pp-riga .pp-del {
   flex-shrink: 0;
   width: 30px;
@@ -102,3 +112,34 @@
   color: var(--color-state-positive);
 }
 .pp-contatore.ko { color: var(--color-state-negative); }
+
+/* ---------- Modifica convocati in partita ---------- */
+#cl-lista { display: flex; flex-direction: column; gap: 6px; max-height: 44vh; overflow-y: auto; }
+#cl-lista .pp-riga { cursor: default; }
+.pp-riga.cl-lock { opacity: 0.72; }
+.pp-riga .cl-num {
+  width: 48px; flex-shrink: 0; text-align: center;
+  font-weight: 800; font-size: 15px; padding: 6px 4px;
+  color: var(--color-text-primary); background: var(--color-surface-raised);
+  border: 1.5px solid var(--color-border-strong); border-radius: var(--radius-sm);
+}
+.pp-riga .cl-num:disabled { background: var(--color-surface); color: var(--color-text-muted); }
+.pp-riga .cl-nick {
+  width: 76px; flex-shrink: 0; text-align: center; text-transform: uppercase;
+  font-weight: 700; font-size: 13px; padding: 6px 4px;
+  color: var(--color-text-primary); background: var(--color-surface-raised);
+  border: 1.5px solid var(--color-border-strong); border-radius: var(--radius-sm);
+}
+.cl-add { display: flex; gap: 6px; margin: 10px 0 2px; }
+.cl-add select {
+  flex: 1; min-width: 0; min-height: var(--tap-target);
+  padding: 0 8px; font-size: 14px; font-weight: 600;
+  color: var(--color-text-primary); background: var(--color-surface);
+  border: 1.5px solid var(--color-border-strong); border-radius: var(--radius-sm);
+}
+.cl-add button {
+  flex-shrink: 0; min-height: var(--tap-target); padding: 0 14px;
+  border-radius: var(--radius-sm); font-weight: 800; font-size: 13px;
+  background: var(--color-brand-soft); color: var(--color-brand-ink);
+  border: 1.5px solid var(--color-brand-ink);
+}
