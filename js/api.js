@@ -48,31 +48,25 @@ function processaCoda() {
   });
 }
 
+/* Login via POST: la password non transita più nella query string GET
+   (niente log di esecuzione Apps Script / cronologia / proxy con la password).
+   La risposta di ContentService porta Access-Control-Allow-Origin: * e la
+   richiesta text/plain è "simple" → nessun preflight, JSON leggibile. */
 function verificaLoginServer(username, password, callback) {
   const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
   if (!base || base.indexOf("INCOLLA_QUI") === 0) { callback(null, false, true); return; }
 
-  const nomeCb = "bspLoginCb_" + Date.now();
-  const script = document.createElement("script");
-  let concluso = false;
-
-  const pulisci = () => {
-    delete window[nomeCb];
-    if (script.parentNode) script.parentNode.removeChild(script);
-  };
-
-  window[nomeCb] = function (risposta) {
-    concluso = true;
-    if (risposta && risposta.ok) callback(risposta.utente || null, true, false);
-    else callback(null, false, false, (risposta && risposta.error) || "Credenziali non valide");
-    pulisci();
-  };
-
-  script.src = base + (base.indexOf("?") > -1 ? "&" : "?") +
-    "action=verificaLogin&username=" + encodeURIComponent(username) +
-    "&password=" + encodeURIComponent(password) + "&callback=" + nomeCb;
-  script.onerror = () => { if (!concluso) callback(null, false, true); pulisci(); };
-  document.body.appendChild(script);
+  fetch(base, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ azione: "VERIFICA_LOGIN", username: username, password: password })
+  })
+    .then(r => r.json())
+    .then(risposta => {
+      if (risposta && risposta.ok) callback(risposta.utente || null, true, false);
+      else callback(null, false, false, (risposta && risposta.error) || "Credenziali non valide");
+    })
+    .catch(() => callback(null, false, true));
 }
 
 window.addEventListener("online", processaCoda);

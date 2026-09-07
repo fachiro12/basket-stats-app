@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=18` · SW `bsp-v18` · backend V4.6.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=20` · SW `bsp-v20` · backend V4.8.
 
 ---
 
@@ -32,7 +32,7 @@ PWA per segnare le statistiche di una partita di basket **in tempo reale**, pens
 1. Modifica i file.
 2. **Bump cache**: in `index.html` sostituisci tutti i `?v=N` con `?v=N+1`; in `sw.js` `bsp-vN` → `bsp-vN+1`.
    ```bash
-   sed -i 's/?v=18/?v=19/g' index.html && sed -i 's/bsp-v18/bsp-v19/' sw.js
+   sed -i 's/?v=19/?v=20/g' index.html && sed -i 's/bsp-v19/bsp-v20/' sw.js
    ```
 3. `git add -A && git commit && git push` → GitHub Pages ridistribuisce in 1–5 min.
 4. Hard refresh sul client (`Ctrl+Shift+R` / riapri la PWA).
@@ -56,7 +56,7 @@ Finché mancano, iOS usa uno screenshot come icona home.
 | File | Responsabilità |
 |---|---|
 | `state.js` | `CONFIG`, `STORAGE_KEYS`, `state` globale, `statoIniziale()`, `salvaStato/caricaStato`, `nomeQuarto()`, `formatTempo()`, `uuid()` |
-| `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (JSONP) |
+| `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (POST `azione:"VERIFICA_LOGIN"`, risposta JSON) |
 | `timer.js` | gestione periodi (**non c'è cronometro**): `avanzaQuarto`, `passaAlPeriodo`, OT, `terminaPartita` (emette evento `FINE`), `nuovaPartita` |
 | `azioni.js` | `registraEvento` (costruisce il payload evento + feed banner), tiri, recupero, palla persa, fallo fatto; macchina a stati overlay Assist/Rimbalzo; helper `etichettaSquadra/etichettaSquadraEstesa/etichettaNum/feed` |
 | `fallo-subito.js` | modale TL "fallo subito"; overlay fallo avversario (fatto/subito), tecnici, doppio/compensati; `apriTlAvversari` (0/1/2/3 TL avversari) |
@@ -126,14 +126,14 @@ fallo_speciale, esito_tl ("SI,NO"), valido (true/false), id_evento_target
 - **Eventi** — `COLONNE_EVENTI` (sopra)
 - **Partite** — `id_partita, data_ora, avversario, luogo, tipo, stagione, categoria, stato, note`
 - **Giocatori** — `id_giocatore, nome, cognome, ruolo, numero_maglia, team, nickname`
-- **Utenti** — `id_utente, username, ruolo, password_hash, attivo` (admin di default `admin`/`1234`)
+- **Utenti** — `id_utente, username, ruolo, password_hash, attivo, salt` (admin di default `admin`/`1234`; `password_hash = SHA256(salt|password)`)
 
 ---
 
 ## 6. Flussi principali
 
 ### Login
-`pin.js` → `verificaLoginServer` (JSONP `?action=verificaLogin&username=&password=&callback=`) → il backend confronta `sha256(password)` con `password_hash` → salva `bsp_current_user`, mostra app. Offline: rientro consentito solo se l'username coincide col profilo già salvato sul device.
+`pin.js` → `verificaLoginServer` (POST JSON `{azione:"VERIFICA_LOGIN", username, password}`, risposta letta come JSON) → il backend confronta `SHA256(salt|password)` con `password_hash` (righe legacy senza salt: fallback a `SHA256(password)` + upgrade automatico) → salva `bsp_current_user` (`{id, username, ruolo, token}`), mostra app. Offline: rientro consentito solo se l'username coincide col profilo già salvato sul device.
 
 ### Avvio partita (dal calendario, gara "Da giocare")
 `iniziaPartita(p)` → `apriPrePartita(p)`:
@@ -183,7 +183,7 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 
 1. ~~**Scritture non autenticate**~~ — **RISOLTO in V4.7**: `doPost` valida `data.token === WRITE_TOKEN` (Script Property). Il token è restituito da `verificaLogin`, salvato in `bsp_current_user.token`, allegato a ogni POST da `api.js` (`tokenScrittura()`). Attivazione: impostare la proprietà `WRITE_TOKEN` in Apps Script, poi tutti fanno re-login. *Resta* security-through-obscurity (il token è nella risposta JSONP + localStorage); una auth firmata server-side sarebbe il passo successivo.
 2. **Perdita silenziosa eventi** — `no-cors` `.then()` risolve anche su HTTP 500 → l'evento esce dalla coda e si perde. Retry solo su errore di rete. → riconciliazione via `getEventi`.
-3. **Password** — SHA-256 senza salt, inviata in query string GET (JSONP) → finisce nei log. → salt + eventuale POST.
+3. ~~**Password**~~ — **RISOLTO in V4.8**: hash SHA-256 **con salt per-utente** (colonna `salt`, `SHA256(salt|password)`); righe legacy senza salt vengono aggiornate al primo login riuscito. Login ora via **POST** (`azione: "VERIFICA_LOGIN"`) → la password non passa più in query string GET (niente log di esecuzione / cronologia / proxy). Il GET `?action=verificaLogin` resta per compatibilità coi client non aggiornati.
 4. **Partita viva solo in `localStorage`** del device segnapunti — nessun "ricostruisci stato dal foglio". Dati cancellati / browser cambiato a metà gara = partita persa.
 5. **UNDO di un CAMBIO** — l'evento `CAMBIO` ha `delta` vuota: UNDO non ripristina `state.roster`/`inCampo`.
 6. **XSS latente** — nomi (da Sheet/localStorage) concatenati in `innerHTML` in `renderCalendario`, `vistaTabellino`, `vistaStint`, `miglioriQuintetti`, `renderRoster`, `barraPunteggio`. → helper `esc()`.
@@ -196,13 +196,16 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 13. Icone PWA PNG mancanti.
 
 ### Backlog consigliato (ordine)
-token scritture → `esc()` HTML → delta reale CAMBIO → riconciliazione coda → "riprendi come segnapunti" → rimuovi `state.stints` → test node del motore stat → auto cache-bust → salt password.
+`esc()` HTML → delta reale CAMBIO → riconciliazione coda → "riprendi come segnapunti" → rimuovi `state.stints` → test node del motore stat → auto cache-bust.
 
 ---
 
-## 9. Backend — codice completo attuale (V4.7)
+## 9. Backend — codice completo attuale (V4.8)
 
-> Da incollare nell'editor Apps Script. `setupSheet()` idempotente. Deploy Web App: eseguito come "me", accesso "chiunque".
+> Da incollare nell'editor Apps Script. Poi lanciare `setupSheet()` una volta (aggiunge la colonna `salt` a `Utenti` e ricalcola l'hash dell'admin se il foglio è nuovo) e **ripubblicare il deployment**. `setupSheet()` è idempotente.
+> Deploy Web App: eseguito come "me", accesso "chiunque".
+>
+> **Password (V4.8):** hash con salt per-utente, login via POST `azione: "VERIFICA_LOGIN"`. Le righe utente esistenti senza `salt` continuano a funzionare e vengono aggiornate al primo login corretto — nessuna azione manuale. Se `setupSheet()` non aggiunge la colonna `salt` a una `Utenti` già popolata, aggiungerla a mano come ultima intestazione.
 >
 > **Token di scrittura (V4.7):** i POST richiedono `data.token === WRITE_TOKEN` (Script Property). Per attivarlo:
 > Apps Script → **Impostazioni progetto → Proprietà script** → aggiungi `WRITE_TOKEN` = una stringa casuale lunga.
@@ -213,8 +216,9 @@ token scritture → `esc()` HTML → delta reale CAMBIO → riconciliazione coda
 
 ```javascript
 /**
- * BASKET STATS PRO — Backend Google Apps Script (V4.7)
- * Eventi · Partite · Giocatori · Utenti — cloud-sync, JSONP, multiutente, token scrittura
+ * BASKET STATS PRO — Backend Google Apps Script (V4.8)
+ * Eventi · Partite · Giocatori · Utenti — cloud-sync, JSONP, multiutente,
+ * token scrittura (V4.7) + password con salt e login via POST (V4.8)
  */
 const SHEET_EVENTI = "Eventi";
 const SHEET_PARTITE = "Partite";
@@ -229,10 +233,47 @@ const COLONNE_EVENTI = [
 ];
 const COLONNE_PARTITE = ["id_partita","data_ora","avversario","luogo","tipo","stagione","categoria","stato","note"];
 const COLONNE_GIOCATORI = ["id_giocatore","nome","cognome","ruolo","numero_maglia","team","nickname"];
-const COLONNE_UTENTI = ["id_utente","username","ruolo","password_hash","attivo"];
+const COLONNE_UTENTI = ["id_utente","username","ruolo","password_hash","attivo","salt"];
 
 function getWriteToken_() {
   return PropertiesService.getScriptProperties().getProperty("WRITE_TOKEN") || "";
+}
+
+/* --- Password con salt (V4.8) --- */
+function nuovoSalt_() {
+  return Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "");
+}
+function hashPassword_(salt, password) {
+  return computeSha256_(String(salt || "") + "|" + String(password || ""));
+}
+
+/* Verifica credenziali. Compatibile con le righe vecchie senza salt:
+   se il match riesce col vecchio hash SHA-256(password), la riga viene
+   aggiornata al volo con salt + hash salato. */
+function verificaLogin_(username, password) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_UTENTI);
+  if (!sheet || sheet.getLastRow() <= 1) return { ok: false, error: "Utente non trovato" };
+  const rows = sheet.getDataRange().getValues(), h = rows[0];
+  const iHash = h.indexOf("password_hash"), iSalt = h.indexOf("salt");
+  for (let r = 1; r < rows.length; r++) {
+    const u = {}; h.forEach((k, i) => u[k] = rows[r][i]);
+    if (u.username !== username || String(u.attivo).toUpperCase() !== "SI") continue;
+    const pwd = password || "";
+    let ok = false;
+    if (u.salt) {
+      ok = (u.password_hash === hashPassword_(u.salt, pwd));
+    } else if (u.password_hash === computeSha256_(pwd)) {
+      ok = true;
+      const salt = nuovoSalt_();                       // upgrade riga legacy
+      sheet.getRange(r + 1, iSalt + 1).setValue(salt);
+      sheet.getRange(r + 1, iHash + 1).setValue(hashPassword_(salt, pwd));
+    }
+    return ok
+      ? { ok: true, utente: { id: u.id_utente, username: u.username, ruolo: u.ruolo, token: getWriteToken_() } }
+      : { ok: false, error: "Password errata" };
+  }
+  return { ok: false, error: "Utente non trovato" };
 }
 
 function setupSheet() {
@@ -241,7 +282,11 @@ function setupSheet() {
   inizializzaFoglio_(ss, SHEET_PARTITE, COLONNE_PARTITE);
   inizializzaFoglio_(ss, SHEET_GIOCATORI, COLONNE_GIOCATORI);
   const u = inizializzaFoglio_(ss, SHEET_UTENTI, COLONNE_UTENTI);
-  if (u.getLastRow() <= 1) u.appendRow(["usr_admin","admin","Admin",computeSha256_("1234"),"SI"]);
+  assicuraColonna_(u, "salt");                 // migrazione V4.8 su Utenti già popolato
+  if (u.getLastRow() <= 1) {
+    const s = nuovoSalt_();
+    u.appendRow(["usr_admin","admin","Admin",hashPassword_(s,"1234"),"SI",s]);
+  }
   Logger.log("WRITE_TOKEN attuale: " + (getWriteToken_() || "(non impostato — scritture aperte)"));
 }
 function inizializzaFoglio_(ss, nome, colonne) {
@@ -250,10 +295,16 @@ function inizializzaFoglio_(ss, nome, colonne) {
   if (s.getLastRow() === 0) { s.appendRow(colonne); s.setFrozenRows(1); }
   return s;
 }
+function assicuraColonna_(sheet, nome) {
+  const h = sheet.getRange(1, 1, 1, sheet.getLastColumn() || 1).getValues()[0];
+  if (h.indexOf(nome) === -1) sheet.getRange(1, (sheet.getLastColumn() || 1) + 1).setValue(nome);
+}
 
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+    if (data.azione === "VERIFICA_LOGIN")
+      return jsonResponse_(verificaLogin_(data.username, data.password));
     const atteso = getWriteToken_();
     if (atteso && String(data.token || "") !== atteso) {
       return jsonResponse_({ ok: false, error: "token non valido" });
@@ -278,24 +329,10 @@ function doGet(e) {
     if (idp) ev = ev.filter(x => String(x.id_partita) === idp);
     return rispostaDati_(params, "eventi", ev);
   }
-  if (params.action === "verificaLogin") {
-    const sheet = ss.getSheetByName(SHEET_UTENTI);
-    let esito = { ok: false, error: "Utente non trovato" };
-    if (sheet && sheet.getLastRow() > 1) {
-      const rows = sheet.getDataRange().getValues(), h = rows[0];
-      for (let r = 1; r < rows.length; r++) {
-        const u = {}; h.forEach((k, i) => u[k] = rows[r][i]);
-        if (u.username === params.username && String(u.attivo).toUpperCase() === "SI") {
-          esito = (u.password_hash === computeSha256_(params.password || ""))
-            ? { ok: true, utente: { id: u.id_utente, username: u.username, ruolo: u.ruolo, token: getWriteToken_() } }
-            : { ok: false, error: "Password errata" };
-          break;
-        }
-      }
-    }
-    return rispostaJsonp_(params, esito);
+  if (params.action === "verificaLogin") {   // compat: vecchi client via JSONP GET
+    return rispostaJsonp_(params, verificaLogin_(params.username, params.password));
   }
-  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.7", stato: "attivo" });
+  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.8", stato: "attivo" });
 }
 
 function leggiFoglio_(ss, nome, formatDate) {

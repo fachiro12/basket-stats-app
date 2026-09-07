@@ -143,6 +143,19 @@ function slugStato(s) {
   return String(s || "").toLowerCase().replace(/\s+/g, "-");
 }
 
+/* Etichetta avversario breve dedotta dal nome di calendario (ultima parola
+   significativa, es. "Sportlandia Tradate" → "Tradate"), per comporre
+   "PVL vs Tradate" nelle schermate Stats/Adv delle partite non live. */
+function avversarioBreveAuto(avversario) {
+  const parti = String(avversario || "").trim().split(/\s+/).filter(Boolean);
+  const scelto = parti.length > 1 ? parti[parti.length - 1] : (parti[0] || "AVV");
+  return scelto.slice(0, CONFIG.MAX_LABEL_AVVERSARIO);
+}
+function nomePartitaDaCalendario(p) {
+  return nomePartitaComposto(p && p.luogo === "Casa" ? "Casa" : "Trasferta",
+    avversarioBreveAuto(p && p.avversario));
+}
+
 function renderCalendario() {
   const cont = document.getElementById("calendario-lista");
   if (!cont) return;
@@ -220,10 +233,8 @@ function apriStatistichePartita(id) {
     return;
   }
   const p = elencoPartite().find(x => String(x.id_partita) === id);
-  const nome = p
-    ? CONFIG.NOME_SQUADRA_MIA + (p.luogo === "Casa" ? " vs " : " @ ") + p.avversario
-    : "Gara " + id;
-  statsEventiRemoti = { id_partita: id, eventi: [], nome: nome, finita: p && p.stato === "Terminata" };
+  const nome = p ? nomePartitaDaCalendario(p) : "Gara " + id;
+  statsEventiRemoti = { id_partita: id, eventi: [], nome: nome, oppLabel: p ? avversarioBreveAuto(p.avversario) : "AVV", finita: p && p.stato === "Terminata" };
   navigaA("stats");
   scaricaEventiPartita(id, ok => {
     if (ok && document.getElementById("view-stats").classList.contains("attiva")) renderStats();

@@ -15,9 +15,12 @@ let seguiLive = null;          // { id, nome, timer } modalità sola-lettura con
 function avviaModalitaSegui(p) {
   fermaSeguiLive();
   const id = String(p.id_partita);
-  const nome = CONFIG.NOME_SQUADRA_MIA + (p.luogo === "Casa" ? " vs " : " @ ") + (p.avversario || "");
+  const nome = typeof nomePartitaDaCalendario === "function"
+    ? nomePartitaDaCalendario(p)
+    : CONFIG.NOME_SQUADRA_MIA + (p.luogo === "Casa" ? " vs " : " @ ") + (p.avversario || "");
+  const opp = typeof avversarioBreveAuto === "function" ? avversarioBreveAuto(p.avversario) : "AVV";
   seguiLive = { id: id, nome: nome, timer: null };
-  statsEventiRemoti = { id_partita: id, eventi: [], nome: nome };
+  statsEventiRemoti = { id_partita: id, eventi: [], nome: nome, oppLabel: opp };
   statsTab = "tabellino";
   navigaA("stats");
   mostraToast("Segui live — sola lettura");
@@ -95,13 +98,39 @@ function esitiArray(v) {
   return String(v || "").split(",").map(s => s.trim()).filter(Boolean);
 }
 
+/* Normalizza il flusso eventi prima di ogni calcolo:
+   - deduplica per id_evento (i re-invii no-cors possono duplicare le righe sul foglio)
+   - scarta gli eventi ANNULLA e i loro bersagli
+   - scarta le righe con valido = FALSE
+   Senza questo, tiri/rimbalzi/assist risultavano gonfiati (es. "32/56 da 3")
+   mentre il punteggio — letto dall'ultimo progressivo — restava corretto. */
+function eventiPuliti(eventi) {
+  const lista = eventi || [];
+  const annullati = {};
+  lista.forEach(e => {
+    if (String(e.tipo_evento) === "ANNULLA" && e.id_evento_target)
+      annullati[String(e.id_evento_target)] = 1;
+  });
+  const visti = {};
+  const out = [];
+  lista.forEach(e => {
+    if (String(e.tipo_evento) === "ANNULLA") return;
+    if (String(e.valido).toUpperCase() === "FALSE") return;
+    const id = e.id_evento ? String(e.id_evento) : "";
+    if (id && (visti[id] || annullati[id])) return;
+    if (id) visti[id] = 1;
+    out.push(e);
+  });
+  return out;
+}
+
 /* ---------- Sorgente eventi: live (state) o remota (fetch foglio) ---------- */
 function statsContesto(forzaLive) {
   const live = forzaLive || !statsEventiRemoti || statsEventiRemoti.id_partita === state.id_partita;
   if (live) {
     return {
       live: true,
-      eventi: (state.eventLog || []).map(x => x.evento || x),
+      eventi: eventiPuliti((state.eventLog || []).map(x => x.evento || x)),
       punteggio: { MIA: state.punteggio.MIA, OPP: state.punteggio.OPP },
       convocati: state.convocati || [],
       nome: state.nomePartita || (CONFIG.NOME_SQUADRA_MIA + " vs " + (state.avversarioBreve || "AVV")),
@@ -112,7 +141,7 @@ function statsContesto(forzaLive) {
       quartoOra: nomeQuarto()
     };
   }
-  const ev = statsEventiRemoti.eventi.filter(e => String(e.valido).toUpperCase() !== "FALSE");
+  const ev = eventiPuliti(statsEventiRemoti.eventi);
   const ultimo = ev[ev.length - 1] || {};
   const nome = statsEventiRemoti.nome || ("Gara " + statsEventiRemoti.id_partita);
   const mOpp = nome.match(/(?:vs|@)\s+(.+)$/);
@@ -122,7 +151,7 @@ function statsContesto(forzaLive) {
     punteggio: punteggioDaEventi(ev),
     convocati: [],
     nome: nome,
-    oppLabel: mOpp ? mOpp[1] : "AVV",
+    oppLabel: statsEventiRemoti.oppLabel || (mOpp ? mOpp[1] : "AVV"),
     finita: !!statsEventiRemoti.finita || ev.some(e => String(e.tipo_evento) === "FINE"),
     minuti: minutiDaEventi(ev),
     tempoOra: ultimo.tempo_partita || "00:00",
@@ -195,19 +224,20 @@ function calcolaBox(ctx) {
     const T = team[sq];
 
     if (t === "TIRO") {
-      const tre = d.indexOf("3P") === 0;
-      const seg = d.indexOf("SEGNATO") > -1;
+      const pt = Number(ev.punti_segnati) || 0;
+      const seg = d.indexOf("SEGNATO") > -1 || pt >= 2;
+      const tre = /3/.test(String(d).split("_")[0]) || pt === 3;
       if (tre) { T.a3++; if (seg) T.m3++; } else { T.a2++; if (seg) T.m2++; }
       if (sq === "MIA" && n) {
         const g = P(n);
         if (tre) { g.a3++; if (seg) g.m3++; } else { g.a2++; if (seg) g.m2++; }
-        g.pt += ev.punti_segnati || 0;
+        g.pt += pt;
       }
     } else if (t === "FALLO_SUBITO") {
       const es = esitiArray(ev.esito_tl);
       const made = es.filter(v => v === "SI").length;
       team.MIA.ftm += made; team.MIA.fta += es.length; team.MIA.fs++;
-      if (n) { const g = P(n); g.ftm += made; g.fta += es.length; g.pt += ev.punti_segnati || 0; g.fs++; }
+      if (n) { const g = P(n); g.ftm += made; g.fta += es.length; g.pt += Number(ev.punti_segnati) || 0; g.fs++; }
     } else if (t === "FALLO_FATTO") {
       const es = esitiArray(ev.esito_tl);
       const made = es.filter(v => v === "SI").length;
@@ -679,7 +709,14 @@ function scaricaEventiPartita(idPartita, cb) {
   window[nomeCb] = function (r) {
     done = true;
     if (r && r.ok && Array.isArray(r.eventi)) {
-      statsEventiRemoti = { id_partita: String(idPartita), eventi: r.eventi };
+      const prec = statsEventiRemoti || {};
+      statsEventiRemoti = {
+        id_partita: String(idPartita),
+        eventi: r.eventi,
+        nome: prec.id_partita === String(idPartita) ? prec.nome : undefined,
+        oppLabel: prec.id_partita === String(idPartita) ? prec.oppLabel : undefined,
+        finita: prec.id_partita === String(idPartita) ? prec.finita : undefined
+      };
       if (cb) cb(true);
     } else if (cb) cb(false);
     pulisci();
