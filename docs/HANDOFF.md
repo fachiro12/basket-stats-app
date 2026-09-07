@@ -181,7 +181,7 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 
 ## 8. Limiti noti / debolezze (dal review)
 
-1. **Scritture non autenticate** — Web App "anyone", POST `no-cors` senza token. Chiunque legga l'URL può scrivere sui fogli. → serve `token` validato da `doPost`.
+1. ~~**Scritture non autenticate**~~ — **RISOLTO in V4.7**: `doPost` valida `data.token === WRITE_TOKEN` (Script Property). Il token è restituito da `verificaLogin`, salvato in `bsp_current_user.token`, allegato a ogni POST da `api.js` (`tokenScrittura()`). Attivazione: impostare la proprietà `WRITE_TOKEN` in Apps Script, poi tutti fanno re-login. *Resta* security-through-obscurity (il token è nella risposta JSONP + localStorage); una auth firmata server-side sarebbe il passo successivo.
 2. **Perdita silenziosa eventi** — `no-cors` `.then()` risolve anche su HTTP 500 → l'evento esce dalla coda e si perde. Retry solo su errore di rete. → riconciliazione via `getEventi`.
 3. **Password** — SHA-256 senza salt, inviata in query string GET (JSONP) → finisce nei log. → salt + eventuale POST.
 4. **Partita viva solo in `localStorage`** del device segnapunti — nessun "ricostruisci stato dal foglio". Dati cancellati / browser cambiato a metà gara = partita persa.
@@ -200,14 +200,21 @@ token scritture → `esc()` HTML → delta reale CAMBIO → riconciliazione coda
 
 ---
 
-## 9. Backend — codice completo attuale (V4.6)
+## 9. Backend — codice completo attuale (V4.7)
 
 > Da incollare nell'editor Apps Script. `setupSheet()` idempotente. Deploy Web App: eseguito come "me", accesso "chiunque".
+>
+> **Token di scrittura (V4.7):** i POST richiedono `data.token === WRITE_TOKEN` (Script Property). Per attivarlo:
+> Apps Script → **Impostazioni progetto → Proprietà script** → aggiungi `WRITE_TOKEN` = una stringa casuale lunga.
+> Finché la proprietà **non è impostata**, tutte le scritture passano (comportamento pre-V4.7).
+> Il token viene restituito da `verificaLogin` e salvato in `bsp_current_user.token` sul client.
+> **Dopo aver impostato la proprietà: tutti gli utenti devono fare logout e login una volta** per ricevere il token.
+> Nota: il token non è un segreto forte (transita nella risposta JSONP del login ed è in localStorage). Serve a bloccare le scritture anonime verso l'URL `/exec` e a poter ruotare la chiave se abusata. La difesa vera resterebbe una auth server-side firmata.
 
 ```javascript
 /**
- * BASKET STATS PRO — Backend Google Apps Script (V4.6)
- * Eventi · Partite · Giocatori · Utenti — cloud-sync, JSONP, multiutente
+ * BASKET STATS PRO — Backend Google Apps Script (V4.7)
+ * Eventi · Partite · Giocatori · Utenti — cloud-sync, JSONP, multiutente, token scrittura
  */
 const SHEET_EVENTI = "Eventi";
 const SHEET_PARTITE = "Partite";
@@ -224,6 +231,10 @@ const COLONNE_PARTITE = ["id_partita","data_ora","avversario","luogo","tipo","st
 const COLONNE_GIOCATORI = ["id_giocatore","nome","cognome","ruolo","numero_maglia","team","nickname"];
 const COLONNE_UTENTI = ["id_utente","username","ruolo","password_hash","attivo"];
 
+function getWriteToken_() {
+  return PropertiesService.getScriptProperties().getProperty("WRITE_TOKEN") || "";
+}
+
 function setupSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   inizializzaFoglio_(ss, SHEET_EVENTI, COLONNE_EVENTI);
@@ -231,6 +242,7 @@ function setupSheet() {
   inizializzaFoglio_(ss, SHEET_GIOCATORI, COLONNE_GIOCATORI);
   const u = inizializzaFoglio_(ss, SHEET_UTENTI, COLONNE_UTENTI);
   if (u.getLastRow() <= 1) u.appendRow(["usr_admin","admin","Admin",computeSha256_("1234"),"SI"]);
+  Logger.log("WRITE_TOKEN attuale: " + (getWriteToken_() || "(non impostato — scritture aperte)"));
 }
 function inizializzaFoglio_(ss, nome, colonne) {
   let s = ss.getSheetByName(nome);
@@ -242,6 +254,10 @@ function inizializzaFoglio_(ss, nome, colonne) {
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+    const atteso = getWriteToken_();
+    if (atteso && String(data.token || "") !== atteso) {
+      return jsonResponse_({ ok: false, error: "token non valido" });
+    }
     if (data.azione === "SALVA_PARTITA")          return salvaPartita_(data);
     if (data.azione === "AGGIORNA_STATO_PARTITA") return aggiornaStatoPartita_(data);
     if (data.azione === "SALVA_GIOCATORE")        return salvaGiocatore_(data);
@@ -271,7 +287,7 @@ function doGet(e) {
         const u = {}; h.forEach((k, i) => u[k] = rows[r][i]);
         if (u.username === params.username && String(u.attivo).toUpperCase() === "SI") {
           esito = (u.password_hash === computeSha256_(params.password || ""))
-            ? { ok: true, utente: { id: u.id_utente, username: u.username, ruolo: u.ruolo } }
+            ? { ok: true, utente: { id: u.id_utente, username: u.username, ruolo: u.ruolo, token: getWriteToken_() } }
             : { ok: false, error: "Password errata" };
           break;
         }
@@ -279,7 +295,7 @@ function doGet(e) {
     }
     return rispostaJsonp_(params, esito);
   }
-  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.6", stato: "attivo" });
+  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.7", stato: "attivo" });
 }
 
 function leggiFoglio_(ss, nome, formatDate) {

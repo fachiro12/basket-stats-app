@@ -34,7 +34,7 @@ PR body: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 
 ## Priorità aperte (dal review — vedi HANDOFF.md)
 
-1. Token di scrittura sui POST (anti-scrittura anonima)
+1. ~~Token di scrittura sui POST~~ — **FATTO (V4.7)**. Da attivare impostando la Script Property `WRITE_TOKEN`.
 2. `esc()` HTML sui nomi interpolati in `innerHTML`
 3. `delta` reale per l'evento CAMBIO (UNDO deve ripristinare il quintetto)
 4. Riconciliazione coda eventi (il `no-cors` non conferma la consegna)

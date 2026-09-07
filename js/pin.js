@@ -33,7 +33,8 @@ function inizializzaPinGate() {
     verificaLoginServer(username, password, (utente, ok, erroreRete, messaggio) => {
       if (ok && utente) {
         localStorage.setItem(STORAGE_KEYS.utente, JSON.stringify({
-          id: utente.id, username: utente.username, ruolo: utente.ruolo
+          id: utente.id, username: utente.username, ruolo: utente.ruolo,
+          token: utente.token || ""   // token di scrittura, richiesto dal backend sui POST
         }));
         _entra(gate, app);
         return;

@@ -2,6 +2,13 @@
    api.js — Invio eventi a Google Apps Script, coda offline, retry
    ========================================================================== */
 
+/* Token di scrittura ottenuto al login (in bsp_current_user). Il backend lo
+   richiede su ogni POST se la Script Property WRITE_TOKEN è impostata. */
+function tokenScrittura() {
+  try { return (JSON.parse(localStorage.getItem(STORAGE_KEYS.utente)) || {}).token || ""; }
+  catch (e) { return ""; }
+}
+
 function inviaEvento(evento) {
   codaInvio.push(evento);
   salvaCoda();
@@ -14,7 +21,7 @@ function inviaAzione(payload) {
     method: "POST",
     mode: "no-cors",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(Object.assign({ token: tokenScrittura() }, payload))
   }).catch(() => {});
 }
 
@@ -23,13 +30,14 @@ function processaCoda() {
   if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.indexOf("INCOLLA_QUI") === 0) {
     aggiornaBadgeOffline(); return;
   }
+  const token = tokenScrittura();
   const daInviare = codaInvio.slice();
   daInviare.forEach(evento => {
     fetch(CONFIG.APPS_SCRIPT_URL, {
       method: "POST",
       mode: "no-cors",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(evento)
+      body: JSON.stringify(Object.assign({ token: token }, evento))
     }).then(() => {
       codaInvio = codaInvio.filter(e => e.id_evento !== evento.id_evento);
       salvaCoda();
