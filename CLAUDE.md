@@ -12,7 +12,7 @@ Repo: `github.com/fachiro12/basket-stats-app` · Live: `https://fachiro12.github
 - **Lingua del codice: italiano.** Nomi funzioni, variabili, commenti, stringhe UI in italiano. Mantieni lo stile.
 - **CSS a token.** Colori/spazi/raggi in `css/tokens.css` (`--color-*`, `--space-*`, `--radius-*`). Non hardcodare colori nuovi se esiste il token.
 - **Mobile-first.** Testato in frame 430px su desktop e a schermo pieno su telefono. Portrait E landscape vanno entrambi verificati (in landscape su touch la nav diventa sidebar).
-- **Cache-busting manuale:** ogni file in `index.html` ha `?v=N`. A ogni deploy: bump di TUTTI i `?v=N` in `index.html` **e** del `CACHE` in `sw.js` (`bsp-vN`). Sono allineati. (Vedi `docs/HANDOFF.md` → "Deploy".)
+- **Cache-busting:** ogni asset in `index.html` ha `?v=N`, allineato al `CACHE` di `sw.js` (`bsp-vN`). Non modificarli a mano: a ogni deploy `node scripts/bump.mjs` (incrementa e allinea tutto; `--check` per verificare). Sorgente di verità = il numero in `sw.js`.
 - **Verifica sempre** la sintassi JS: `for f in js/*.js; do node -c "$f"; done`.
 - **Non committare/pushare** se non richiesto esplicitamente. Se richiesto: branch da `main` solo se si sta sul default e serve, altrimenti commit diretto su `main` è la prassi di questo repo.
 
@@ -41,4 +41,5 @@ PR body: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 5. ~~`esc()` HTML sui nomi interpolati in `innerHTML`~~ — **FATTO (v20)**.
 6. ~~`delta` reale per l'evento CAMBIO~~ — **FATTO (v20)**.
 7. ~~Rimuovere `state.stints`/`stintCorrente`~~ — **FATTO (v20)**.
-8. Test node del motore statistiche · automatizzare il cache-busting `?v=N`.
+8. ~~Automatizzare il cache-busting~~ — **FATTO (v20)**: `scripts/bump.mjs`.
+9. Test node del motore statistiche (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`).

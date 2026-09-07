@@ -29,11 +29,13 @@ PWA per segnare le statistiche di una partita di basket **in tempo reale**, pens
 | PWA | `manifest.webmanifest` + `sw.js` (service worker network-first) |
 
 ### Deploy
-1. Modifica i file.
-2. **Bump cache**: in `index.html` sostituisci tutti i `?v=N` con `?v=N+1`; in `sw.js` `bsp-vN` → `bsp-vN+1`.
+1. Modifica i file. Verifica sintassi: `for f in js/*.js; do node -c "$f"; done`
+2. **Bump cache** — un solo comando allinea i ~19 `?v=N` di `index.html`, il `CACHE` di `sw.js` e questa riga di HANDOFF:
    ```bash
-   sed -i 's/?v=19/?v=20/g' index.html && sed -i 's/bsp-v19/bsp-v20/' sw.js
+   node scripts/bump.mjs          # incrementa di 1
+   node scripts/bump.mjs --check  # verifica allineamento (in CI o pre-commit)
    ```
+   La sorgente di verità è il numero in `sw.js` (`const CACHE = "bsp-vN"`).
 3. `git add -A && git commit && git push` → GitHub Pages ridistribuisce in 1–5 min.
 4. Hard refresh sul client (`Ctrl+Shift+R` / riapri la PWA).
 
@@ -71,7 +73,7 @@ Finché mancano, iOS usa uno screenshot come icona home.
 `tokens.css` (variabili) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro") · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`)
 
 ### Altro
-`index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `icon.svg`
+`index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `icon.svg` · `scripts/bump.mjs` (cache-busting one-shot, vedi "Deploy")
 
 ---
 
@@ -194,14 +196,14 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 6. ~~**XSS latente**~~ — **RISOLTO in v20**: helper globale `esc()` (`state.js`) applicato a tutte le interpolazioni di nomi/note in `innerHTML` — `renderCalendario`, `renderRoster`, `renderSlotCambi`, `renderPartita` (roster), `apriRecap`, `renderPrePartita`, `renderQuintetto`, `barraPunteggio`, `rigaSquadra`, `vistaTabellino`, `vistaAdvGiocatori`, `vistaTiri`, `vistaStint`, `miglioriQuintetti`, `vistaPbp`. I nomi squadra costanti (`CONFIG.NOME_SQUADRA_MIA`) non sono editabili → lasciati grezzi.
 7. ~~**`state.stints`/`stintCorrente` = codice morto**~~ — **RIMOSSO in v20**: eliminati da `statoIniziale()`, `confermaCambi`, `passaAlPeriodo`/`terminaPartita` (`timer.js`), `confermaQuintetto`, `ricostruisciStatoDaEventi`; con loro `apriStint`/`chiudiStint`/`chiudiStintPeriodo`. Le stat usano solo `stintsDaEventi()`.
 8. ~~`apriRecap` senza guardia~~ — **RISOLTO in v20**: guardia `typeof statsContesto/calcolaBox === "function"` + `try/catch` che mostrano un messaggio nella tabella invece di lanciare.
-9. **Cache-busting manuale** su ~19 riferimenti + nome SW.
+9. ~~**Cache-busting manuale**~~ — **RISOLTO in v20**: `scripts/bump.mjs` (Node, zero dipendenze) allinea in un colpo i ~19 `?v=N`, il `CACHE` di `sw.js` e la riga "Ultimo aggiornamento" di HANDOFF; `--check` per la verifica. Sorgente di verità = `sw.js`.
 10. `impostaStatoPartita` re-invia la partita con campi locali possibilmente stale → può clobberare modifiche fatte sul foglio.
 11. Minuti/± dipendono dalla disciplina del segnapunti (checkpoint CAMBI + punteggio corretto ai checkpoint).
 12. **Zero test.**
 13. Icone PWA PNG mancanti.
 
 ### Backlog consigliato (ordine)
-test node del motore stat (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`) → automatizza il cache-busting.
+test node del motore stat (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`).
 
 ---
 
@@ -423,7 +425,7 @@ function jsonResponse_(obj) { return ContentService.createTextOutput(JSON.string
 ## 10. Come riprendere in una nuova chat
 
 **Contesto da dare a Claude:**
-> Progetto `basket-stats-app`: PWA vanilla (no build) per statistiche basket live della Virtus Luino, backend Google Apps Script + Sheet, deploy GitHub Pages. Leggi `CLAUDE.md` e `docs/HANDOFF.md`. Convenzioni: JS globale non-modulare, italiano, CSS a token, cache-busting `?v=N` manuale + `sw.js`. Non committare senza che te lo chieda.
+> Progetto `basket-stats-app`: PWA vanilla (no build) per statistiche basket live della Virtus Luino, backend Google Apps Script + Sheet, deploy GitHub Pages. Leggi `CLAUDE.md` e `docs/HANDOFF.md`. Convenzioni: JS globale non-modulare, italiano, CSS a token, cache-busting via `node scripts/bump.mjs` (mai a mano). Non committare senza che te lo chieda.
 
 **File da fornire** (o link al repo):
 - Sempre: `CLAUDE.md`, `docs/HANDOFF.md`, `index.html`, tutti i `js/*.js`, tutti i `css/*.css`.
