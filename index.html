@@ -11,17 +11,17 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Basket Stats">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=34">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=34">
-<link rel="apple-touch-icon" href="icon-180.png?v=34">
-<link rel="stylesheet" href="css/tokens.css?v=34">
-<link rel="stylesheet" href="css/base.css?v=34">
-<link rel="stylesheet" href="css/shell.css?v=34">
-<link rel="stylesheet" href="css/partita.css?v=34">
-<link rel="stylesheet" href="css/altro.css?v=34">
-<link rel="stylesheet" href="css/calendario.css?v=34">
-<link rel="stylesheet" href="css/roster.css?v=34">
-<link rel="stylesheet" href="css/stats.css?v=34">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=35">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=35">
+<link rel="apple-touch-icon" href="icon-180.png?v=35">
+<link rel="stylesheet" href="css/tokens.css?v=35">
+<link rel="stylesheet" href="css/base.css?v=35">
+<link rel="stylesheet" href="css/shell.css?v=35">
+<link rel="stylesheet" href="css/partita.css?v=35">
+<link rel="stylesheet" href="css/altro.css?v=35">
+<link rel="stylesheet" href="css/calendario.css?v=35">
+<link rel="stylesheet" href="css/roster.css?v=35">
+<link rel="stylesheet" href="css/stats.css?v=35">
 </head>
 <body>
 
@@ -218,6 +218,25 @@
       <div class="contenuto-pagina" id="adv-body"></div>
     </div><!-- /view-adv -->
 
+    <!-- ============ VIEW: ANALISI STAGIONE ============ -->
+    <div class="view" id="view-analisi">
+      <header class="cal-topbar">
+        <button class="cal-tb-btn" id="analisi-indietro" aria-label="Torna ad Altro">
+          <svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg>
+        </button>
+        <span class="st-titolo" id="analisi-titolo">Analisi stagione</span>
+        <button class="cal-tb-btn" id="analisi-refresh" aria-label="Aggiorna dal foglio">
+          <svg class="ico" aria-hidden="true"><use href="#i-swap"></use></svg>
+        </button>
+      </header>
+      <div class="stats-tabs" id="analisi-tabs">
+        <button data-antab="squadra" class="attivo">Squadra</button>
+        <button data-antab="giocatori">Giocatori</button>
+      </div>
+      <div id="analisi-filtri"></div>
+      <div class="contenuto-pagina" id="analisi-body"></div>
+    </div><!-- /view-analisi -->
+
     <!-- ============ VIEW: ALTRO ============ -->
     <div class="view" id="view-squadra">
       <div class="header-pagina">
@@ -250,16 +269,23 @@
           </button>
         </div>
 
+        <div class="titolo-sezione-altro">Analisi</div>
+        <div class="lista-altro">
+          <div class="riga-altro" id="apri-analisi">
+            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-trending-up"></use></svg>
+            <span class="col-testo">
+              <span class="titolo-altro">Analisi stagione</span>
+              <span class="sotto-altro">Riepiloghi e filtri su tutte le gare concluse</span>
+            </span>
+            <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          </div>
+        </div>
+
         <div class="titolo-sezione-altro">Traccia</div>
         <div class="lista-altro">
           <div class="riga-altro" data-apri="roster">
             <svg class="ico ico-riga" aria-hidden="true"><use href="#i-users"></use></svg>
             <span class="titolo-altro">Roster e ruoli</span>
-            <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
-          </div>
-          <div class="riga-altro">
-            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-trending-up"></use></svg>
-            <span class="titolo-altro">Andamento stagione</span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </div>
           <div class="riga-altro">
@@ -544,18 +570,19 @@
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=34"></script>
-<script src="js/tema.js?v=34"></script>
-<script src="js/api.js?v=34"></script>
-<script src="js/timer.js?v=34"></script>
-<script src="js/azioni.js?v=34"></script>
-<script src="js/fallo-subito.js?v=34"></script>
-<script src="js/calendario.js?v=34"></script>
-<script src="js/giocatori.js?v=34"></script>
-<script src="js/stats.js?v=34"></script>
-<script src="js/ui.js?v=34"></script>
-<script src="js/pin.js?v=34"></script>
-<script src="js/app.js?v=34"></script>
+<script src="js/state.js?v=35"></script>
+<script src="js/tema.js?v=35"></script>
+<script src="js/api.js?v=35"></script>
+<script src="js/timer.js?v=35"></script>
+<script src="js/azioni.js?v=35"></script>
+<script src="js/fallo-subito.js?v=35"></script>
+<script src="js/calendario.js?v=35"></script>
+<script src="js/giocatori.js?v=35"></script>
+<script src="js/stats.js?v=35"></script>
+<script src="js/analisi.js?v=35"></script>
+<script src="js/ui.js?v=35"></script>
+<script src="js/pin.js?v=35"></script>
+<script src="js/app.js?v=35"></script>
 
 </body>
 </html>

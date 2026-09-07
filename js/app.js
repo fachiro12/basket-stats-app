@@ -51,6 +51,32 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnAzzeraGara = document.getElementById("btn-azzera-gara");
   if (btnAzzeraGara && typeof apriAzzeraGara === "function") btnAzzeraGara.addEventListener("click", apriAzzeraGara);
 
+  /* -------- ANALISI STAGIONE -------- */
+  const apriAn = document.getElementById("apri-analisi");
+  if (apriAn && typeof apriAnalisi === "function") apriAn.addEventListener("click", apriAnalisi);
+  const anIndietro = document.getElementById("analisi-indietro");
+  if (anIndietro) anIndietro.addEventListener("click", () => navigaA("squadra"));
+  const anRefresh = document.getElementById("analisi-refresh");
+  if (anRefresh && typeof caricaEventiStagione === "function")
+    anRefresh.addEventListener("click", () => caricaEventiStagione());
+  document.querySelectorAll("#analisi-tabs button").forEach(b =>
+    b.addEventListener("click", () => renderAnalisi(b.dataset.antab)));
+  const anFiltri = document.getElementById("analisi-filtri");
+  if (anFiltri) anFiltri.addEventListener("click", e => {
+    const btn = e.target.closest(".an-chip");
+    if (!btn) return;
+    const grp = btn.closest(".an-chip-grp");
+    if (grp && typeof impostaFiltroAnalisi === "function")
+      impostaFiltroAnalisi(grp.dataset.fil, btn.dataset.val);
+  });
+  const anBody = document.getElementById("analisi-body");
+  if (anBody) anBody.addEventListener("click", e => {
+    const th = e.target.closest("th[data-sort]");
+    if (th && typeof impostaOrdineAnalisi === "function") { impostaOrdineAnalisi(th.dataset.sort); return; }
+    const fb = e.target.closest("[data-anfmt]");
+    if (fb && typeof impostaFmtAnalisi === "function") impostaFmtAnalisi(fb.dataset.anfmt);
+  });
+
   /* -------- ROSTER / ANAGRAFICA GIOCATORI -------- */
   document.querySelectorAll('[data-apri="roster"]').forEach(el =>
     el.addEventListener("click", apriRoster));

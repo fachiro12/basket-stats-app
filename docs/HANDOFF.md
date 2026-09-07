@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=34` · SW `bsp-v34` · backend V4.10.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=35` · SW `bsp-v35` · backend V4.11.
 
 ---
 
@@ -69,12 +69,13 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 | `calendario.js` | `CALENDARIO_DR1` (26 gare seed offline), cache/pending partite (`bsp_partite_cache`/`bsp_partite_pending`), `scaricaPartite` (JSONP), `salvaPartitaCloud`, `impostaStatoPartita`, `renderCalendario`, `iniziaPartita`, `apriStatistichePartita`, modale "aggiungi partita"; **`ricostruisciStatoDaEventi` / `riprendiComeSegnapunti`** (subentro segnapunti da foglio), `avversarioBreveAuto` / `nomePartitaDaCalendario`, `apriResetDati` / `apriAzzeraGara` (Altro → Manutenzione: azzera tutto / una sola gara) |
 | `giocatori.js` | anagrafica giocatori (`bsp_giocatori`, sync JSONP `getGiocatori` + POST `SALVA_GIOCATORE`), CRUD UI (nickname max 6); **flusso pre-partita 2 step** (convocati tap-riga → quintetto base → avvio); **`apriConvocatiLive` / `salvaConvocatiLive` / `haGiocatoEventi`** (modifica convocati in partita) |
 | `stats.js` | motore stat: `statsContesto`, `eventiPuliti` (dedup + drop ANNULLA/valido=FALSE), `calcolaBox`, `stintsDaEventi`, `calcolaAdvanced`; render Stats (tabellino/andamento/tiri/**PBP** = play-by-play, `descriviEvento`) e Adv (squadra/giocatori); **Segui Live** (`avviaModalitaSegui`, `pollSeguiLive` ogni 20s); `barraPunteggio`; fetch storico `scaricaEventiPartita` |
+| `analisi.js` | **Analisi stagione** (Altro → sezione dedicata, `#view-analisi`): aggrega le sole gare `stato==="Terminata"` riusando `calcolaBox`/`calcolaAdvanced` in sola lettura. `apriAnalisi`, `caricaEventiStagione` (JSONP `getEventiStagione` + cache `bsp_analisi_eventi`), `garePerAnalisi` (filtri Campionato⁄Amichevoli · Casa⁄Trasferta · Vinte⁄Perse — campionato e amichevoli **mai insieme**), `aggregaStagione`, viste Squadra (record, Four Factors, ratings, grafico margini) e Giocatori (tabella ordinabile, USG%/AST%/TOV%) |
 | `ui.js` | `renderPartita` (HUD, roster, selezione), `mostraToast`, `aggiornaBadgeOffline`, modale CAMBI (`apriCambi`/`confermaCambi` + select tempo con vincolo), `apriRecap`, `navigaA` (router viste + hook render) |
 | `pin.js` | login gate (`inizializzaPinGate`, `tentaLogin`, fallback offline, `logout`, `aggiornaProfiloAttivo`) |
 | `app.js` | `DOMContentLoaded`: registra tutti i listener + avvio (`navigaA`, `renderCalendario`, `scaricaPartite`, `scaricaGiocatori`, `inizializzaPinGate`, `processaCoda`); registra il service worker |
 
 ### CSS (`css/`)
-`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`)
+`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`, **Analisi stagione** `#analisi-filtri`/`.an-*`)
 
 ### Altro
 `index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `mockup-src.jpg` + i 5 PNG icona · `scripts/bump.mjs` (cache-busting) · `scripts/ritaglia-icona.mjs` (crop mockup → PNG via Chrome headless)
@@ -86,7 +87,8 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 - **`view-partita`** — HUD (punteggio PVL/AVV, quarto, Q+1/UNDO/RECAP, banner ultimo evento) + pannello sinistro (roster + AVVERSARI) + pannello destro (griglie TIRI/PALLA/FALLI + overlay contestuali) + barra CAMBI a piena larghezza + striscia "eventi in coda".
 - **`view-stats`** — topbar + tab `Tabellino` / `Andamento` / `Tiri` / `PBP`; barra punteggio (gradiente navy PVL); toggle `Numeri`/`%`.
 - **`view-adv`** — topbar + tab `Squadra` / `Giocatori`; barra punteggio; card metriche + migliori quintetti + stint (tutti ricostruiti da `stintsDaEventi()`).
-- **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, Roster (anagrafica), **Aspetto** (switch Arena), Configurazione, **Manutenzione** (solo Admin, password + "SVUOTA"): `apriAzzeraGara` → `SVUOTA_EVENTI_GARA` (una gara, tornata a "Da giocare"); `apriResetDati` → `SVUOTA_EVENTI` (tutti gli eventi). Roster e calendario restano. Esci.
+- **`view-analisi`** — Analisi stagione (da Altro → sezione "Analisi"): back + tab `Squadra`/`Giocatori` + barra filtri chip. Aggrega le sole gare `Terminata`; campionato e amichevoli separati. Fetch `getEventiStagione` in cache `bsp_analisi_eventi` (immutabile), pulsante Aggiorna.
+- **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, **Analisi** (Analisi stagione), Roster (anagrafica), **Aspetto** (switch Arena), Configurazione, **Manutenzione** (solo Admin, password + "SVUOTA"): `apriAzzeraGara` → `SVUOTA_EVENTI_GARA` (una gara, tornata a "Da giocare"); `apriResetDati` → `SVUOTA_EVENTI` (tutti gli eventi). Roster e calendario restano. Esci.
 - **`view-calendario`** — topbar (hamburger placeholder / select stagione / +) + lista 26 gare con stato e bottone contestuale.
 
 Nav: capsula fluttuante in basso (portrait), **sidebar icone a sinistra** (landscape su touch).
@@ -239,7 +241,7 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 
 ---
 
-## 9. Backend — codice completo attuale (V4.10)
+## 9. Backend — codice completo attuale (V4.11)
 
 > Da incollare nell'editor Apps Script. Poi lanciare `setupSheet()` una volta (aggiunge la colonna `salt` a `Utenti` e ricalcola l'hash dell'admin se il foglio è nuovo) e **ripubblicare il deployment**. `setupSheet()` è idempotente.
 > Deploy Web App: eseguito come "me", accesso "chiunque".
@@ -255,9 +257,9 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 
 ```javascript
 /**
- * BASKET STATS PRO — Backend Google Apps Script (V4.10)
+ * BASKET STATS PRO — Backend Google Apps Script (V4.11)
  * Eventi · Partite · Giocatori · Utenti — cloud-sync, JSONP, multiutente,
- * token scrittura (V4.7) + password con salt e login via POST (V4.8) + SVUOTA_EVENTI (V4.9) + SVUOTA_EVENTI_GARA (V4.10)
+ * token scrittura (V4.7) + password con salt e login via POST (V4.8) + SVUOTA_EVENTI (V4.9) + SVUOTA_EVENTI_GARA (V4.10) + getEventiStagione (V4.11)
  */
 const SHEET_EVENTI = "Eventi";
 const SHEET_PARTITE = "Partite";
@@ -370,10 +372,17 @@ function doGet(e) {
     if (idp) ev = ev.filter(x => String(x.id_partita) === idp);
     return rispostaDati_(params, "eventi", ev);
   }
+  if (params.action === "getEventiStagione") {   // V4.11: eventi delle sole gare concluse (per "Analisi stagione")
+    const partite = leggiFoglio_(ss, SHEET_PARTITE, false);
+    const finite = {};
+    partite.forEach(p => { if (String(p.stato) === "Terminata") finite[String(p.id_partita)] = 1; });
+    const ev = leggiFoglio_(ss, SHEET_EVENTI, false).filter(x => finite[String(x.id_partita)]);
+    return rispostaDati_(params, "eventi", ev);
+  }
   if (params.action === "verificaLogin") {   // compat: vecchi client via JSONP GET
     return rispostaJsonp_(params, verificaLogin_(params.username, params.password));
   }
-  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.10", stato: "attivo" });
+  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.11", stato: "attivo" });
 }
 
 function leggiFoglio_(ss, nome, formatDate) {
