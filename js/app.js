@@ -18,6 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-pp").addEventListener("click", registraPallaPersa);
   document.getElementById("btn-fallo-subito").addEventListener("click", apriFalloSubito);
   document.getElementById("btn-fallo-fatto").addEventListener("click", registraFalloFatto);
+  document.getElementById("ultimo-evento-banner").addEventListener("click", () => {
+    if (typeof modificaUltimoFallo === "function") modificaUltimoFallo();
+  });
 
   document.querySelectorAll("[data-tiro]").forEach(btn => {
     btn.addEventListener("click", () => registraTiro(btn.dataset.tiro, btn.dataset.esito));

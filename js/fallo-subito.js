@@ -144,11 +144,55 @@ function registraTecnicoAvversario(num, tipoSpeciale, segnato) {
   }, inverti, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · TL tecnico avv. (" + (segnato ? "realizzato" : "sbagliato") + ")");
 }
 
+/* ==========================================================================
+   SCHERMATA ESITI TL — tutti gli N tiri visibili insieme, SÌ/NO ri-toccabili
+   fino alla conferma. Usata da fallo-subito, fallo-fatto e "correggi ultimo".
+   ========================================================================== */
+let tlEsitiTmp = [];
+let ffModifica = false;   // true = stiamo rifacendo gli esiti di un fallo già registrato
+
+function aoRigaTL(i) {
+  const row = document.createElement("div");
+  row.className = "ao-tl-riga";
+  const lab = document.createElement("span");
+  lab.className = "ao-tl-lab";
+  lab.textContent = "TL " + (i + 1);
+  row.appendChild(lab);
+  [["si", "SI", "SÌ"], ["no", "NO", "NO"]].forEach(([cls, val, txt]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "ao-tl-btn " + cls + (tlEsitiTmp[i] === val ? " on" : "");
+    b.textContent = txt;
+    b.addEventListener("click", () => {
+      tlEsitiTmp[i] = val;
+      row.querySelectorAll(".ao-tl-btn").forEach(x => x.classList.toggle("on", x === b));
+    });
+    row.appendChild(b);
+  });
+  return row;
+}
+
+function schermataEsitiTL(n, esitiPre, titolo, onConferma, onIndietro) {
+  tlEsitiTmp = [];
+  for (let i = 0; i < n; i++) tlEsitiTmp.push(esitiPre && esitiPre[i] ? esitiPre[i] : null);
+  const el = [];
+  for (let i = 0; i < n; i++) el.push(aoRigaTL(i));
+  const conferma = aoBottone("✓ Conferma", () => {
+    if (tlEsitiTmp.some(v => v == null)) { mostraToast("Segna tutti i " + n + " TL"); return; }
+    onConferma(tlEsitiTmp.slice());
+  });
+  conferma.classList.add("ao-conferma");
+  el.push(conferma);
+  el.push(aoBottone("← indietro", onIndietro));
+  mostraActionOverlay(titolo, el, 0);
+}
+
 /* ---------- FALLO FATTO da un nostro giocatore: TL agli avversari ---------- */
 let ffNum = null;
 
 function apriTlAvversari(num) {
   ffNum = num;
+  ffModifica = false;
   mostraActionOverlay("Fallo " + etichettaNum(num) + " — TL avversari?", [
     aoBottone("Nessun TL", () => finalizzaFalloFatto("PERSONALE", []), true),
     aoBottone("1 TL", () => faseEsitiTlAvv(1, [])),
@@ -157,20 +201,16 @@ function apriTlAvversari(num) {
   ], 0);
 }
 
-function faseEsitiTlAvv(n, esiti) {
-  if (esiti.length >= n) { finalizzaFalloFatto(n + "TL", esiti); return; }
-  const i = esiti.length + 1;
-  const back = esiti.length > 0
-    ? () => faseEsitiTlAvv(n, esiti.slice(0, -1))
-    : () => apriTlAvversari(ffNum);
-  mostraActionOverlay("TL avversario " + i + "/" + n + " — realizzato?", [
-    aoBottone("SÌ", () => faseEsitiTlAvv(n, esiti.concat("SI"))),
-    aoBottone("NO", () => faseEsitiTlAvv(n, esiti.concat("NO")), true),
-    aoBottone("← indietro", back)
-  ], 0);
+function faseEsitiTlAvv(n, esitiPre) {
+  schermataEsitiTL(n, esitiPre,
+    "TL avversari · fallo " + etichettaNum(ffNum) + " — segna gli esiti",
+    esiti => finalizzaFalloFatto(n + "TL", esiti),
+    () => (ffModifica ? chiudiActionOverlay() : apriTlAvversari(ffNum)));
 }
 
 function finalizzaFalloFatto(opzione, esiti) {
+  const eraModifica = ffModifica;
+  if (ffModifica) { ffModifica = false; annullaUltimoEvento(); }
   const num = ffNum;
   const qi = indiceFalli();
   const puntiOpp = esiti.filter(v => v === "SI").length;
@@ -193,7 +233,8 @@ function finalizzaFalloFatto(opzione, esiti) {
      (esiti.length ? " (" + puntiOpp + "/" + esiti.length + " TL avv.)" : ""));
 
   chiudiActionOverlay();
-  if (esiti.length && esiti[esiti.length - 1] === "NO") avviaOverlayRimbalzo("OPP");
+  if (eraModifica) mostraToast("Tiri liberi corretti");
+  else if (esiti.length && esiti[esiti.length - 1] === "NO") avviaOverlayRimbalzo("OPP");
 }
 
 function registraDoppioFallo(num, sottotipo) {
@@ -219,6 +260,7 @@ function registraDoppioFallo(num, sottotipo) {
    ========================================================================== */
 function avviaFalloSubito(num) {
   ffsNum = num;
+  ffModifica = false;
   ffsAnd1 = ultimaAzioneEraCanestro(num);
   // And-1 = 1 solo TL: salta il menu conteggio (si torna indietro col ←)
   if (ffsAnd1) faseEsitiFalloSubito(1, [], "NESSUNO");
@@ -251,20 +293,17 @@ function faseSpecialeFalloSubito() {
   ], 0);
 }
 
-function faseEsitiFalloSubito(n, esiti, fs) {
-  if (esiti.length >= n) { finalizzaFalloSubito(n + "TL", esiti, fs); return; }
-  const i = esiti.length + 1;
-  const back = esiti.length > 0
-    ? () => faseEsitiFalloSubito(n, esiti.slice(0, -1), fs)
-    : () => faseCountFalloSubito(fs);
-  mostraActionOverlay("TL " + i + "/" + n + " di " + etichettaNum(ffsNum) + " — realizzato?", [
-    aoBottone("SÌ", () => faseEsitiFalloSubito(n, esiti.concat("SI"), fs)),
-    aoBottone("NO", () => faseEsitiFalloSubito(n, esiti.concat("NO"), fs), true),
-    aoBottone("← indietro", back)
-  ], 0);
+function faseEsitiFalloSubito(n, esitiPre, fs) {
+  const et = fs === "NESSUNO" ? "" : " · " + fs.replace("+", " + ").toLowerCase();
+  schermataEsitiTL(n, esitiPre,
+    "TL di " + etichettaNum(ffsNum) + et + " — segna gli esiti",
+    esiti => finalizzaFalloSubito(n + "TL", esiti, fs),
+    () => (ffModifica ? chiudiActionOverlay() : faseCountFalloSubito(fs)));
 }
 
 function finalizzaFalloSubito(opzione, esiti, fs) {
+  const eraModifica = ffModifica;
+  if (ffModifica) { ffModifica = false; annullaUltimoEvento(); }
   const num = ffsNum;
   const qi = indiceFalli();
   const puntiTl = esiti.filter(v => v === "SI").length;
@@ -290,10 +329,42 @@ function finalizzaFalloSubito(opzione, esiti, fs) {
      dettaglio + (esiti.length ? " " + puntiTl + "/" + esiti.length : "") + ")");
 
   chiudiActionOverlay();
-  // ultimo TL sbagliato (serie standard) → rimbalzo
-  if (fs === "NESSUNO" && opzione !== "RIMESSA" && esiti.length && esiti[esiti.length - 1] === "NO") {
-    avviaOverlayRimbalzo();
+  if (eraModifica) {
+    mostraToast("Tiri liberi corretti");
+  } else if (fs === "NESSUNO" && opzione !== "RIMESSA" && esiti.length && esiti[esiti.length - 1] === "NO") {
+    avviaOverlayRimbalzo();   // ultimo TL sbagliato → rimbalzo
   }
+}
+
+/* ==========================================================================
+   CORREGGI ULTIMO FALLO — riapre solo la schermata esiti TL del fallo appena
+   registrato (se è l'ultimo evento). Alla conferma: annulla il vecchio +
+   registra il nuovo. Niente "undo grosso + rifai tutto". Trigger: tap sulla
+   barra "ultimo evento" quando evidenziata.
+   ========================================================================== */
+function ultimoFalloCorreggibile() {
+  const last = (state.eventLog || [])[state.eventLog.length - 1];
+  const ev = last && (last.evento || last);
+  if (!ev || state.partitaFinita) return null;
+  if (ev.tipo_evento !== "FALLO_SUBITO" && ev.tipo_evento !== "FALLO_FATTO") return null;
+  const esiti = String(ev.esito_tl || "").split(",").map(s => s.trim()).filter(Boolean);
+  return esiti.length ? { ev: ev, esiti: esiti } : null;
+}
+
+function modificaUltimoFallo() {
+  const c = ultimoFalloCorreggibile();
+  if (!c) return;
+  ffModifica = true;
+  if (c.ev.tipo_evento === "FALLO_SUBITO") {
+    ffsNum = c.ev.giocatore_num;
+    ffsAnd1 = c.ev.dettaglio === "1TL_AND1";
+    const fs = c.ev.fallo_speciale && c.ev.fallo_speciale !== "NESSUNO" ? c.ev.fallo_speciale : "NESSUNO";
+    faseEsitiFalloSubito(c.esiti.length, c.esiti, fs);
+  } else {
+    ffNum = c.ev.giocatore_num;
+    faseEsitiTlAvv(c.esiti.length, c.esiti);
+  }
+  mostraToast("Cambia gli esiti sbagliati, poi Conferma");
 }
 
 /* And-1: il giocatore ha segnato da 2/3 poco fa. Si guarda indietro saltando

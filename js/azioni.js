@@ -97,6 +97,7 @@ function chiudiActionOverlay() {
   aoTimeout = null;
   aoElemento().classList.add("hidden");
   document.getElementById("ao-griglia").innerHTML = "";
+  if (typeof ffModifica !== "undefined") ffModifica = false;
 }
 
 function aoBottone(testo, onTap, neutro) {

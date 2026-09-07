@@ -111,6 +111,12 @@ header.hud {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+#ultimo-evento-banner.correggibile {
+  cursor: pointer;
+  background: var(--color-brand-soft);
+  border-color: var(--color-brand-ink);
+  color: var(--color-brand-ink);
+}
 
 /* Striscia sotto il bottone CAMBI: sopra non c'è nulla di tappabile → niente mis-tap */
 .badge-offline {
@@ -213,6 +219,28 @@ main.corpo-partita {
   min-height: 40px;
   margin-top: 2px;
 }
+
+/* Riga esito tiro libero nell'action-overlay (tutti gli N visibili insieme) */
+.ao-tl-riga {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ao-tl-lab { flex: 1; font-weight: 800; font-size: 13px; color: var(--color-text-primary); }
+.ao-tl-btn {
+  flex: 0 0 62px;
+  min-height: 42px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border-strong);
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  font-weight: 800;
+  font-size: 14px;
+}
+.ao-tl-btn.si.on { background: var(--color-state-positive); color: var(--color-on-color); border-color: var(--color-state-positive); }
+.ao-tl-btn.no.on { background: var(--color-state-negative); color: var(--color-on-color); border-color: var(--color-state-negative); }
+.ao-btn.ao-conferma { background: var(--color-brand); color: var(--color-text-on-brand); border-color: var(--color-brand); }
 
 /* ---------- Pannello Fine Partita ---------- */
 #end-game-panel {

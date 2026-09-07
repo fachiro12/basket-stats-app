@@ -52,8 +52,11 @@ function renderPartita() {
   document.getElementById("btn-opp").disabled = fin;
   document.getElementById("end-game-panel").classList.toggle("hidden", !fin);
 
-  // Ultimo evento
-  document.getElementById("ultimo-evento-banner").textContent = state.ultimoTestoFeed;
+  // Ultimo evento — se è un fallo con TL, la barra diventa "tocca per correggere"
+  const bannerEl = document.getElementById("ultimo-evento-banner");
+  const corr = typeof ultimoFalloCorreggibile === "function" && ultimoFalloCorreggibile();
+  bannerEl.textContent = (corr ? "✎ " : "") + (state.ultimoTestoFeed || "");
+  bannerEl.classList.toggle("correggibile", !!corr);
 
   // Roster
   const listaEl = document.getElementById("lista-giocatori");
