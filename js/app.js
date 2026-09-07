@@ -48,6 +48,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-logout").addEventListener("click", logout);
   const btnReset = document.getElementById("btn-reset-dati");
   if (btnReset && typeof apriResetDati === "function") btnReset.addEventListener("click", apriResetDati);
+  const btnAzzeraGara = document.getElementById("btn-azzera-gara");
+  if (btnAzzeraGara && typeof apriAzzeraGara === "function") btnAzzeraGara.addEventListener("click", apriAzzeraGara);
 
   /* -------- ROSTER / ANAGRAFICA GIOCATORI -------- */
   document.querySelectorAll('[data-apri="roster"]').forEach(el =>

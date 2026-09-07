@@ -151,6 +151,24 @@ function svuotaEventiServer(callback) {
     .catch(() => callback(false));
 }
 
+/* Come sopra ma per una SOLA gara: cancella gli eventi con quell'id_partita
+   e rimette la partita a "Da giocare". */
+function svuotaEventiGaraServer(idPartita, callback) {
+  const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
+  if (!base || base.indexOf("INCOLLA_QUI") === 0) { callback(false); return; }
+  fetch(base, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      azione: "SVUOTA_EVENTI_GARA", id_partita: String(idPartita),
+      conferma: "SVUOTA", reset_stato: true, token: tokenScrittura()
+    })
+  })
+    .then(r => r.json())
+    .then(r => callback(!!(r && r.ok && r.azione === "gara_svuotata"), r))
+    .catch(() => callback(false));
+}
+
 window.addEventListener("online", processaCoda);
 window.addEventListener("online", riconciliaCoda);
 setInterval(processaCoda, CONFIG.RETRY_CODA_MS);

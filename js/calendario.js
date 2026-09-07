@@ -420,6 +420,70 @@ function apriResetDati() {
   });
 }
 
+/* ==========================================================================
+   MANUTENZIONE — Azzera UNA gara: cancella solo gli eventi con quell'id_partita
+   e rimette la partita a "Da giocare". Solo Admin · password + "SVUOTA".
+   ========================================================================== */
+function apriAzzeraGara() {
+  const u = (typeof utenteCorrente === "function") ? utenteCorrente() : null;
+  if (!u || u.ruolo !== "Admin") { mostraToast("Riservato agli Admin"); return; }
+
+  const gare = elencoPartite().filter(p => String(p.stato || "") !== "Da giocare");
+  if (!gare.length) { mostraToast("Nessuna gara con dati da azzerare"); return; }
+
+  const lista = gare.map((p, i) =>
+    (i + 1) + ". " + (p.avversario || "?") + "  (Gara " + p.id_partita + " · " + p.stato + ")").join("\n");
+  const sel = prompt("Quale gara azzerare?\n\n" + lista + "\n\nScrivi il numero:");
+  if (sel == null) return;
+  const idx = parseInt(sel, 10) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= gare.length) { mostraToast("Numero non valido"); return; }
+  azzeraGara(gare[idx], u);
+}
+
+function azzeraGara(p, u) {
+  if (!p) return;
+  const nome = p.avversario || ("Gara " + p.id_partita);
+  if (!confirm(
+    "Azzerare i dati di \"" + nome + "\" (Gara " + p.id_partita + ")?\n\n" +
+    "Cancella SOLO gli eventi di questa partita e la rimette a \"Da giocare\".\n" +
+    "Le altre partite, il roster e il calendario non vengono toccati. Irreversibile."
+  )) return;
+
+  const pwd = prompt("Password di \"" + u.username + "\" per confermare:");
+  if (!pwd) return;
+  if (prompt('Scrivi SVUOTA per confermare:') !== "SVUOTA") { mostraToast("Annullato"); return; }
+
+  mostraToast("Verifica credenziali…");
+  verificaLoginServer(u.username, pwd, (utente, ok) => {
+    if (!ok) { mostraToast("Password errata — annullato"); return; }
+    mostraToast("Azzeramento gara…");
+    svuotaEventiGaraServer(p.id_partita, (esito, r) => {
+      if (!esito) { mostraToast("Azzeramento non riuscito"); return; }
+      const id = String(p.id_partita);
+
+      // se è la gara caricata su questo device, resettala
+      if (String(state.id_partita) === id) {
+        localStorage.removeItem(STORAGE_KEYS.stato);
+        localStorage.removeItem(STORAGE_KEYS.coda);
+        if (localStorage.getItem(STORAGE_KEYS.segnapunti) === id) localStorage.removeItem(STORAGE_KEYS.segnapunti);
+        codaInvio = [];
+        state = statoIniziale();
+        salvaStato();
+        if (typeof aggiornaBadgeOffline === "function") aggiornaBadgeOffline();
+      }
+      if (statsEventiRemoti && String(statsEventiRemoti.id_partita) === id) statsEventiRemoti = null;
+      if (typeof seguiLive !== "undefined" && seguiLive && String(seguiLive.id) === id
+          && typeof fermaSeguiLive === "function") fermaSeguiLive();
+
+      impostaStatoPartita(id, "Da giocare");   // ottimistico locale + push
+      scaricaPartite(() => renderCalendario());
+      renderCalendario();
+      if (typeof renderPartita === "function") renderPartita();
+      mostraToast("Gara azzerata" + (r && r.rimossi != null ? " · " + r.rimossi + " eventi" : ""));
+    });
+  });
+}
+
 /* ---------- Modale "Aggiungi partita" ---------- */
 function apriAggiungiPartita() {
   document.getElementById("ap-tipo").value = "Amichevole";

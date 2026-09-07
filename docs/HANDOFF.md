@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=32` · SW `bsp-v32` · backend V4.9.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=33` · SW `bsp-v33` · backend V4.10.
 
 ---
 
@@ -62,11 +62,11 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 |---|---|
 | `state.js` | `CONFIG`, `STORAGE_KEYS`, `state` globale, `statoIniziale()`, `salvaStato/caricaStato`, `nomeQuarto()`, `indiceFalli()` (OT⇒Q4), `numValido()`, `formatTempo()`, `uuid()`, `esc()` |
 | `tema.js` | tema Chiaro/Arena: `temaCorrente`, `applicaTema`, `inizializzaTema` (switch in "Altro", `localStorage: bsp_tema`) |
-| `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (POST `azione:"VERIFICA_LOGIN"`, risposta JSON), `riconciliaCoda` (pull `getEventi` + re-invio mancanti), `svuotaEventiServer` (POST `SVUOTA_EVENTI`) |
+| `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (POST `azione:"VERIFICA_LOGIN"`, risposta JSON), `riconciliaCoda` (pull `getEventi` + re-invio mancanti), `svuotaEventiServer` / `svuotaEventiGaraServer` (POST `SVUOTA_EVENTI` / `SVUOTA_EVENTI_GARA`) |
 | `timer.js` | gestione periodi (**non c'è cronometro**): `avanzaQuarto`, `passaAlPeriodo`, OT, `terminaPartita` (emette evento `FINE`), `nuovaPartita` |
 | `azioni.js` | `registraEvento` (costruisce il payload evento + feed banner), tiri, recupero, palla persa, fallo fatto; macchina a stati overlay Assist/Rimbalzo; helper `etichettaSquadra/etichettaSquadraEstesa/etichettaNum/feed` |
 | `fallo-subito.js` | **flusso fallo a passi** nell'overlay destro (`#action-overlay`), con "← indietro" ad ogni step: `avviaFalloSubito` (PVL subisce), `apriTlAvversari`/`finalizzaFalloFatto` (PVL commette), overlay fallo avversario, tecnici, doppio/compensati; `ultimaAzioneEraCanestro(num)` (and-1) |
-| `calendario.js` | `CALENDARIO_DR1` (26 gare seed offline), cache/pending partite (`bsp_partite_cache`/`bsp_partite_pending`), `scaricaPartite` (JSONP), `salvaPartitaCloud`, `impostaStatoPartita`, `renderCalendario`, `iniziaPartita`, `apriStatistichePartita`, modale "aggiungi partita"; **`ricostruisciStatoDaEventi` / `riprendiComeSegnapunti`** (subentro segnapunti da foglio), `avversarioBreveAuto` / `nomePartitaDaCalendario`, `apriResetDati` (Altro → Manutenzione → azzera eventi) |
+| `calendario.js` | `CALENDARIO_DR1` (26 gare seed offline), cache/pending partite (`bsp_partite_cache`/`bsp_partite_pending`), `scaricaPartite` (JSONP), `salvaPartitaCloud`, `impostaStatoPartita`, `renderCalendario`, `iniziaPartita`, `apriStatistichePartita`, modale "aggiungi partita"; **`ricostruisciStatoDaEventi` / `riprendiComeSegnapunti`** (subentro segnapunti da foglio), `avversarioBreveAuto` / `nomePartitaDaCalendario`, `apriResetDati` / `apriAzzeraGara` (Altro → Manutenzione: azzera tutto / una sola gara) |
 | `giocatori.js` | anagrafica giocatori (`bsp_giocatori`, sync JSONP `getGiocatori` + POST `SALVA_GIOCATORE`), CRUD UI (nickname max 6); **flusso pre-partita 2 step** (convocati tap-riga → quintetto base → avvio); **`apriConvocatiLive` / `salvaConvocatiLive` / `haGiocatoEventi`** (modifica convocati in partita) |
 | `stats.js` | motore stat: `statsContesto`, `eventiPuliti` (dedup + drop ANNULLA/valido=FALSE), `calcolaBox`, `stintsDaEventi`, `calcolaAdvanced`; render Stats (tabellino/andamento/tiri/**PBP** = play-by-play, `descriviEvento`) e Adv (squadra/giocatori); **Segui Live** (`avviaModalitaSegui`, `pollSeguiLive` ogni 20s); `barraPunteggio`; fetch storico `scaricaEventiPartita` |
 | `ui.js` | `renderPartita` (HUD, roster, selezione), `mostraToast`, `aggiornaBadgeOffline`, modale CAMBI (`apriCambi`/`confermaCambi` + select tempo con vincolo), `apriRecap`, `navigaA` (router viste + hook render) |
@@ -86,7 +86,7 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 - **`view-partita`** — HUD (punteggio PVL/AVV, quarto, Q+1/UNDO/RECAP, banner ultimo evento) + pannello sinistro (roster + AVVERSARI) + pannello destro (griglie TIRI/PALLA/FALLI + overlay contestuali) + barra CAMBI a piena larghezza + striscia "eventi in coda".
 - **`view-stats`** — topbar + tab `Tabellino` / `Andamento` / `Tiri` / `PBP`; barra punteggio (gradiente navy PVL); toggle `Numeri`/`%`.
 - **`view-adv`** — topbar + tab `Squadra` / `Giocatori`; barra punteggio; card metriche + migliori quintetti + stint (tutti ricostruiti da `stintsDaEventi()`).
-- **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, Roster (anagrafica), **Aspetto** (switch Arena), Configurazione, **Manutenzione** (`#btn-reset-dati` → `apriResetDati`: solo Admin, conferma password + parola "SVUOTA" → `SVUOTA_EVENTI` sul foglio + pulizia locale, tiene roster e calendario), Esci.
+- **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, Roster (anagrafica), **Aspetto** (switch Arena), Configurazione, **Manutenzione** (solo Admin, password + "SVUOTA"): `apriAzzeraGara` → `SVUOTA_EVENTI_GARA` (una gara, tornata a "Da giocare"); `apriResetDati` → `SVUOTA_EVENTI` (tutti gli eventi). Roster e calendario restano. Esci.
 - **`view-calendario`** — topbar (hamburger placeholder / select stagione / +) + lista 26 gare con stato e bottone contestuale.
 
 Nav: capsula fluttuante in basso (portrait), **sidebar icone a sinistra** (landscape su touch).
@@ -239,7 +239,7 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 
 ---
 
-## 9. Backend — codice completo attuale (V4.9)
+## 9. Backend — codice completo attuale (V4.10)
 
 > Da incollare nell'editor Apps Script. Poi lanciare `setupSheet()` una volta (aggiunge la colonna `salt` a `Utenti` e ricalcola l'hash dell'admin se il foglio è nuovo) e **ripubblicare il deployment**. `setupSheet()` è idempotente.
 > Deploy Web App: eseguito come "me", accesso "chiunque".
@@ -255,9 +255,9 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 
 ```javascript
 /**
- * BASKET STATS PRO — Backend Google Apps Script (V4.9)
+ * BASKET STATS PRO — Backend Google Apps Script (V4.10)
  * Eventi · Partite · Giocatori · Utenti — cloud-sync, JSONP, multiutente,
- * token scrittura (V4.7) + password con salt e login via POST (V4.8) + SVUOTA_EVENTI (V4.9)
+ * token scrittura (V4.7) + password con salt e login via POST (V4.8) + SVUOTA_EVENTI (V4.9) + SVUOTA_EVENTI_GARA (V4.10)
  */
 const SHEET_EVENTI = "Eventi";
 const SHEET_PARTITE = "Partite";
@@ -352,6 +352,7 @@ function doPost(e) {
     if (data.azione === "AGGIORNA_STATO_PARTITA") return aggiornaStatoPartita_(data);
     if (data.azione === "SALVA_GIOCATORE")        return salvaGiocatore_(data);
     if (data.azione === "SVUOTA_EVENTI")          return svuotaEventi_(data);
+    if (data.azione === "SVUOTA_EVENTI_GARA")     return svuotaEventiGara_(data);
     if (data.tipo_evento === "ANNULLA")           return handleAnnulla_(data);
     appendEvento_(data, true);
     return jsonResponse_({ ok: true, azione: "evento_salvato" });
@@ -372,7 +373,7 @@ function doGet(e) {
   if (params.action === "verificaLogin") {   // compat: vecchi client via JSONP GET
     return rispostaJsonp_(params, verificaLogin_(params.username, params.password));
   }
-  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.9", stato: "attivo" });
+  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.10", stato: "attivo" });
 }
 
 function leggiFoglio_(ss, nome, formatDate) {
@@ -436,6 +437,39 @@ function svuotaEventi_(data) {
     }
   }
   return jsonResponse_({ ok: true, azione: "eventi_svuotati" });
+}
+/* Azzera gli eventi di UNA sola partita + la rimette a "Da giocare".
+   Riscrive il foglio Eventi senza le righe di quell'id (una operazione, veloce). */
+function svuotaEventiGara_(data) {
+  if (String(data.conferma) !== "SVUOTA")
+    return jsonResponse_({ ok: false, error: "conferma mancante" });
+  const idp = String(data.id_partita || "");
+  if (!idp) return jsonResponse_({ ok: false, error: "id_partita mancante" });
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ev = ss.getSheetByName(SHEET_EVENTI);
+  let rimossi = 0;
+  if (ev && ev.getLastRow() > 1) {
+    const v = ev.getDataRange().getValues();
+    const idI = COLONNE_EVENTI.indexOf("id_partita");
+    const keep = v.slice(1).filter(row => String(row[idI]) !== idp);
+    rimossi = (v.length - 1) - keep.length;
+    if (rimossi > 0) {
+      ev.getRange(2, 1, v.length - 1, v[0].length).clearContent();
+      if (keep.length) ev.getRange(2, 1, keep.length, v[0].length).setValues(keep);
+    }
+  }
+  if (data.reset_stato) {
+    const p = ss.getSheetByName(SHEET_PARTITE);
+    if (p && p.getLastRow() > 1) {
+      const pv = p.getDataRange().getValues();
+      const pidI = COLONNE_PARTITE.indexOf("id_partita");
+      const stI = COLONNE_PARTITE.indexOf("stato") + 1;
+      for (let r = 1; r < pv.length; r++) {
+        if (String(pv[r][pidI]) === idp) { p.getRange(r + 1, stI).setValue("Da giocare"); break; }
+      }
+    }
+  }
+  return jsonResponse_({ ok: true, azione: "gara_svuotata", rimossi: rimossi });
 }
 function salvaPartita_(data) {
   const sheet = inizializzaFoglio_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_PARTITE, COLONNE_PARTITE);
