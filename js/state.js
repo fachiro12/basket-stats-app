@@ -81,6 +81,17 @@ function nomeQuarto() {
   return "OT" + (state.quartoIndice - reg + 1);
 }
 
+/* Indice per i FALLI di squadra: nei supplementari contano come 4° quarto
+   (FIBA Art. 41) → mai oltre l'ultimo quarto regolamentare. */
+function indiceFalli() {
+  return Math.min(state.quartoIndice, CONFIG.QUARTI_REGOLAMENTARI - 1);
+}
+
+/* Numero di maglia valido (lo 0 è lecito: `if (num)` lo scartava). */
+function numValido(n) {
+  return n !== null && n !== undefined && n !== "" && Number.isFinite(Number(n));
+}
+
 function formatTempo(sec) {
   sec = Math.max(0, sec);
   const m = Math.floor(sec / 60).toString().padStart(2, "0");

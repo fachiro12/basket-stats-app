@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=25` · SW `bsp-v25` · backend V4.9.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=26` · SW `bsp-v26` · backend V4.9.
 
 ---
 
@@ -57,7 +57,7 @@ Rigenerare dopo una modifica ai `.svg`: `bash scripts/genera-icone.sh` (usa Chro
 ### JS (`js/`, caricati in quest'ordine in `index.html`)
 | File | Responsabilità |
 |---|---|
-| `state.js` | `CONFIG`, `STORAGE_KEYS`, `state` globale, `statoIniziale()`, `salvaStato/caricaStato`, `nomeQuarto()`, `formatTempo()`, `uuid()`, `esc()` |
+| `state.js` | `CONFIG`, `STORAGE_KEYS`, `state` globale, `statoIniziale()`, `salvaStato/caricaStato`, `nomeQuarto()`, `indiceFalli()` (OT⇒Q4), `numValido()`, `formatTempo()`, `uuid()`, `esc()` |
 | `tema.js` | tema Chiaro/Arena: `temaCorrente`, `applicaTema`, `inizializzaTema` (switch in "Altro", `localStorage: bsp_tema`) |
 | `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (POST `azione:"VERIFICA_LOGIN"`, risposta JSON), `riconciliaCoda` (pull `getEventi` + re-invio mancanti), `svuotaEventiServer` (POST `SVUOTA_EVENTI`) |
 | `timer.js` | gestione periodi (**non c'è cronometro**): `avanzaQuarto`, `passaAlPeriodo`, OT, `terminaPartita` (emette evento `FINE`), `nuovaPartita` |
@@ -147,14 +147,19 @@ fallo_speciale, esito_tl ("SI,NO"), valido (true/false), id_evento_target
 3. `confermaQuintetto` → `state = statoIniziale()` + popola convocati/roster/nomePartita/ecc., `localStorage.bsp_segnapunti_di = id`, `impostaStatoPartita(id, "In corso")`, vai a `view-partita`.
 
 ### Registrazione evento
-Seleziona giocatore PVL o AVVERSARI → tap azione → `registra*()` in `azioni.js`/`fallo-subito.js` → `registraEvento(campi, delta, testoFeed)` → push in `state.eventLog`, aggiorna `#ultimo-evento-banner`, `salvaStato()`, `inviaEvento()` (coda → foglio), `renderPartita()`.
-Tiro sbagliato / TL finale sbagliato → overlay **Rimbalzo**. Canestro PVL → overlay **Assist** (timeout 4s).
+Seleziona giocatore PVL o AVVERSARI → tap azione → `registra*()` in `azioni.js`/`fallo-subito.js` → `registraEvento(campi, delta, testoFeed)` → push in `state.eventLog`, aggiorna `#ultimo-evento-banner`, **azzera `state.selezione`** (v26: ogni azione richiede un nuovo tap → niente doppio-evento / mis-attribuzione), `salvaStato()`, `inviaEvento()`, `renderPartita()`.
+- Tiro sbagliato / TL finale sbagliato → overlay **Rimbalzo** (con "Di squadra → di chi?"). Canestro PVL → overlay **Assist** (timeout 4s).
+- **And-1** (v26): se il selezionato ha appena segnato da 2/3 (`ultimaAzioneEraCanestro`, guarda indietro saltando ASSIST/ANNULLA) → `apriModaleFalloSubito` preseleziona **1 TL** con badge AND-1.
+- **Recupero ⇒ palla persa avversaria**: derivata in `calcolaBox` (`team[altra].pp++`), non registrata come evento. Non registrare anche la PALLA_PERSA speculare.
+- **Numero 0** lecito (`numValido()` sostituisce `if (num)`).
+- A **partita finita** ogni inserimento è bloccato (roster/AVVERSARI/CAMBI/falli disabilitati); resta solo UNDO.
 
 ### Cambi / checkpoint (`apriCambi`/`confermaCambi` in `ui.js`)
-Modale: periodo, **tempo rimanente** (2 `<select>` MM/SS — vincolo: non può aumentare nello stesso quarto), punteggio del checkpoint, e per ognuno dei 5 in campo un `<select>` per scambiarlo con un panchinaro. Alla conferma registra un evento `CAMBIO` e aggiorna `state.roster`/`inCampo`/`tempoPartita`/`ultimoCheckpoint`.
+Modale: periodo, **tempo rimanente** (2 `<select>` MM/SS — vincolo: non può aumentare nello stesso quarto), **punteggio corrente in sola lettura** (v26: non più editabile — le correzioni si fanno con UNDO), e per ognuno dei 5 in campo un `<select>` per scambiarlo con un panchinaro. Alla conferma registra un evento `CAMBIO` e aggiorna `state.roster`/`inCampo`/`tempoPartita`/`ultimoCheckpoint`. **Al cambio quarto `passaAlPeriodo` apre `apriCambi` in automatico** per confermare il quintetto (checkpoint a tempo pieno).
 
 ### Fine partita
-`avanzaQuarto` su Q4 → `confirm()` OK=OT / Annulla=`terminaPartita()`. `terminaPartita` emette evento `FINE`, `partitaFinita=true`, `impostaStatoPartita("Terminata")`, mostra `#end-game-panel`.
+`avanzaQuarto` Q1→Q3 chiede conferma; su Q4 → `confirm()` OK=OT / Annulla=`terminaPartita()`. `terminaPartita` emette evento `FINE`, `partitaFinita=true`, `impostaStatoPartita("Terminata")`, mostra `#end-game-panel`.
+**Falli di squadra in OT**: contano come 4° quarto (FIBA Art. 41) — `indiceFalli()` = `min(quartoIndice, QUARTI_REGOLAMENTARI−1)`; `falliSquadraPerQuarto` resta lungo 4.
 
 ### Secondo device — "Segui Live"
 Se apri dal calendario una gara "In corso" che **non** stai segnando tu → `avviaModalitaSegui(p)`: va su Stats sola-lettura, `pollSeguiLive` scarica `getEventi` ogni 20s e ricalcola tutto. Quando trova un evento `FINE` → banner "PARTITA TERMINATA", stop polling, ricarica il calendario. La vista Partita è bloccata (`navigaA` reindirizza).
@@ -199,8 +204,8 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 8. ~~`apriRecap` senza guardia~~ — **RISOLTO in v20**: guardia `typeof statsContesto/calcolaBox === "function"` + `try/catch` che mostrano un messaggio nella tabella invece di lanciare.
 9. ~~**Cache-busting manuale**~~ — **RISOLTO in v20**: `scripts/bump.mjs` (Node, zero dipendenze) allinea in un colpo i ~19 `?v=N`, il `CACHE` di `sw.js` e la riga "Ultimo aggiornamento" di HANDOFF; `--check` per la verifica. Sorgente di verità = `sw.js`.
 10. `impostaStatoPartita` re-invia la partita con campi locali possibilmente stale → può clobberare modifiche fatte sul foglio.
-11. Minuti/± dipendono dalla disciplina del segnapunti (checkpoint CAMBI + punteggio corretto ai checkpoint).
-12. **Zero test.**
+11. Minuti/± dipendono ancora dalla disciplina del segnapunti (aprire i CAMBI ai cambi reali) — **migliorato in v26**: `stintsDaEventi` non miscredita più la giocata di transizione (usa `prevSc`), e `passaAlPeriodo` apre i CAMBI in automatico a ogni quarto.
+12. **Zero test.** Priorità: test node di `stintsDaEventi`/`calcolaBox` (motore ± e box score).
 13. ~~Icone PWA PNG mancanti~~ — **FATTE in v22** (`icon.svg` + `icon-maskable.svg` + 4 PNG, palette PVL; `scripts/genera-icone.sh` per rigenerare).
 
 ### Backlog consigliato (ordine)

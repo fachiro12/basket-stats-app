@@ -31,12 +31,17 @@ function registraEvento(campi, delta, testoFeed) {
   const banner = document.getElementById("ultimo-evento-banner");
   if (banner) banner.textContent = testoFeed;
 
+  // Ogni evento chiude la selezione: la prossima azione richiede un nuovo tap
+  // sul giocatore/AVVERSARI → niente doppio-evento, niente mis-attribuzione.
+  state.selezione = null;
+
   salvaStato();
   inviaEvento(evento);
   renderPartita();
 }
 
 function richiedeSelezione() {
+  if (state.partitaFinita) { mostraToast("Partita terminata"); return false; }
   if (!state.selezione) {
     mostraToast("Seleziona prima un giocatore o AVVERSARI");
     return false;
@@ -69,14 +74,14 @@ function registraTiro(tipo, esito) {
 
   registraEvento({
     squadra: sq,
-    giocatore_num: num ? String(num) : "",
+    giocatore_num: numValido(num) ? String(num) : "",
     tipo_evento: "TIRO",
     dettaglio: tipo + "_" + esito,
     punti_segnati: punti
   }, inverti, feed(sq, num, tipo + " " + (esito === "SEGNATO" ? "segnato" : "sbagliato")));
 
   // Macchina a stati: canestro MIA -> Assist? / tiro sbagliato -> Rimbalzo (chiunque tiri)
-  if (sq === "MIA" && esito === "SEGNATO" && num) avviaOverlayAssist(num);
+  if (sq === "MIA" && esito === "SEGNATO" && numValido(num)) avviaOverlayAssist(num);
   else if (esito === "ERRATO") avviaOverlayRimbalzo(sq);
 }
 
@@ -176,7 +181,16 @@ function avviaOverlayRimbalzo(squadraTiro) {
   mostraActionOverlay("Rimbalzo", [
     btnNostro,
     btnAvv,
-    aoBottone("Di squadra", () => { registraRimbalzo("SQUADRA", "MIA", null); chiudiActionOverlay(); }, true)
+    aoBottone("Di squadra", () => chiediSquadraRimbalzoDiSquadra(), true)
+  ], 0);
+}
+
+function chiediSquadraRimbalzoDiSquadra() {
+  const nostro = CONFIG.NOME_SQUADRA_MIA;
+  const avv = etichettaSquadra("OPP");
+  mostraActionOverlay("Rimbalzo di squadra — di chi?", [
+    aoBottone(nostro, () => { registraRimbalzo("SQUADRA", "MIA", null); chiudiActionOverlay(); }),
+    aoBottone(avv, () => { registraRimbalzo("SQUADRA", "OPP", null); chiudiActionOverlay(); })
   ], 0);
 }
 
@@ -191,12 +205,13 @@ function chiediRimbalzistaMIA(tipo) {
 
 function registraRimbalzo(tipo, squadra, num) {
   registraEvento({
-    squadra: squadra, giocatore_num: num ? String(num) : "",
+    squadra: squadra, giocatore_num: numValido(num) ? String(num) : "",
     tipo_evento: "RIMBALZO", dettaglio: tipo, punti_segnati: 0
   }, () => {}, feed(squadra, num, "rimbalzo " + tipo.toLowerCase()));
 }
 
 function richiedeSelezioneSquadra() {
+  if (state.partitaFinita) { mostraToast("Partita terminata"); return false; }
   if (!state.selezione || (state.selezione.squadra !== "MIA" && state.selezione.squadra !== "OPP")) {
     mostraToast("Seleziona un giocatore " + CONFIG.NOME_SQUADRA_MIA + " o AVVERSARI");
     return false;
@@ -207,19 +222,19 @@ function richiedeSelezioneSquadra() {
 function registraRecupero() {
   if (!richiedeSelezioneSquadra()) return;
   const sq = state.selezione.squadra, num = state.selezione.num;
-  state.selezione = null;
   registraEvento({
-    squadra: sq, giocatore_num: num ? String(num) : "",
+    squadra: sq, giocatore_num: numValido(num) ? String(num) : "",
     tipo_evento: "RECUPERO", dettaglio: "REC", punti_segnati: 0
   }, () => {}, feed(sq, num, "recupero"));
+  /* Un recupero = palla persa della squadra avversaria: il turnover implicito
+     è ricavato in fase di calcolo (calcolaBox), non registrato come evento. */
 }
 
 function registraPallaPersa() {
   if (!richiedeSelezioneSquadra()) return;
   const sq = state.selezione.squadra, num = state.selezione.num;
-  state.selezione = null;
   registraEvento({
-    squadra: sq, giocatore_num: num ? String(num) : "",
+    squadra: sq, giocatore_num: numValido(num) ? String(num) : "",
     tipo_evento: "PALLA_PERSA", dettaglio: "PP", punti_segnati: 0
   }, () => {}, feed(sq, num, "palla persa"));
 }
@@ -258,6 +273,7 @@ function annullaUltimoEvento() {
   inviaEvento(eventoAnnulla);
 
   state.ultimoTestoFeed = "↩ Annullato · " + (ultimo.evento.tipo_evento || "").replace(/_/g, " ").toLowerCase();
+  state.selezione = null;
   salvaStato();
   renderPartita();
   mostraToast("Ultimo evento annullato");

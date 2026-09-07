@@ -8,6 +8,8 @@ function avanzaQuarto() {
   const ultimoRegolamentare = CONFIG.QUARTI_REGOLAMENTARI - 1;
 
   if (state.quartoIndice < ultimoRegolamentare) {
+    if (!confirm("Fine " + nomeQuarto() + " → passare a Q" + (state.quartoIndice + 2) +
+                 "?\n(poi confermi il quintetto)")) return;
     passaAlPeriodo(state.quartoIndice + 1);
     return;
   }
@@ -18,13 +20,8 @@ function avanzaQuarto() {
     "Annulla = termina la partita (FINALE)"
   );
 
-  if (vaiAiSupplementari) {
-    aggiungiPeriodoSupplementare();
-    passaAlPeriodo(state.quartoIndice + 1);
-    mostraToast("Inizia " + nomeQuarto());
-  } else {
-    terminaPartita();
-  }
+  if (vaiAiSupplementari) passaAlPeriodo(state.quartoIndice + 1);
+  else terminaPartita();
 }
 
 function passaAlPeriodo(indice) {
@@ -32,15 +29,14 @@ function passaAlPeriodo(indice) {
   const durSec = indice < CONFIG.QUARTI_REGOLAMENTARI ? CONFIG.DURATA_QUARTO_SEC : CONFIG.DURATA_OT_SEC;
   state.tempoPartita = formatTempo(durSec);
   state.ultimoCheckpoint = { quarto: nomeQuarto(), mm: Math.round(durSec / 60), ss: 0 };
+  // I falli di squadra NON si azzerano in OT (contano come 4° quarto, FIBA Art. 41):
+  // falliSquadraPerQuarto resta lungo QUARTI_REGOLAMENTARI, l'indice è indiceFalli().
 
   salvaStato();
   renderPartita();
-  if (indice < CONFIG.QUARTI_REGOLAMENTARI) mostraToast("Inizia " + nomeQuarto());
-}
-
-function aggiungiPeriodoSupplementare() {
-  state.falliSquadraPerQuarto.MIA.push(0);
-  state.falliSquadraPerQuarto.OPP.push(0);
+  mostraToast("Inizia " + nomeQuarto());
+  // Conferma/aggiorna il quintetto per il nuovo periodo (checkpoint a tempo pieno)
+  if (typeof apriCambi === "function") apriCambi();
 }
 
 function terminaPartita() {

@@ -323,9 +323,10 @@ function ricostruisciStatoDaEventi(partita, eventiRaw) {
   s.falliGiocatori = {};
   s.convocati.forEach(c => { s.falliGiocatori[c.numero] = 0; });
   s.falliSquadraPerQuarto = { MIA: [0, 0, 0, 0], OPP: [0, 0, 0, 0] };
-  const bump = (arr, qi) => { while (arr.length <= qi) arr.push(0); arr[qi]++; };
+  const bump = (arr, qi) => { arr[qi] = (arr[qi] || 0) + 1; };
   eventi.forEach(e => {
-    const qi = indiceDaQuarto(e.quarto);
+    // OT conta come 4° quarto per i falli di squadra (FIBA Art. 41)
+    const qi = Math.min(indiceDaQuarto(e.quarto), CONFIG.QUARTI_REGOLAMENTARI - 1);
     if (e.tipo_evento === "FALLO_FATTO") {
       bump(s.falliSquadraPerQuarto.MIA, qi);
       if (String(e.fallo_speciale) === "COMPENSATO") bump(s.falliSquadraPerQuarto.OPP, qi);

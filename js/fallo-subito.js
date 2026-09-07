@@ -6,6 +6,7 @@ let fsOpzione = null;
 let fsEsitiTl = [];
 
 function apriFalloSubito() {
+  if (state.partitaFinita) { mostraToast("Partita terminata"); return; }
   // FALLO SUBITO = il selezionato ha SUBITO un fallo
   if (state.selezione?.squadra === "MIA" && state.selezione.num != null) {
     apriModaleFalloSubito();
@@ -41,7 +42,7 @@ function faseEsitoTecnicoNostro() {
 }
 
 function registraTecnicoPanchinaNostra(segnato) {
-  const qi = state.quartoIndice;
+  const qi = indiceFalli();
   const punti = segnato ? 1 : 0;
   state.punteggio.OPP += punti;
   state.falliSquadraPerQuarto.MIA[qi] += 1;
@@ -113,7 +114,7 @@ function faseSottotipoDoppio(num) {
 }
 
 function registraFalloSubitoSenzaTl(num) {
-  const qi = state.quartoIndice;
+  const qi = indiceFalli();
   state.falliSquadraPerQuarto.OPP[qi] += 1;
   const inverti = () => {
     state.falliSquadraPerQuarto.OPP[qi] = Math.max(0, state.falliSquadraPerQuarto.OPP[qi] - 1);
@@ -125,7 +126,7 @@ function registraFalloSubitoSenzaTl(num) {
 }
 
 function registraTecnicoAvversario(num, tipoSpeciale, segnato) {
-  const qi = state.quartoIndice;
+  const qi = indiceFalli();
   const punti = segnato ? 1 : 0;
   state.punteggio.MIA += punti;
   state.falliSquadraPerQuarto.OPP[qi] += 1;
@@ -165,21 +166,21 @@ function faseEsitiTlAvv(n, esiti) {
 
 function finalizzaFalloFatto(opzione, esiti) {
   const num = ffNum;
-  const qi = state.quartoIndice;
+  const qi = indiceFalli();
   const puntiOpp = esiti.filter(v => v === "SI").length;
 
   state.falliSquadraPerQuarto.MIA[qi] += 1;
-  if (num) state.falliGiocatori[num] = (state.falliGiocatori[num] || 0) + 1;
+  if (numValido(num)) state.falliGiocatori[num] = (state.falliGiocatori[num] || 0) + 1;
   state.punteggio.OPP += puntiOpp;
 
   const inverti = () => {
     state.falliSquadraPerQuarto.MIA[qi] = Math.max(0, state.falliSquadraPerQuarto.MIA[qi] - 1);
-    if (num) state.falliGiocatori[num] = Math.max(0, (state.falliGiocatori[num] || 0) - 1);
+    if (numValido(num)) state.falliGiocatori[num] = Math.max(0, (state.falliGiocatori[num] || 0) - 1);
     state.punteggio.OPP -= puntiOpp;
   };
 
   registraEvento({
-    squadra: "MIA", giocatore_num: String(num),
+    squadra: "MIA", giocatore_num: numValido(num) ? String(num) : "",
     tipo_evento: "FALLO_FATTO", dettaglio: opzione,
     punti_segnati: puntiOpp, esito_tl: esiti.slice()
   }, inverti, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · fallo fatto" +
@@ -190,7 +191,7 @@ function finalizzaFalloFatto(opzione, esiti) {
 }
 
 function registraDoppioFallo(num, sottotipo) {
-  const qi = state.quartoIndice;
+  const qi = indiceFalli();
   state.falliSquadraPerQuarto.MIA[qi] += 1;
   state.falliSquadraPerQuarto.OPP[qi] += 1;
   state.falliGiocatori[num] = (state.falliGiocatori[num] || 0) + 1;
@@ -219,16 +220,26 @@ function apriModaleFalloSubito() {
   document.getElementById("fs-righe-tl").innerHTML = "";
   document.getElementById("fs-conferma").disabled = true;
   document.getElementById("overlay-fallo-subito").classList.add("visibile");
+
+  // And-1 probabile (il selezionato ha appena segnato) → preseleziona 1 TL
+  if (ultimaAzioneEraCanestro()) selezionaOpzioneFs("1TL");
 }
 
+/* And-1: il giocatore selezionato ha segnato da 2/3 poco fa. Si guarda indietro
+   saltando ASSIST/ANNULLA, così l'assist registrato in mezzo non lo nasconde. */
 function ultimaAzioneEraCanestro() {
-  const ultimo = state.eventLog[state.eventLog.length - 1];
-  if (!ultimo) return false;
-  const ev = ultimo.evento;
-  return ev.squadra === "MIA" &&
-    ev.giocatore_num === String(state.selezione?.num) &&
-    ev.tipo_evento === "TIRO" &&
-    (ev.dettaglio === "2P_SEGNATO" || ev.dettaglio === "3P_SEGNATO");
+  const num = String(state.selezione?.num);
+  if (num === "undefined" || num === "null" || num === "") return false;
+  const log = state.eventLog;
+  for (let i = log.length - 1, k = 0; i >= 0 && k < 4; i--, k++) {
+    const ev = log[i].evento;
+    if (ev.tipo_evento === "ASSIST" || ev.tipo_evento === "ANNULLA") continue;
+    return ev.squadra === "MIA" &&
+      String(ev.giocatore_num) === num &&
+      ev.tipo_evento === "TIRO" &&
+      (ev.dettaglio === "2P_SEGNATO" || ev.dettaglio === "3P_SEGNATO");
+  }
+  return false;
 }
 
 function selezionaOpzioneFs(opz) {
@@ -284,7 +295,7 @@ function confermaFalloSubito() {
   let dettaglio = fsOpzione;
   if (fsOpzione === "1TL" && ultimaAzioneEraCanestro()) dettaglio = "1TL_AND1";
 
-  const qi = state.quartoIndice;
+  const qi = indiceFalli();
   state.punteggio.MIA += puntiTl;
   state.falliSquadraPerQuarto.OPP[qi] += 1;
 

@@ -247,6 +247,7 @@ function calcolaBox(ctx) {
       if (n) P(n).ff++;
     } else if (t === "RECUPERO") {
       T.pr++; if (sq === "MIA" && n) P(n).pr++;
+      team[sq === "MIA" ? "OPP" : "MIA"].pp++;   // recupero ⇒ palla persa avversaria (specularità)
     } else if (t === "PALLA_PERSA") {
       T.pp++; if (sq === "MIA" && n) P(n).pp++;
     } else if (t === "ASSIST") {
@@ -286,7 +287,7 @@ function stintsDaEventi(eventi, tempoOra, quartoOra) {
     return m ? { MIA: +m[1], OPP: +m[2] } : null;
   };
   const out = [];
-  let cur = null, lastSc = { MIA: 0, OPP: 0 };
+  let cur = null, prevSc = { MIA: 0, OPP: 0 };   // prevSc = punteggio PRIMA dell'evento corrente
 
   const chiudi = (fineSc, fineT) => {
     if (!cur) return;
@@ -303,21 +304,22 @@ function stintsDaEventi(eventi, tempoOra, quartoOra) {
   (eventi || []).forEach(ev => {
     const lu = lineupOf(ev.quintetto_mia);
     const t = tempoInSec(ev.tempo_partita);
-    const sc = scoreOf(ev) || lastSc;
-    lastSc = sc;
-    if (!lu.length) return;
-    if (!cur) { cur = { quarto: ev.quarto, quintetto: lu, tIn: t, scIn: sc }; return; }
-    if (ev.quarto && ev.quarto !== cur.quarto) {          // fine periodo
-      chiudi(sc, 0);
-      cur = { quarto: ev.quarto, quintetto: lu, tIn: periodoSecQ(ev.quarto), scIn: sc };
-    } else if (lu.join(",") !== cur.quintetto.join(",")) { // cambio quintetto
-      chiudi(sc, t);
-      cur = { quarto: ev.quarto, quintetto: lu, tIn: t, scIn: sc };
+    const scAfter = scoreOf(ev) || prevSc;
+    if (!lu.length) { prevSc = scAfter; return; }
+    if (!cur) {
+      cur = { quarto: ev.quarto, quintetto: lu, tIn: t, scIn: prevSc };
+    } else if (ev.quarto && ev.quarto !== cur.quarto) {     // fine periodo: la giocata è del periodo NUOVO
+      chiudi(prevSc, 0);
+      cur = { quarto: ev.quarto, quintetto: lu, tIn: periodoSecQ(ev.quarto), scIn: prevSc };
+    } else if (lu.join(",") !== cur.quintetto.join(",")) {  // cambio quintetto
+      chiudi(prevSc, t);
+      cur = { quarto: ev.quarto, quintetto: lu, tIn: t, scIn: prevSc };
     }
+    prevSc = scAfter;
   });
   if (cur) {
     const tOra = (quartoOra && quartoOra !== cur.quarto) ? 0 : tempoInSec(tempoOra);
-    chiudi(lastSc, tOra);
+    chiudi(prevSc, tOra);
   }
   return out;
 }

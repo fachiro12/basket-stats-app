@@ -38,15 +38,19 @@ function renderPartita() {
   document.getElementById("nome-opp").textContent = state.avversarioBreve || "AVV";
   document.getElementById("btn-opp-label").textContent = state.avversarioBreve || "AVVERSARI";
 
-  // Bonus
-  const bonusMia = state.falliSquadraPerQuarto.OPP[state.quartoIndice] >= CONFIG.FALLI_SQUADRA_PER_BONUS;
-  const bonusOpp = state.falliSquadraPerQuarto.MIA[state.quartoIndice] >= CONFIG.FALLI_SQUADRA_PER_BONUS;
+  // Bonus (in OT si usa l'indice del 4° quarto — FIBA Art. 41)
+  const fi = (typeof indiceFalli === "function") ? indiceFalli() : state.quartoIndice;
+  const bonusMia = state.falliSquadraPerQuarto.OPP[fi] >= CONFIG.FALLI_SQUADRA_PER_BONUS;
+  const bonusOpp = state.falliSquadraPerQuarto.MIA[fi] >= CONFIG.FALLI_SQUADRA_PER_BONUS;
   document.getElementById("bonus-mia").classList.toggle("attivo", bonusMia);
   document.getElementById("bonus-opp").classList.toggle("attivo", bonusOpp);
 
-  // Stato partita
-  document.getElementById("btn-quarto").disabled = !!state.partitaFinita;
-  document.getElementById("end-game-panel").classList.toggle("hidden", !state.partitaFinita);
+  // Stato partita — a partita finita si blocca ogni inserimento (resta solo UNDO)
+  const fin = !!state.partitaFinita;
+  document.getElementById("btn-quarto").disabled = fin;
+  document.getElementById("btn-cambi").disabled = fin;
+  document.getElementById("btn-opp").disabled = fin;
+  document.getElementById("end-game-panel").classList.toggle("hidden", !fin);
 
   // Ultimo evento
   document.getElementById("ultimo-evento-banner").textContent = state.ultimoTestoFeed;
@@ -61,6 +65,7 @@ function renderPartita() {
     const btn = document.createElement("button");
     const sel = state.selezione?.squadra === "MIA" && state.selezione?.num === num;
     btn.className = "btn-giocatore" + (sel ? " selezionato" : "");
+    btn.disabled = fin;
     let cf = "falli";
     if (falli >= CONFIG.FALLI_PERSONALI_LIMITE) cf += " out-falli";
     else if (falli === CONFIG.FALLI_PERSONALI_LIMITE - 1) cf += " warning-falli";
@@ -77,13 +82,14 @@ function renderPartita() {
     "selezionato", !!(state.selezione?.squadra === "OPP")
   );
 
-  // FALLO SUBITO: nostro giocatore (sua modale TL) o AVVERSARI (fallo che abbiamo fatto noi)
-  document.getElementById("btn-fallo-subito").disabled =
-    !(state.selezione?.squadra === "MIA" || state.selezione?.squadra === "OPP");
+  // FALLO SUBITO / FATTO: servono una selezione (giocatore PVL o AVVERSARI)
+  const selOk = state.selezione?.squadra === "MIA" || state.selezione?.squadra === "OPP";
+  document.getElementById("btn-fallo-subito").disabled = fin || !selOk;
+  document.getElementById("btn-fallo-fatto").disabled = fin || !selOk;
 
-  // Azioni in grigio finché non c'è una selezione
+  // Azioni in grigio finché non c'è una selezione (o a partita finita)
   document.querySelector(".pannello-destro")
-    .classList.toggle("azioni-bloccate", !state.selezione);
+    .classList.toggle("azioni-bloccate", fin || !state.selezione);
 
   aggiornaBadgeOffline();
 }
@@ -157,18 +163,20 @@ function renderSlotCambi() {
 }
 
 function apriCambi() {
+  if (state.partitaFinita) { mostraToast("Partita terminata"); return; }
   document.getElementById("cambi-quarto").textContent = nomeQuarto();
   popolaTempoCambi();
   document.getElementById("cambi-min").onchange = popolaSecondiCambi;
-  document.getElementById("cambi-punti-mia").value = state.punteggio.MIA;
-  document.getElementById("cambi-punti-opp").value = state.punteggio.OPP;
   document.getElementById("cambi-punti-label").textContent =
     "Punteggio (" + CONFIG.NOME_SQUADRA_MIA + " − " + (state.avversarioBreve || "AVV") + ")";
+  document.getElementById("cambi-punteggio").textContent =
+    state.punteggio.MIA + " − " + state.punteggio.OPP;
   renderSlotCambi();
   document.getElementById("overlay-cambi").classList.add("visibile");
 }
 
 function confermaCambi() {
+  if (state.partitaFinita) { mostraToast("Partita terminata"); return; }
   const quintettoPrec = state.roster.slice();
 
   /* Snapshot per l'UNDO: il CAMBIO muta roster/inCampo/tempo/checkpoint
@@ -213,15 +221,12 @@ function confermaCambi() {
   nuovo.forEach(n => { if (!(n in state.falliGiocatori)) state.falliGiocatori[n] = 0; });
   state.roster = nuovo;
 
-  const pMia = parseInt(document.getElementById("cambi-punti-mia").value, 10);
-  const pOpp = parseInt(document.getElementById("cambi-punti-opp").value, 10);
+  // Il checkpoint usa il punteggio CORRENTE (non più editabile qui: le correzioni
+  // punteggio vanno fatte con UNDO/re-inserimento, non nella modale cambi).
   const checkpoint = {
     quarto: nomeQuarto(),
     tempo,
-    punteggio: {
-      MIA: isNaN(pMia) ? state.punteggio.MIA : pMia,
-      OPP: isNaN(pOpp) ? state.punteggio.OPP : pOpp
-    }
+    punteggio: { MIA: state.punteggio.MIA, OPP: state.punteggio.OPP }
   };
 
   state.inCampo = state.roster.slice();
