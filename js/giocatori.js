@@ -135,10 +135,10 @@ function renderRoster() {
     const row = document.createElement("button");
     row.className = "roster-item";
     row.innerHTML =
-      '<span class="roster-num">#' + (g.numero_maglia || "–") + '</span>' +
-      '<span class="roster-info"><strong>' + (g.cognome || "") + ' ' + (g.nome || "") +
-      (g.nickname ? ' <em>(' + g.nickname + ')</em>' : "") +
-      '</strong><small>' + (g.ruolo || "—") + ' · ' + (g.team || TEAM_DEFAULT) + '</small></span>' +
+      '<span class="roster-num">#' + esc(g.numero_maglia || "–") + '</span>' +
+      '<span class="roster-info"><strong>' + esc(g.cognome || "") + ' ' + esc(g.nome || "") +
+      (g.nickname ? ' <em>(' + esc(g.nickname) + ')</em>' : "") +
+      '</strong><small>' + esc(g.ruolo || "—") + ' · ' + esc(g.team || TEAM_DEFAULT) + '</small></span>' +
       '<svg class="ico" aria-hidden="true"><use href="#i-edit"></use></svg>';
     row.addEventListener("click", () => apriFormGiocatore(g.id));
     cont.appendChild(row);
@@ -257,9 +257,9 @@ function renderPrePartita() {
     row.className = "pp-riga" + (g.convocato ? " on" : "");
     row.innerHTML =
       '<input type="checkbox" class="pp-check" data-idx="' + idx + '"' + (g.convocato ? " checked" : "") + '>' +
-      '<span class="pp-nome">' + nome + (g.nickname ? ' (' + g.nickname + ')' : "") +
-        '<small>' + (g.ruolo || "—") + (g.manuale ? " · manuale" : "") + '</small></span>' +
-      '<input type="tel" inputmode="numeric" maxlength="2" class="pp-num" data-idx="' + idx + '" value="' + g.numGara + '">' +
+      '<span class="pp-nome">' + esc(nome) + (g.nickname ? ' (' + esc(g.nickname) + ')' : "") +
+        '<small>' + esc(g.ruolo || "—") + (g.manuale ? " · manuale" : "") + '</small></span>' +
+      '<input type="tel" inputmode="numeric" maxlength="2" class="pp-num" data-idx="' + idx + '" value="' + esc(g.numGara) + '">' +
       (g.manuale ? '<button type="button" class="pp-del" data-idx="' + idx + '" aria-label="Rimuovi">&times;</button>' : '');
     cont.appendChild(row);
   });
@@ -375,9 +375,9 @@ function renderQuintetto() {
     const row = document.createElement("div");
     row.className = "pp-riga" + (on ? " on" : "");
     row.innerHTML =
-      '<input type="checkbox" class="q-check" data-num="' + c.numero + '"' + (on ? " checked" : "") + '>' +
-      '<span class="pp-nome">' + etichettaGiocatore(c) +
-        '<small>' + (c.ruolo || "—") + '</small></span>';
+      '<input type="checkbox" class="q-check" data-num="' + esc(c.numero) + '"' + (on ? " checked" : "") + '>' +
+      '<span class="pp-nome">' + esc(etichettaGiocatore(c)) +
+        '<small>' + esc(c.ruolo || "—") + '</small></span>';
     cont.appendChild(row);
   });
   aggiornaContatoreQuintetto();

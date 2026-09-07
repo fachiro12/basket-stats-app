@@ -169,7 +169,7 @@ function barraPunteggio(ctx) {
     '<span class="st-score-n noi">' + ctx.punteggio.MIA + '</span>' +
     '<span class="st-score-vs">–</span>' +
     '<span class="st-score-n">' + ctx.punteggio.OPP + '</span>' +
-    '<span class="st-score-team">' + (ctx.oppLabel || "AVV") + '</span>' +
+    '<span class="st-score-team">' + esc(ctx.oppLabel || "AVV") + '</span>' +
     (inCorso ? '<span class="st-score-q">' + inCorso + '</span>' : '') +
   '</div>';
 }
@@ -376,7 +376,7 @@ function renderStats(tab) {
     const box = calcolaBox(ctx);
     if (statsTab === "andamento") contenuto = vistaAndamento(ctx);
     else if (statsTab === "tiri") contenuto = vistaTiri(box, opp);
-    else if (statsTab === "cronaca") contenuto = vistaCronaca(ctx);
+    else if (statsTab === "pbp") contenuto = vistaPbp(ctx);
     else contenuto = vistaTabellino(ctx, box, opp);
   } catch (e) {
     contenuto = '<div class="st-hint">Errore stats: ' + (e && e.message || e) + '</div>';
@@ -389,7 +389,7 @@ function rigaSquadra(nome, t, opp, cls) {
   const orb = p ? '<span>RO% ' + pct(t.ro, t.ro + opp.rd) + '</span>' : '';
   const drb = p ? '<span>RD% ' + pct(t.rd, t.rd + opp.ro) + '</span>' : '';
   return '<div class="st-team ' + (cls || "") + '">' +
-    '<span class="st-team-nome">' + nome + '</span>' +
+    '<span class="st-team-nome">' + esc(nome) + '</span>' +
     '<span class="st-team-pt">' + t.pt + '</span>' +
     '<span>FG ' + (p ? pct(t.m2 + t.m3, t.a2 + t.a3) : frac(t.m2 + t.m3, t.a2 + t.a3)) + '</span>' +
     '<span>2P ' + (p ? pct(t.m2, t.a2) : frac(t.m2, t.a2)) + '</span>' +
@@ -429,7 +429,7 @@ function vistaTabellino(ctx, box, opp) {
     righe +=
       '<tr>' +
       '<td class="st-n">#' + n + '</td>' +
-      '<td class="st-g">' + nomeGiocatore(n) + '</td>' +
+      '<td class="st-g">' + esc(nomeGiocatore(n)) + '</td>' +
       '<td class="sm-hide">' + mmss(g.min) + '</td>' +
       '<td class="st-pt">' + g.pt + '</td>' +
       cel +
@@ -459,12 +459,13 @@ function vistaTabellino(ctx, box, opp) {
 
 function vistaTiri(box, opp) {
   const A = box.team.MIA, B = box.team.OPP;
+  const oe = esc(opp);
   const adv = calcolaAdvanced(box, statsContesto().minuti);
   const barra = (label, mA, aA, mB, aB, pA, pB) =>
     '<div class="st-tiro">' +
       '<div class="st-tiro-top"><span>' + label + '</span>' +
         '<span>' + CONFIG.NOME_SQUADRA_MIA + ' ' + (aA != null ? frac(mA, aA) + ' · ' : '') + dec(pA, 0) + '%' +
-        ' · ' + opp + ' ' + (aB != null ? frac(mB, aB) + ' · ' : '') + dec(pB, 0) + '%</span></div>' +
+        ' · ' + oe + ' ' + (aB != null ? frac(mB, aB) + ' · ' : '') + dec(pB, 0) + '%</span></div>' +
       '<div class="st-bar"><span class="noi" style="width:' + Math.min(pA, 100) + '%"></span></div>' +
       '<div class="st-bar"><span class="avv" style="width:' + Math.min(pB, 100) + '%"></span></div>' +
     '</div>';
@@ -479,7 +480,7 @@ function vistaTiri(box, opp) {
     barra('TS%', null, null, null, null, adv.tsA, adv.tsB);
 }
 
-/* ---------- Cronaca (play-by-play, stile Lega Basket) ---------- */
+/* ---------- PBP — play-by-play (stile Lega Basket) ---------- */
 function descriviEvento(e, prevLuStr, opp) {
   const t = String(e.tipo_evento || "");
   const n = String(e.giocatore_num || "").trim();
@@ -531,7 +532,7 @@ function descriviEvento(e, prevLuStr, opp) {
   return lato + " · " + t.replace(/_/g, " ").toLowerCase();
 }
 
-function vistaCronaca(ctx) {
+function vistaPbp(ctx) {
   const ev = ctx.eventi.slice();
   if (!ev.length) return '<div class="st-hint">Nessun evento registrato.</div>';
   const opp = ctx.oppLabel || "AVV";
@@ -543,11 +544,11 @@ function vistaCronaca(ctx) {
     const per = (e.quarto || "") + (e.tempo_partita ? " " + e.tempo_partita : "");
     const pp = /^\d+-\d+$/.test(String(e.punteggio_progressivo || "")) ? e.punteggio_progressivo : "";
     return '<div class="pbp-riga ' + cls + '">' +
-      '<span class="pbp-t">' + per + '</span>' +
-      '<span class="pbp-d">' + testo + '</span>' +
-      '<span class="pbp-s">' + pp + '</span></div>';
+      '<span class="pbp-t">' + esc(per) + '</span>' +
+      '<span class="pbp-d">' + esc(testo) + '</span>' +
+      '<span class="pbp-s">' + esc(pp) + '</span></div>';
   }).reverse().join('');
-  return '<div class="st-hint">Cronaca · dal più recente · ' + ev.length + ' eventi</div>' +
+  return '<div class="st-hint">PBP · dal più recente · ' + ev.length + ' eventi</div>' +
     '<div class="pbp">' + righe + '</div>';
 }
 
@@ -636,7 +637,7 @@ function renderAdv(tab) {
   catch (e) { stint = '<div class="st-hint">Errore stint: ' + (e && e.message || e) + '</div>'; }
 
   document.getElementById("adv-body").innerHTML = testa +
-    '<div class="adv-legenda"><span class="noi">' + CONFIG.NOME_SQUADRA_MIA + '</span><span class="avv">' + opp + '</span> · ' +
+    '<div class="adv-legenda"><span class="noi">' + CONFIG.NOME_SQUADRA_MIA + '</span><span class="avv">' + esc(opp) + '</span> · ' +
       dec(ctx.minuti, 0) + "' giocati</div>" +
     '<div class="adv-griglia">' +
       card('Possessi', dec(a.possA), dec(a.possB), 'FGA + 0.44·FTA − ORB + TO') +
@@ -670,7 +671,7 @@ function vistaAdvGiocatori(ctx, box, opp) {
     righe +=
       '<tr>' +
       '<td class="st-n">#' + n + '</td>' +
-      '<td class="st-g">' + nomeGiocatore(n) + '</td>' +
+      '<td class="st-g">' + esc(nomeGiocatore(n)) + '</td>' +
       '<td>' + mmss(g.min) + '</td>' +
       '<td class="st-pt">' + g.pt + '</td>' +
       '<td>' + (fga || g.fta ? dec(ts, 0) + '%' : '–') + '</td>' +
@@ -699,7 +700,7 @@ function vistaAdvGiocatori(ctx, box, opp) {
 function vistaStint(box) {
   const st = (box && box.stints) || [];
   if (!st.length) return '<div class="st-hint">Nessuno stint: registra dei cambi durante la partita.</div>';
-  const lbl = n => "#" + n + (nomeGiocatore(n) ? " " + nomeGiocatore(n) : "");
+  const lbl = n => "#" + esc(n) + (nomeGiocatore(n) ? " " + esc(nomeGiocatore(n)) : "");
   const dmin = s => Math.max(1, Math.round(s.durSec / 60));
 
   const righe = st.map((s, i) =>
@@ -718,7 +719,7 @@ function vistaStint(box) {
 /* Proposta: quintetti reali migliori per ± + quintetto teorico (somma ± singoli) */
 function miglioriQuintetti(box) {
   const st = box.stints || [];
-  const lbl = n => "#" + n + (nomeGiocatore(n) ? " " + nomeGiocatore(n) : "");
+  const lbl = n => "#" + esc(n) + (nomeGiocatore(n) ? " " + esc(nomeGiocatore(n)) : "");
 
   // A) quintetti effettivamente in campo, aggregati
   const agg = {};

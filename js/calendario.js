@@ -173,12 +173,12 @@ function renderCalendario() {
           '<svg class="ico" aria-hidden="true"><use href="#i-' + (casa ? "home" : "bus") + '"></use></svg>' +
           (casa ? "Casa" : "Trasferta") +
         '</span>' +
-        '<span class="cal-badge stato-' + slugStato(stato) + '">' + stato + '</span>' +
+        '<span class="cal-badge stato-' + slugStato(stato) + '">' + esc(stato) + '</span>' +
       '</div>' +
-      '<div class="cal-avv">' + p.avversario + '</div>' +
-      '<div class="cal-meta">Gara ' + p.id_partita + ' · ' + formattaDataOra(p.data_ora) +
-        ' · ' + p.categoria + ' · ' + p.tipo + '</div>' +
-      (p.note ? '<div class="cal-note">' + p.note + '</div>' : '') +
+      '<div class="cal-avv">' + esc(p.avversario) + '</div>' +
+      '<div class="cal-meta">Gara ' + esc(p.id_partita) + ' · ' + esc(formattaDataOra(p.data_ora)) +
+        ' · ' + esc(p.categoria) + ' · ' + esc(p.tipo) + '</div>' +
+      (p.note ? '<div class="cal-note">' + esc(p.note) + '</div>' : '') +
       '<div class="cal-azioni"></div>';
 
     const azioni = card.querySelector(".cal-azioni");

@@ -62,13 +62,13 @@ Finché mancano, iOS usa uno screenshot come icona home.
 | `fallo-subito.js` | modale TL "fallo subito"; overlay fallo avversario (fatto/subito), tecnici, doppio/compensati; `apriTlAvversari` (0/1/2/3 TL avversari) |
 | `calendario.js` | `CALENDARIO_DR1` (26 gare seed offline), cache/pending partite (`bsp_partite_cache`/`bsp_partite_pending`), `scaricaPartite` (JSONP), `salvaPartitaCloud`, `impostaStatoPartita`, `renderCalendario`, `iniziaPartita`, `apriStatistichePartita`, modale "aggiungi partita"; **`ricostruisciStatoDaEventi` / `riprendiComeSegnapunti`** (subentro segnapunti da foglio), `avversarioBreveAuto` / `nomePartitaDaCalendario` |
 | `giocatori.js` | anagrafica giocatori (`bsp_giocatori`, sync JSONP `getGiocatori` + POST `SALVA_GIOCATORE`), CRUD UI; **flusso pre-partita 2 step**: convocati → quintetto base → avvio |
-| `stats.js` | motore stat: `statsContesto`, `eventiPuliti` (dedup + drop ANNULLA/valido=FALSE), `calcolaBox`, `stintsDaEventi`, `calcolaAdvanced`; render Stats (tabellino/andamento/tiri/**cronaca** = play-by-play, `descriviEvento`) e Adv (squadra/giocatori); **Segui Live** (`avviaModalitaSegui`, `pollSeguiLive` ogni 20s); `barraPunteggio`; fetch storico `scaricaEventiPartita` |
+| `stats.js` | motore stat: `statsContesto`, `eventiPuliti` (dedup + drop ANNULLA/valido=FALSE), `calcolaBox`, `stintsDaEventi`, `calcolaAdvanced`; render Stats (tabellino/andamento/tiri/**PBP** = play-by-play, `descriviEvento`) e Adv (squadra/giocatori); **Segui Live** (`avviaModalitaSegui`, `pollSeguiLive` ogni 20s); `barraPunteggio`; fetch storico `scaricaEventiPartita` |
 | `ui.js` | `renderPartita` (HUD, roster, selezione), `mostraToast`, `aggiornaBadgeOffline`, modale CAMBI (`apriCambi`/`confermaCambi` + select tempo con vincolo), `apriRecap`, `navigaA` (router viste + hook render) |
 | `pin.js` | login gate (`inizializzaPinGate`, `tentaLogin`, fallback offline, `logout`, `aggiornaProfiloAttivo`) |
 | `app.js` | `DOMContentLoaded`: registra tutti i listener + avvio (`navigaA`, `renderCalendario`, `scaricaPartite`, `scaricaGiocatori`, `inizializzaPinGate`, `processaCoda`); registra il service worker |
 
 ### CSS (`css/`)
-`tokens.css` (variabili) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro") · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, cronaca `.pbp`)
+`tokens.css` (variabili) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro") · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`)
 
 ### Altro
 `index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `icon.svg`
@@ -158,7 +158,7 @@ Se apri dal calendario una gara "In corso" che **non** stai segnando tu → `avv
 Card calendario di una gara "In corso" non tua → bottone **"Riprendi come segnapunti"** (anche come **"Prendi controllo"** nella banner Segui Live) → `riprendiComeSegnapunti(p)`: `scaricaEventiPartita` → `ricostruisciStatoDaEventi(p, eventi)` rifà `state` dal foglio → `bsp_segnapunti_di = id`, `fermaSeguiLive()`, va su `view-partita`. Vedi limiti in §8.4.
 
 ### Stat (client-side)
-`statsContesto()` sceglie sorgente: **live** (`state.eventLog`) o **remota** (`statsEventiRemoti.eventi` dal foglio), passando sempre da `eventiPuliti()` (dedup per `id_evento`, via ANNULLA + bersagli, via `valido=FALSE`). `calcolaBox(ctx)` produce per-giocatore + squadra. `stintsDaEventi(eventi, tempoOra, quartoOra)` ricostruisce gli stint (minuti, ±) dal flusso: cambio quando `quintetto_mia` cambia o cambia `quarto`. `calcolaAdvanced` applica le formule FIBA/Hack-a-Stat (§7). Tab **Cronaca** (`vistaCronaca`/`descriviEvento`): play-by-play leggibile in ordine inverso, riga = periodo+tempo · descrizione · punteggio progressivo.
+`statsContesto()` sceglie sorgente: **live** (`state.eventLog`) o **remota** (`statsEventiRemoti.eventi` dal foglio), passando sempre da `eventiPuliti()` (dedup per `id_evento`, via ANNULLA + bersagli, via `valido=FALSE`). `calcolaBox(ctx)` produce per-giocatore + squadra. `stintsDaEventi(eventi, tempoOra, quartoOra)` ricostruisce gli stint (minuti, ±) dal flusso: cambio quando `quintetto_mia` cambia o cambia `quarto`. `calcolaAdvanced` applica le formule FIBA/Hack-a-Stat (§7). Tab **PBP** (`vistaPbp`/`descriviEvento`): play-by-play leggibile in ordine inverso, riga = periodo+tempo · descrizione · punteggio progressivo.
 
 ---
 
@@ -188,8 +188,8 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 2. ~~**Perdita silenziosa eventi**~~ — **MITIGATO in v20**: `riconciliaCoda()` (`api.js`, ogni 45s + su `online`) confronta gli `id_evento` di `state.eventLog` col foglio (`getEventi`) e rimette in coda i mancanti più vecchi di 30s. Gira solo sul device segnapunti. Non copre gli `ANNULLA` (non sono in `eventLog`); eventuali duplicati da re-invio sono innocui perché `eventiPuliti()` deduplica lato stat. Resta il limite di fondo: `no-cors` non conferma nulla.
 3. ~~**Password**~~ — **RISOLTO in V4.8**: hash SHA-256 **con salt per-utente** (colonna `salt`, `SHA256(salt|password)`); righe legacy senza salt vengono aggiornate al primo login riuscito. Login ora via **POST** (`azione: "VERIFICA_LOGIN"`) → la password non passa più in query string GET (niente log di esecuzione / cronologia / proxy). Il GET `?action=verificaLogin` resta per compatibilità coi client non aggiornati.
 4. ~~**Partita viva solo in `localStorage`**~~ — **MITIGATO in v20**: `ricostruisciStatoDaEventi()` (`calendario.js`) ricostruisce `state` dagli eventi del foglio (punteggio, periodo, tempo, quintetto in campo, falli personali e di squadra, `eventLog` con `delta` best-effort). Entry point: bottone **"Riprendi come segnapunti"** sulla card calendario di una partita "In corso" non segnata da questo device, e **"Prendi controllo"** nella banner Segui Live. Limiti: si perde ciò che l'altro device non ha ancora sincronizzato; l'UNDO di eventi pre-subentro non ripristina i contatori falli; i panchinari mai entrati non rientrano nei convocati (aggiungibili dai cambi).
-5. **UNDO di un CAMBIO** — l'evento `CAMBIO` ha `delta` vuota: UNDO non ripristina `state.roster`/`inCampo`.
-6. **XSS latente** — nomi (da Sheet/localStorage) concatenati in `innerHTML` in `renderCalendario`, `vistaTabellino`, `vistaStint`, `miglioriQuintetti`, `renderRoster`, `barraPunteggio`. → helper `esc()`.
+5. ~~**UNDO di un CAMBIO**~~ — **RISOLTO in v20**: `confermaCambi` passa una `delta` reale (`ripristinaCambio`) che rimette `roster`/`inCampo`/`tempoPartita`/`ultimoCheckpoint`/`stints`/`stintCorrente` e rimuove le chiavi `falliGiocatori` appena aggiunte.
+6. ~~**XSS latente**~~ — **RISOLTO in v20**: helper globale `esc()` (`state.js`) applicato a tutte le interpolazioni di nomi/note in `innerHTML` — `renderCalendario`, `renderRoster`, `renderSlotCambi`, `renderPartita` (roster), `apriRecap`, `renderPrePartita`, `renderQuintetto`, `barraPunteggio`, `rigaSquadra`, `vistaTabellino`, `vistaAdvGiocatori`, `vistaTiri`, `vistaStint`, `miglioriQuintetti`, `vistaPbp`. I nomi squadra costanti (`CONFIG.NOME_SQUADRA_MIA`) non sono editabili → lasciati grezzi.
 7. **`state.stints`/`stintCorrente` = codice morto** — le stat usano solo `stintsDaEventi()`. Il bookkeeping in `ui.js`/`timer.js` è da rimuovere.
 8. `apriRecap` dipende da `stats.js` senza guardia `typeof`.
 9. **Cache-busting manuale** su ~19 riferimenti + nome SW.
@@ -199,7 +199,7 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 13. Icone PWA PNG mancanti.
 
 ### Backlog consigliato (ordine)
-`esc()` HTML → delta reale CAMBIO → rimuovi `state.stints` → test node del motore stat → auto cache-bust.
+rimuovi `state.stints` (codice morto) → test node del motore stat → auto cache-bust → salt lato client se serve.
 
 ---
 

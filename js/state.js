@@ -93,6 +93,13 @@ function formatTempo(sec) {
   return m + ":" + s;
 }
 
+/* Escape per interpolazione sicura in innerHTML (nomi giocatori/avversari/note
+   arrivano da Sheet e localStorage, editabili dai coach). */
+const _ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+function esc(v) {
+  return String(v == null ? "" : v).replace(/[&<>"']/g, c => _ESC_MAP[c]);
+}
+
 function uuid() {
   if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {

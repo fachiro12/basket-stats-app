@@ -65,8 +65,8 @@ function renderPartita() {
     if (falli >= CONFIG.FALLI_PERSONALI_LIMITE) cf += " out-falli";
     else if (falli === CONFIG.FALLI_PERSONALI_LIMITE - 1) cf += " warning-falli";
     btn.innerHTML =
-      `<span class="g-id"><span class="numero">#${num}</span>` +
-      (nick ? `<span class="nick">${nick}</span>` : "") + `</span>` +
+      `<span class="g-id"><span class="numero">#${esc(num)}</span>` +
+      (nick ? `<span class="nick">${esc(nick)}</span>` : "") + `</span>` +
       `<span class="${cf}">${falli}F</span>`;
     btn.addEventListener("click", () => selezionaGiocatore(num));
     listaEl.appendChild(btn);
@@ -141,16 +141,16 @@ function renderSlotCambi() {
     if (panchina.length || conv.length) {
       let opts = '<option value="">resta in campo</option>';
       panchina.forEach(c => {
-        opts += '<option value="' + c.numero + '">↔ #' + c.numero +
-                (c.nickname ? " " + c.nickname : "") + '</option>';
+        opts += '<option value="' + esc(c.numero) + '">↔ #' + esc(c.numero) +
+                (c.nickname ? " " + esc(c.nickname) : "") + '</option>';
       });
-      div.innerHTML = '<span class="slot-in">#' + num + nick + '</span>' +
+      div.innerHTML = '<span class="slot-in">#' + esc(num) + esc(nick) + '</span>' +
         '<select class="cambio-sel" data-idx="' + idx + '">' + opts + '</select>';
     } else {
-      div.innerHTML = '<span class="slot-in">#' + num + '</span>' +
+      div.innerHTML = '<span class="slot-in">#' + esc(num) + '</span>' +
         '<span class="freccia" aria-hidden="true">→</span>' +
         '<input type="tel" inputmode="numeric" maxlength="2" class="cambio-num" data-idx="' + idx +
-        '" placeholder="' + num + '">';
+        '" placeholder="' + esc(num) + '">';
     }
     cont.appendChild(div);
   });
@@ -171,6 +171,29 @@ function apriCambi() {
 function confermaCambi() {
   if (!Array.isArray(state.stints)) state.stints = [];
   const quintettoPrec = state.roster.slice();
+
+  /* Snapshot per l'UNDO: il CAMBIO muta roster/inCampo/tempo/checkpoint/stint
+     e aggiunge chiavi a falliGiocatori. La delta ripristina tutto. */
+  const snap = {
+    roster: state.roster.slice(),
+    inCampo: (state.inCampo || state.roster).slice(),
+    tempoPartita: state.tempoPartita,
+    ultimoCheckpoint: state.ultimoCheckpoint ? Object.assign({}, state.ultimoCheckpoint) : null,
+    falliKeys: Object.keys(state.falliGiocatori),
+    stints: (state.stints || []).slice(),
+    stintCorrente: state.stintCorrente ? JSON.parse(JSON.stringify(state.stintCorrente)) : null
+  };
+  const ripristinaCambio = () => {
+    state.roster = snap.roster.slice();
+    state.inCampo = snap.inCampo.slice();
+    state.tempoPartita = snap.tempoPartita;
+    state.ultimoCheckpoint = snap.ultimoCheckpoint ? Object.assign({}, snap.ultimoCheckpoint) : null;
+    Object.keys(state.falliGiocatori).forEach(k => {
+      if (snap.falliKeys.indexOf(k) === -1) delete state.falliGiocatori[k];
+    });
+    state.stints = snap.stints.slice();
+    state.stintCorrente = snap.stintCorrente ? JSON.parse(JSON.stringify(snap.stintCorrente)) : null;
+  };
 
   const mm = parseInt(document.getElementById("cambi-min").value, 10) || 0;
   const ss = parseInt(document.getElementById("cambi-sec").value, 10) || 0;
@@ -226,7 +249,7 @@ function confermaCambi() {
     dettaglio: "STINT",
     punti_segnati: 0,
     punteggio_progressivo: checkpoint.punteggio.MIA + "-" + checkpoint.punteggio.OPP
-  }, () => {}, descr);
+  }, ripristinaCambio, descr);
 
   chiudiCambi();
   mostraToast("Quintetto e checkpoint salvati");
@@ -276,7 +299,7 @@ function apriRecap() {
     const pm = Math.round(g.pm || 0);
     const net = g.min ? Math.round((g.pm || 0) / g.min * 40) : 0;
     html += `<tr>
-      <td>#${n}</td><td style="text-align:left">${nomeGiocatore(n)}</td>
+      <td>#${esc(n)}</td><td style="text-align:left">${esc(nomeGiocatore(n))}</td>
       <td>${g.pt || 0}</td>
       <td class="${pm >= 0 ? "pos" : "neg"}">${pm > 0 ? "+" : ""}${pm}</td>
       <td>${efg}</td>

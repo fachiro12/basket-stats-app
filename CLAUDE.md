@@ -38,5 +38,6 @@ PR body: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 2. ~~Password con salt + login via POST~~ — **FATTO (V4.8)**.
 3. ~~Riconciliazione coda eventi~~ — **FATTO (v20)**: `riconciliaCoda()` in `api.js`.
 4. ~~"Riprendi come segnapunti"~~ — **FATTO (v20)**: `ricostruisciStatoDaEventi()` in `calendario.js`.
-5. `esc()` HTML sui nomi interpolati in `innerHTML`
-6. `delta` reale per l'evento CAMBIO (UNDO deve ripristinare il quintetto)
+5. ~~`esc()` HTML sui nomi interpolati in `innerHTML`~~ — **FATTO (v20)**.
+6. ~~`delta` reale per l'evento CAMBIO~~ — **FATTO (v20)**.
+7. Rimuovere `state.stints`/`stintCorrente` (codice morto: le stat usano `stintsDaEventi()`).
