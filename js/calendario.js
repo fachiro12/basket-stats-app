@@ -197,6 +197,17 @@ function renderCalendario() {
       btn.addEventListener("click", () => iniziaPartita(p));
     }
     azioni.appendChild(btn);
+
+    const mioLive = localStorage.getItem(STORAGE_KEYS.segnapunti) === String(p.id_partita)
+      && String(state.id_partita) === String(p.id_partita);
+    if (stato === "In corso" && !mioLive) {
+      const btn2 = document.createElement("button");
+      btn2.className = "cal-btn secondario";
+      btn2.textContent = "Riprendi come segnapunti";
+      btn2.addEventListener("click", () => riprendiComeSegnapunti(p));
+      azioni.appendChild(btn2);
+    }
+
     cont.appendChild(card);
   });
 }
@@ -239,6 +250,131 @@ function apriStatistichePartita(id) {
   scaricaEventiPartita(id, ok => {
     if (ok && document.getElementById("view-stats").classList.contains("attiva")) renderStats();
   });
+}
+
+/* ==========================================================================
+   RIPRENDI COME SEGNAPUNTI — ricostruzione dello stato dagli eventi del foglio
+   Serve quando la partita "viva" è solo nel localStorage di un altro device
+   (dati cancellati / browser cambiato / subentro di un secondo segnapunti).
+   Gli eventi sul foglio sono la sorgente di verità; ciò che non è stato
+   ancora sincronizzato dall'altro dispositivo va perso.
+   ========================================================================== */
+function indiceDaQuarto(q) {
+  const reg = CONFIG.QUARTI_REGOLAMENTARI;
+  const s = String(q || "Q1").toUpperCase();
+  const ot = s.match(/^OT(\d+)/);
+  if (ot) return reg + (parseInt(ot[1], 10) || 1) - 1;
+  const qn = s.match(/^Q(\d+)/);
+  if (qn) return (parseInt(qn[1], 10) || 1) - 1;
+  return 0;
+}
+
+function deltaRicostruita_(ev) {
+  const t = ev.tipo_evento, pt = Number(ev.punti_segnati) || 0;
+  if (!pt) return () => {};
+  if (t === "TIRO") { const sq = ev.squadra === "OPP" ? "OPP" : "MIA"; return () => { state.punteggio[sq] -= pt; }; }
+  if (t === "FALLO_SUBITO") return () => { state.punteggio.MIA -= pt; };
+  if (t === "FALLO_FATTO")  return () => { state.punteggio.OPP -= pt; };
+  return () => {};
+}
+
+function ricostruisciStatoDaEventi(partita, eventiRaw) {
+  const eventi = (typeof eventiPuliti === "function" ? eventiPuliti(eventiRaw) : (eventiRaw || []));
+  const s = statoIniziale();
+  const nums = v => String(v || "").split(",").map(x => x.trim()).filter(Boolean);
+
+  s.id_partita = String(partita.id_partita);
+  s.avversario = partita.avversario || "";
+  s.avversarioBreve = avversarioBreveAuto(partita.avversario);
+  s.luogoPartita = partita.luogo === "Trasferta" ? "Trasferta" : "Casa";
+  s.nomePartita = (typeof nomePartitaComposto === "function")
+    ? nomePartitaComposto(s.luogoPartita, s.avversarioBreve)
+    : CONFIG.NOME_SQUADRA_MIA + " vs " + s.avversarioBreve;
+
+  // Convocati: numeri visti nei quintetti + azioni MIA, arricchiti dall'anagrafica
+  const visti = {};
+  eventi.forEach(e => {
+    nums(e.quintetto_mia).forEach(n => { visti[n] = 1; });
+    const g = String(e.giocatore_num || "").trim();
+    if (e.squadra === "MIA" && /^\d+$/.test(g)) visti[g] = 1;
+  });
+  const ana = (typeof caricaGiocatori === "function") ? caricaGiocatori() : [];
+  s.convocati = Object.keys(visti).map(Number).sort((a, b) => a - b).map(n => {
+    const g = ana.find(x => String(x.numero_maglia) === String(n)) || {};
+    return {
+      id: g.id_giocatore || "", nome: g.nome || "", cognome: g.cognome || "",
+      nickname: g.nickname || "", ruolo: g.ruolo || "", numero: n
+    };
+  });
+
+  // Punteggio / periodo / tempo / quintetto in campo dall'ultimo evento utile
+  const ultimo = eventi[eventi.length - 1] || null;
+  const ultimoPeriodo = [...eventi].reverse().find(e => /^(Q|OT)\d/i.test(String(e.quarto || "")));
+  if (ultimo) {
+    const mp = String(ultimo.punteggio_progressivo || "").match(/^(\d+)-(\d+)$/);
+    if (mp) s.punteggio = { MIA: +mp[1], OPP: +mp[2] };
+    s.tempoPartita = ultimo.tempo_partita || s.tempoPartita;
+  }
+  s.quartoIndice = indiceDaQuarto(ultimoPeriodo ? ultimoPeriodo.quarto : (ultimo && ultimo.quarto));
+  const luFinale = nums((ultimoPeriodo || ultimo || {}).quintetto_mia).map(Number);
+  if (luFinale.length) { s.roster = luFinale; s.inCampo = luFinale.slice(); }
+
+  // Falli: personali (FALLO_FATTO per giocatore) + di squadra per quarto
+  s.falliGiocatori = {};
+  s.convocati.forEach(c => { s.falliGiocatori[c.numero] = 0; });
+  s.falliSquadraPerQuarto = { MIA: [0, 0, 0, 0], OPP: [0, 0, 0, 0] };
+  const bump = (arr, qi) => { while (arr.length <= qi) arr.push(0); arr[qi]++; };
+  eventi.forEach(e => {
+    const qi = indiceDaQuarto(e.quarto);
+    if (e.tipo_evento === "FALLO_FATTO") {
+      bump(s.falliSquadraPerQuarto.MIA, qi);
+      if (String(e.fallo_speciale) === "COMPENSATO") bump(s.falliSquadraPerQuarto.OPP, qi);
+      const g = String(e.giocatore_num || "").trim();
+      if (/^\d+$/.test(g)) s.falliGiocatori[g] = (s.falliGiocatori[g] || 0) + 1;
+    } else if (e.tipo_evento === "FALLO_SUBITO") {
+      bump(s.falliSquadraPerQuarto.OPP, qi);
+    }
+  });
+
+  s.eventLog = eventi.map(ev => ({ evento: ev, delta: deltaRicostruita_(ev) }));
+  s.partitaFinita = eventi.some(e => String(e.tipo_evento) === "FINE");
+
+  const tp = String(s.tempoPartita || "00:00").split(":");
+  s.ultimoCheckpoint = {
+    quarto: ultimoPeriodo ? ultimoPeriodo.quarto : "Q1",
+    mm: parseInt(tp[0], 10) || 0, ss: parseInt(tp[1], 10) || 0
+  };
+  s.stints = [];
+  s.stintCorrente = null;
+  s.ultimoTestoFeed = "Ripreso come segnapunti · " + s.punteggio.MIA + "-" + s.punteggio.OPP;
+  return s;
+}
+
+function riprendiComeSegnapunti(p) {
+  if (!p) { mostraToast("Partita non trovata"); return; }
+  if (!confirm("Prendere il controllo come segnapunti di \"" + (p.avversario || p.id_partita) + "\"?\n\n" +
+    "Lo stato viene ricostruito dagli eventi già sul foglio. Eventi non ancora sincronizzati da un altro dispositivo andranno persi.")) return;
+
+  mostraToast("Recupero eventi dal foglio…");
+  scaricaEventiPartita(String(p.id_partita), ok => {
+    const ev = (statsEventiRemoti && Array.isArray(statsEventiRemoti.eventi)) ? statsEventiRemoti.eventi : [];
+    if (!ok || !ev.length) { mostraToast("Nessun evento sul foglio: impossibile ricostruire"); return; }
+
+    state = ricostruisciStatoDaEventi(p, ev);
+    salvaStato();
+    localStorage.setItem(STORAGE_KEYS.segnapunti, String(p.id_partita));
+    if (typeof fermaSeguiLive === "function") fermaSeguiLive();
+    statsEventiRemoti = null;
+    impostaStatoPartita(p.id_partita, "In corso");
+    renderCalendario();
+    navigaA("partita");
+    renderPartita();
+    mostraToast("Sei il segnapunti · " + state.punteggio.MIA + "-" + state.punteggio.OPP);
+  });
+}
+
+function riprendiComeSegnapuntiId(id) {
+  riprendiComeSegnapunti(elencoPartite().find(x => String(x.id_partita) === String(id)));
 }
 
 /* ---------- Modale "Aggiungi partita" ---------- */

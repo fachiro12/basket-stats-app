@@ -35,7 +35,8 @@ PR body: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 ## Priorità aperte (dal review — vedi HANDOFF.md)
 
 1. ~~Token di scrittura sui POST~~ — **FATTO (V4.7)**. Da attivare impostando la Script Property `WRITE_TOKEN`.
-2. `esc()` HTML sui nomi interpolati in `innerHTML`
-3. `delta` reale per l'evento CAMBIO (UNDO deve ripristinare il quintetto)
-4. Riconciliazione coda eventi (il `no-cors` non conferma la consegna)
-5. "Riprendi come segnapunti" (ricostruzione stato dagli eventi del foglio)
+2. ~~Password con salt + login via POST~~ — **FATTO (V4.8)**.
+3. ~~Riconciliazione coda eventi~~ — **FATTO (v20)**: `riconciliaCoda()` in `api.js`.
+4. ~~"Riprendi come segnapunti"~~ — **FATTO (v20)**: `ricostruisciStatoDaEventi()` in `calendario.js`.
+5. `esc()` HTML sui nomi interpolati in `innerHTML`
+6. `delta` reale per l'evento CAMBIO (UNDO deve ripristinare il quintetto)

@@ -38,6 +38,11 @@
   color: #FFFFFF;
   border-color: var(--color-brand);
 }
+/* 4 tab (Tabellino/Andamento/Tiri/Cronaca): stringi un filo per stare su 430px */
+.stats-tabs button { padding-left: 2px; padding-right: 2px; }
+@media (max-width: 430px) {
+  .stats-tabs button { font-size: 11px; letter-spacing: 0.1px; }
+}
 
 #stats-body, #adv-body { gap: 10px; }
 
@@ -70,6 +75,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 7px 10px;
   border-radius: var(--radius-sm);
@@ -244,3 +250,27 @@ table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
 .mq-teo b { color: #000000; }
 .mq-teo .mq-r { font-size: 10px; font-weight: 800; color: var(--color-brand); }
 .mq-vincolo { font-size: 10px; color: var(--color-text-muted); margin-top: 3px; }
+
+/* ---------- Cronaca (play-by-play) ---------- */
+.pbp {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+.pbp-riga {
+  display: grid;
+  grid-template-columns: 66px 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  font-size: 12px;
+}
+.pbp-riga.noi { border-left: 3px solid var(--color-brand); }
+.pbp-riga.avv { border-left: 3px solid var(--color-text-muted); }
+.pbp-t { color: var(--color-text-muted); font-weight: 700; font-size: 11px; white-space: nowrap; }
+.pbp-d { color: #000000; min-width: 0; }
+.pbp-s { color: var(--color-text-secondary); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }

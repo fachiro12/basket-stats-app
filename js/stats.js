@@ -54,6 +54,7 @@ function bannerSegui() {
     ? '<div class="segui-bar fin"><span>● PARTITA TERMINATA · dati finali</span>' +
       '<button id="segui-stop">Esci</button></div>'
     : '<div class="segui-bar"><span>● SEGUI LIVE · aggiornamento auto 20s · sola lettura</span>' +
+      '<button id="segui-prendi">Prendi controllo</button>' +
       '<button id="segui-stop">Esci</button></div>';
 }
 
@@ -375,6 +376,7 @@ function renderStats(tab) {
     const box = calcolaBox(ctx);
     if (statsTab === "andamento") contenuto = vistaAndamento(ctx);
     else if (statsTab === "tiri") contenuto = vistaTiri(box, opp);
+    else if (statsTab === "cronaca") contenuto = vistaCronaca(ctx);
     else contenuto = vistaTabellino(ctx, box, opp);
   } catch (e) {
     contenuto = '<div class="st-hint">Errore stats: ' + (e && e.message || e) + '</div>';
@@ -475,6 +477,78 @@ function vistaTiri(box, opp) {
     barra('Tiri liberi', A.ftm, A.fta, B.ftm, B.fta, A.fta ? A.ftm / A.fta * 100 : 0, B.fta ? B.ftm / B.fta * 100 : 0) +
     barra('eFG%', null, null, null, null, adv.efgA, adv.efgB) +
     barra('TS%', null, null, null, null, adv.tsA, adv.tsB);
+}
+
+/* ---------- Cronaca (play-by-play, stile Lega Basket) ---------- */
+function descriviEvento(e, prevLuStr, opp) {
+  const t = String(e.tipo_evento || "");
+  const n = String(e.giocatore_num || "").trim();
+  const d = String(e.dettaglio || "");
+  const noi = CONFIG.NOME_SQUADRA_MIA, av = opp || "AVV";
+  const lato = e.squadra === "OPP" ? av : noi;
+  const chi = num => "#" + num + (nomeGiocatore(num) ? " " + nomeGiocatore(num) : "");
+  const mioG = /^\d+$/.test(n) && e.squadra === "MIA";
+
+  if (t === "TIRO") {
+    const tre = /3/.test(String(d).split("_")[0]) || Number(e.punti_segnati) === 3;
+    const seg = d.indexOf("SEGNATO") > -1 || Number(e.punti_segnati) >= 2;
+    const q = tre ? "da 3" : "da 2";
+    return lato + " · " + (mioG ? chi(n) + " " : "") + (seg ? "canestro " + q : "tiro sbagliato " + q);
+  }
+  if (t === "ASSIST") {
+    const m = d.match(/_A_(\d+)$/);
+    return noi + " · assist " + (n ? chi(n) : "") + (m ? " → #" + m[1] : "");
+  }
+  if (t === "RIMBALZO") {
+    const tipo = d === "OFFENSIVO" ? "rimbalzo offensivo"
+      : d === "DIFENSIVO" ? "rimbalzo difensivo" : "rimbalzo di squadra";
+    return lato + " · " + tipo + (mioG ? " " + chi(n) : "");
+  }
+  if (t === "RECUPERO")   return lato + " · palla recuperata" + (mioG ? " " + chi(n) : "");
+  if (t === "PALLA_PERSA") return lato + " · palla persa" + (mioG ? " " + chi(n) : "");
+  if (t === "FALLO_FATTO") {
+    const es = esitiArray(e.esito_tl);
+    const tl = es.length ? " · " + es.filter(x => x === "SI").length + "/" + es.length + " TL " + av : "";
+    const extra = d && !/^(STANDARD|STINT)$/.test(d) ? " (" + d.replace(/_/g, " ").toLowerCase() + ")" : "";
+    return /^\d+$/.test(n) ? noi + " · fallo di " + chi(n) + tl + extra
+                           : noi + " · fallo di squadra" + tl + extra;
+  }
+  if (t === "FALLO_SUBITO") {
+    const es = esitiArray(e.esito_tl);
+    const tl = es.length ? " · " + es.filter(x => x === "SI").length + "/" + es.length + " TL " + noi : "";
+    return av + " · fallo su " + (/^\d+$/.test(n) ? chi(n) : noi) + tl;
+  }
+  if (t === "CAMBIO") {
+    const set = str => new Set(String(str || "").split(",").map(x => x.trim()).filter(Boolean));
+    const cur = set(e.quintetto_mia), prev = set(prevLuStr);
+    const inn = [...cur].filter(x => !prev.has(x));
+    const out = [...prev].filter(x => !cur.has(x));
+    if (!inn.length && !out.length) return noi + " · checkpoint " + (e.tempo_partita || "");
+    return noi + " · cambio — IN " + (inn.map(chi).join(", ") || "—") +
+           " / OUT " + (out.map(chi).join(", ") || "—");
+  }
+  if (t === "FINE") return "— Fine partita —";
+  return lato + " · " + t.replace(/_/g, " ").toLowerCase();
+}
+
+function vistaCronaca(ctx) {
+  const ev = ctx.eventi.slice();
+  if (!ev.length) return '<div class="st-hint">Nessun evento registrato.</div>';
+  const opp = ctx.oppLabel || "AVV";
+  let prevLu = "";
+  const righe = ev.map(e => {
+    const testo = descriviEvento(e, prevLu, opp);
+    if (e.quintetto_mia != null && String(e.quintetto_mia) !== "") prevLu = String(e.quintetto_mia);
+    const cls = e.squadra === "OPP" ? "avv" : (e.squadra === "MIA" ? "noi" : "");
+    const per = (e.quarto || "") + (e.tempo_partita ? " " + e.tempo_partita : "");
+    const pp = /^\d+-\d+$/.test(String(e.punteggio_progressivo || "")) ? e.punteggio_progressivo : "";
+    return '<div class="pbp-riga ' + cls + '">' +
+      '<span class="pbp-t">' + per + '</span>' +
+      '<span class="pbp-d">' + testo + '</span>' +
+      '<span class="pbp-s">' + pp + '</span></div>';
+  }).reverse().join('');
+  return '<div class="st-hint">Cronaca · dal più recente · ' + ev.length + ' eventi</div>' +
+    '<div class="pbp">' + righe + '</div>';
 }
 
 function vistaAndamento(ctx) {

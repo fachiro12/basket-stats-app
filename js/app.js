@@ -92,6 +92,9 @@ document.addEventListener("DOMContentLoaded", () => {
       fermaSeguiLive();
       statsEventiRemoti = null;
       navigaA("calendario");
+    } else if (t.id === "segui-prendi") {
+      if (seguiLive && seguiLive.id && typeof riprendiComeSegnapuntiId === "function")
+        riprendiComeSegnapuntiId(seguiLive.id);
     } else if (t.dataset && t.dataset.fmt) {
       statsFmt = t.dataset.fmt;
       renderStats();
