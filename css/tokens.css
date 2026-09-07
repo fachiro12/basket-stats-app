@@ -1,46 +1,75 @@
 /* ==========================================================================
-   BASKET STATS PRO — Design Tokens (Light Mode, stile Investing.com)
+   BASKET STATS PRO — Design Tokens
+   Palette "PVL": costruita dal logo (blu profondo · rosso pallone · bianco).
+   Verde e rosso solo per le voci statistiche. Nessun terzo colore.
    Unica fonte di verità per colori, spazi, raggi, ombre, tipografia.
+
+   Temi: default CHIARO. "Arena" (scuro) si attiva con
+   <html data-tema="arena"> — vedi js/tema.js e lo switch in "Altro".
+   Ogni colore è definito qui su :root e ridefinito nel blocco [data-tema].
    ========================================================================== */
 :root {
   /* ---------- Superfici ---------- */
-  --color-bg: #F4F5F7;              /* sfondo pagina/app */
-  --color-surface: #EAECEF;         /* elementi secondari / pill inattivi */
-  --color-surface-raised: #FFFFFF;  /* card / superfici */
-  --color-border: #E5E7EB;          /* bordi sottili 1px */
-  --color-border-strong: #D1D5DB;
+  --color-bg: #F1F4F9;               /* sfondo app (freddo, non #F4F5F7) */
+  --color-surface: #E7ECF4;          /* pill inattivi, chip, riempimenti tenui */
+  --color-surface-raised: #FFFFFF;   /* card / modali */
+  --color-surface-sunken: #EDF1F7;   /* input, banner, checkpoint */
+  --color-border: #E2E7F0;           /* bordi 1px */
+  --color-border-strong: #CBD5E3;
 
-  /* alias semantici */
+  /* ---------- Testo ---------- */
+  --color-text-primary: #0C1424;     /* non più nero pieno */
+  --color-text-secondary: #3A4763;
+  --color-text-muted: #667085;
+  --color-text-on-brand: #FFFFFF;    /* testo sopra i riempimenti brand/stato */
+  --color-on-color: #FFFFFF;
+
+  /* ---------- Brand (blu PVL) ---------- */
+  --color-brand: #1E3C8C;            /* riempimento pieno + testo bianco */
+  --color-brand-ink: #1E3C8C;        /* brand come TESTO/icona su superfici */
+  --color-brand-bright: #3D6BD6;     /* accenti, linee, focus, hover */
+  --color-brand-soft: #E7ECFB;       /* fill tenue: riga "PVL", chip Casa */
+  --color-brand-strong: #14245B;     /* più profondo: giocatore selezionato */
+
+  /* ---------- Segnali statistici ---------- */
+  --color-state-positive: #0E7B4E;
+  --color-state-positive-soft: #DCF1E7;
+  --color-state-positive-border: #93D9BA;
+  --color-state-negative: #CE2B2B;   /* = rosso del pallone del logo */
+  --color-state-negative-soft: #FBE6E5;
+  --color-state-negative-border: #F1AAA6;
+  /* "warning" e "live" condividono la famiglia rossa (niente ambra) */
+  --color-state-warning: #CE2B2B;
+  --color-state-warning-soft: #FBE6E5;
+  --color-live: #CE2B2B;
+
+  /* Falli: indigo, distinto dal blu brand (bookkeeping, né buono né cattivo) */
+  --color-foul: #4338CA;
+  --color-foul-soft: #E5E5FB;
+  --color-foul-border: #BBBEF3;
+
+  /* ---------- Barra punteggio (Stats / Adv) ---------- */
+  --color-score-bg-a: #1C377F;
+  --color-score-bg-b: #101E4A;
+  --color-score-mine: #A9C6FF;       /* il nostro numero sulla barra scura */
+
+  /* ---------- Toast (sempre "invertito" rispetto alla pagina) ---------- */
+  --color-toast-bg: #101828;
+  --color-toast-text: #F4F7FE;
+
+  /* ---------- alias semantici (retro-compatibilità) ---------- */
   --bg-app: var(--color-bg);
   --bg-main: var(--color-bg);
   --bg-surface: var(--color-surface-raised);
   --bg-card: var(--color-surface-raised);
   --bg-secondary: var(--color-surface);
-  --bg-subtle: #F0F2F5;
+  --bg-subtle: var(--color-surface-sunken);
   --border-color: var(--color-border);
-
-  /* ---------- Testo ---------- */
-  --color-text-primary: #000000;
-  --color-text-secondary: #6B7280;
-  --color-text-muted: #9099A6;
-  --color-text-on-brand: #FFFFFF;
-
   --text-primary: var(--color-text-primary);
   --text-secondary: var(--color-text-secondary);
-
-  /* ---------- Accenti funzionali ---------- */
-  --color-brand: #FF6B00;           /* arancione Investing */
-  --color-brand-soft: #FFEEDF;
   --color-accent: var(--color-brand);
   --color-primary: var(--color-brand);
-  --color-active: #000000;
-
-  --color-state-positive: #0A7A50;
-  --color-state-positive-soft: #DEF4EA;
-  --color-state-negative: #C22730;
-  --color-state-negative-soft: #FBE3E4;
-  --color-state-warning: #9A5A00;
-  --color-state-warning-soft: #FCEBCF;
+  --color-active: var(--color-text-primary);
 
   /* ---------- Spaziature ---------- */
   --space-1: 4px;
@@ -56,10 +85,10 @@
   --radius-pill: 999px;
   --radius-card: var(--radius-lg);
 
-  /* ---------- Ombre ---------- */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-raised: 0 8px 28px rgba(0, 0, 0, 0.12);
+  /* ---------- Ombre (tinta fredda, non nero puro) ---------- */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 14px rgba(15, 23, 42, 0.06);
+  --shadow-raised: 0 12px 34px rgba(15, 23, 42, 0.18);
 
   /* ---------- Tipografia ---------- */
   --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -68,5 +97,60 @@
   /* ---------- Layout / interazione ---------- */
   --tabbar-height: 50px;
   --tap-target: 44px;
-  --focus-ring: 0 0 0 3px rgba(255, 107, 0, 0.35);
+  --focus-ring: 0 0 0 3px rgba(30, 60, 140, 0.32);
+
+  color-scheme: light;
+}
+
+/* ==========================================================================
+   ARENA — tema scuro (opt-in). Solo ridefinizione dei token colore.
+   ========================================================================== */
+:root[data-tema="arena"] {
+  --color-bg: #0A0F1C;
+  --color-surface: #1C2740;
+  --color-surface-raised: #131C30;
+  --color-surface-sunken: #0F1728;
+  --color-border: #27324C;
+  --color-border-strong: #3A4763;
+
+  --color-text-primary: #E9EFFB;
+  --color-text-secondary: #AEBAD2;
+  --color-text-muted: #8593AE;
+  --color-text-on-brand: #FFFFFF;
+  --color-on-color: #FFFFFF;
+
+  --color-brand: #2E52B8;            /* riempimento: tiene il testo bianco */
+  --color-brand-ink: #7FA8FF;        /* brand come testo su fondo scuro */
+  --color-brand-bright: #8FB4FF;
+  --color-brand-soft: #1B2A49;
+  --color-brand-strong: #24418F;
+
+  --color-state-positive: #43C089;
+  --color-state-positive-soft: #12331F;
+  --color-state-positive-border: #1F5C3F;
+  --color-state-negative: #F0706A;
+  --color-state-negative-soft: #3A1E1E;
+  --color-state-negative-border: #6E3230;
+  --color-state-warning: #F0706A;
+  --color-state-warning-soft: #3A1E1E;
+  --color-live: #F0706A;
+
+  --color-foul: #A5B4FC;
+  --color-foul-soft: #23264C;
+  --color-foul-border: #3C3F78;
+
+  --color-score-bg-a: #24418F;
+  --color-score-bg-b: #0E1A44;
+  --color-score-mine: #A9C6FF;
+
+  --color-toast-bg: #E9EFFB;
+  --color-toast-text: #0C1424;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-raised: 0 14px 38px rgba(0, 0, 0, 0.55);
+
+  --focus-ring: 0 0 0 3px rgba(110, 155, 242, 0.42);
+
+  color-scheme: dark;
 }

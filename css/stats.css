@@ -6,7 +6,7 @@
   min-width: 0;
   font-size: 14px;
   font-weight: 900;
-  color: #000000;
+  color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -34,9 +34,9 @@
   touch-action: manipulation;
 }
 .stats-tabs button.attivo {
-  background: var(--color-brand);
-  color: #FFFFFF;
-  border-color: var(--color-brand);
+  background: var(--color-brand-soft);
+  color: var(--color-brand-ink);
+  border-color: var(--color-brand-ink);
 }
 /* 4 tab (Tabellino/Andamento/Tiri/PBP): stringi un filo per stare su 430px */
 .stats-tabs button { padding-left: 2px; padding-right: 2px; }
@@ -52,14 +52,14 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: 4px 8px;
-  padding: 8px 10px;
-  background: #000000;
-  color: #FFFFFF;
+  padding: 10px;
+  background: linear-gradient(150deg, var(--color-score-bg-a), var(--color-score-bg-b));
+  color: var(--color-on-color);
   border-radius: var(--radius-sm);
 }
-.st-score-team { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; opacity: 0.85; }
+.st-score-team { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; opacity: 0.82; }
 .st-score-n { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
-.st-score-n.noi { color: var(--color-brand); }
+.st-score-n.noi { color: var(--color-score-mine); }
 .st-score-vs { font-size: 16px; opacity: 0.5; }
 .st-score-q {
   width: 100%;
@@ -67,8 +67,8 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.4px;
-  color: #FFFFFF;
-  opacity: 0.75;
+  color: var(--color-on-color);
+  opacity: 0.72;
 }
 
 .segui-bar {
@@ -96,7 +96,7 @@
   padding: 5px 12px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--color-state-negative);
-  background: #FFFFFF;
+  background: var(--color-surface-raised);
   color: var(--color-state-negative);
   font-weight: 800;
   font-size: 11px;
@@ -116,9 +116,9 @@
 }
 .st-team.noi { background: var(--color-brand-soft); }
 .st-team.avv { background: var(--color-surface); }
-.st-team-nome { font-size: 13px; font-weight: 900; color: #000000; min-width: 44px; }
-.st-team-pt { font-size: 20px; font-weight: 900; color: var(--color-brand); }
-.st-team.avv .st-team-pt { color: #000000; }
+.st-team-nome { font-size: 13px; font-weight: 900; color: var(--color-text-primary); min-width: 44px; }
+.st-team-pt { font-size: 20px; font-weight: 900; color: var(--color-brand-ink); }
+.st-team.avv .st-team-pt { color: var(--color-text-primary); }
 
 .st-hint { font-size: 11px; color: var(--color-text-muted); text-align: center; }
 
@@ -128,13 +128,13 @@
   min-height: 30px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border-strong);
-  background: #FFFFFF;
+  background: var(--color-surface-raised);
   color: var(--color-text-secondary);
   font-weight: 800;
   font-size: 11px;
   text-transform: uppercase;
 }
-.st-fmt button.attivo { background: #000000; color: #FFFFFF; border-color: #000000; }
+.st-fmt button.attivo { background: var(--color-brand-strong); color: var(--color-on-color); border-color: var(--color-brand-strong); }
 
 /* ---------- Tabella box score ---------- */
 .st-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-height: 62vh; overflow-y: auto; }
@@ -155,14 +155,16 @@ table.st-box thead th {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #000000;
-  color: #FFFFFF;
+  background: var(--color-brand-strong);
+  color: var(--color-on-color);
   font-size: 10px;
   font-weight: 800;
 }
-table.st-box td.st-n, table.st-box th:first-child { text-align: left; font-weight: 800; color: var(--color-brand); }
-table.st-box td.st-g, table.st-box th:nth-child(2) { text-align: left; font-weight: 700; color: #000000; }
-table.st-box td.st-pt { font-weight: 900; color: #000000; }
+table.st-box td.st-n, table.st-box th:first-child { text-align: left; font-weight: 800; color: var(--color-brand-ink); }
+table.st-box th:first-child { color: var(--color-on-color); }
+table.st-box td.st-g, table.st-box th:nth-child(2) { text-align: left; font-weight: 700; color: var(--color-text-primary); }
+table.st-box th:nth-child(2) { color: var(--color-on-color); }
+table.st-box td.st-pt { font-weight: 900; color: var(--color-text-primary); }
 table.st-box td.st-val { font-weight: 800; }
 table.st-box tbody tr:nth-child(even) { background: var(--color-surface); }
 table.st-box td.pos { color: var(--color-state-positive); font-weight: 800; }
@@ -176,22 +178,22 @@ table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
 /* ---------- Tiri ---------- */
 .st-tiro { display: flex; flex-direction: column; gap: 4px; }
 .st-tiro-top { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; font-weight: 700; color: var(--color-text-secondary); }
-.st-tiro-top span:first-child { font-weight: 900; color: #000000; }
+.st-tiro-top span:first-child { font-weight: 900; color: var(--color-text-primary); }
 .st-bar { height: 10px; background: var(--color-surface); border-radius: 999px; overflow: hidden; }
 .st-bar span { display: block; height: 100%; border-radius: 999px; }
-.st-bar span.noi { background: var(--color-brand); }
+.st-bar span.noi { background: var(--color-brand-bright); }
 .st-bar span.avv { background: var(--color-text-secondary); }
 
 /* ---------- Andamento ---------- */
-.st-and-tit { font-size: 12px; font-weight: 800; color: #000000; }
+.st-and-tit { font-size: 12px; font-weight: 800; color: var(--color-text-primary); }
 .st-chart { width: 100%; min-width: 300px; height: auto; aspect-ratio: 680 / 240; display: block; }
 .st-zero { stroke: var(--color-border-strong); stroke-width: 1.5; }
 .st-grid { stroke: var(--color-border); stroke-width: 1; }
 .st-q { stroke: var(--color-text-muted); stroke-width: 1; stroke-dasharray: 2 3; }
 .st-qt { font-size: 10px; fill: var(--color-text-secondary); font-weight: 800; }
 .st-axis { font-size: 10px; fill: var(--color-text-muted); font-weight: 700; }
-.st-area { fill: var(--color-brand-soft); }
-.st-linea { fill: none; stroke: var(--color-brand); stroke-width: 2.5; stroke-linejoin: round; }
+.st-area { fill: var(--color-brand-bright); opacity: 0.14; }
+.st-linea { fill: none; stroke: var(--color-brand-ink); stroke-width: 2.5; stroke-linejoin: round; }
 
 @media (orientation: landscape) {
   .st-scroll { max-height: 78vh; }
@@ -202,7 +204,7 @@ table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
 .adv-legenda .noi::before, .adv-legenda .avv::before {
   content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px;
 }
-.adv-legenda .noi::before { background: var(--color-brand); }
+.adv-legenda .noi::before { background: var(--color-brand-ink); }
 .adv-legenda .avv::before { background: var(--color-text-secondary); }
 
 .adv-griglia { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -214,7 +216,7 @@ table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
 }
 .adv-tit { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; color: var(--color-text-secondary); }
 .adv-vals { display: flex; align-items: baseline; gap: 10px; margin-top: 2px; }
-.adv-vals .noi { font-size: 20px; font-weight: 900; color: var(--color-brand); }
+.adv-vals .noi { font-size: 20px; font-weight: 900; color: var(--color-brand-ink); }
 .adv-vals .avv { font-size: 14px; font-weight: 800; color: var(--color-text-secondary); }
 .adv-nota { font-size: 10px; color: var(--color-text-muted); margin-top: 4px; }
 
@@ -238,7 +240,7 @@ table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
 .mq-pm.pos { color: var(--color-state-positive); }
 .mq-pm.neg { color: var(--color-state-negative); }
 .mq-min { color: var(--color-text-muted); font-weight: 700; min-width: 30px; }
-.mq-nomi { flex: 1; min-width: 0; color: #000000; font-weight: 600; }
+.mq-nomi { flex: 1; min-width: 0; color: var(--color-text-primary); font-weight: 600; }
 .mq-teo {
   font-size: 12px;
   line-height: 1.4;
@@ -247,8 +249,8 @@ table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
   border-radius: var(--radius-sm);
   padding: 8px 10px;
 }
-.mq-teo b { color: #000000; }
-.mq-teo .mq-r { font-size: 10px; font-weight: 800; color: var(--color-brand); }
+.mq-teo b { color: var(--color-text-primary); }
+.mq-teo .mq-r { font-size: 10px; font-weight: 800; color: var(--color-brand-ink); }
 .mq-vincolo { font-size: 10px; color: var(--color-text-muted); margin-top: 3px; }
 
 /* ---------- PBP (play-by-play) ---------- */
@@ -269,8 +271,8 @@ table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
   border: 1px solid var(--color-border);
   font-size: 12px;
 }
-.pbp-riga.noi { border-left: 3px solid var(--color-brand); }
+.pbp-riga.noi { border-left: 3px solid var(--color-brand-ink); }
 .pbp-riga.avv { border-left: 3px solid var(--color-text-muted); }
 .pbp-t { color: var(--color-text-muted); font-weight: 700; font-size: 11px; white-space: nowrap; }
-.pbp-d { color: #000000; min-width: 0; }
+.pbp-d { color: var(--color-text-primary); min-width: 0; }
 .pbp-s { color: var(--color-text-secondary); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }

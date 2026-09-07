@@ -23,7 +23,8 @@ const STORAGE_KEYS = {
   coda: "bsp_coda_invio",
   pin: "bsp_pin_ok",
   utente: "bsp_current_user",
-  segnapunti: "bsp_segnapunti_di"   // id_partita di cui QUESTO device è segnapunti
+  segnapunti: "bsp_segnapunti_di",   // id_partita di cui QUESTO device è segnapunti
+  tema: "bsp_tema"                    // "chiaro" (default) | "arena" — preferenza del device
 };
 
 function statoIniziale() {

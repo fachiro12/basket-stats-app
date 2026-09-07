@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=20` · SW `bsp-v20` · backend V4.8.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=21` · SW `bsp-v21` · backend V4.8.
 
 ---
 
@@ -57,7 +57,8 @@ Finché mancano, iOS usa uno screenshot come icona home.
 ### JS (`js/`, caricati in quest'ordine in `index.html`)
 | File | Responsabilità |
 |---|---|
-| `state.js` | `CONFIG`, `STORAGE_KEYS`, `state` globale, `statoIniziale()`, `salvaStato/caricaStato`, `nomeQuarto()`, `formatTempo()`, `uuid()` |
+| `state.js` | `CONFIG`, `STORAGE_KEYS`, `state` globale, `statoIniziale()`, `salvaStato/caricaStato`, `nomeQuarto()`, `formatTempo()`, `uuid()`, `esc()` |
+| `tema.js` | tema Chiaro/Arena: `temaCorrente`, `applicaTema`, `inizializzaTema` (switch in "Altro", `localStorage: bsp_tema`) |
 | `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (POST `azione:"VERIFICA_LOGIN"`, risposta JSON), `riconciliaCoda` (pull `getEventi` + re-invio mancanti) |
 | `timer.js` | gestione periodi (**non c'è cronometro**): `avanzaQuarto`, `passaAlPeriodo`, OT, `terminaPartita` (emette evento `FINE`), `nuovaPartita` |
 | `azioni.js` | `registraEvento` (costruisce il payload evento + feed banner), tiri, recupero, palla persa, fallo fatto; macchina a stati overlay Assist/Rimbalzo; helper `etichettaSquadra/etichettaSquadraEstesa/etichettaNum/feed` |
@@ -70,7 +71,7 @@ Finché mancano, iOS usa uno screenshot come icona home.
 | `app.js` | `DOMContentLoaded`: registra tutti i listener + avvio (`navigaA`, `renderCalendario`, `scaricaPartite`, `scaricaGiocatori`, `inizializzaPinGate`, `processaCoda`); registra il service worker |
 
 ### CSS (`css/`)
-`tokens.css` (variabili) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro") · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`)
+`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`)
 
 ### Altro
 `index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `icon.svg` · `scripts/bump.mjs` (cache-busting one-shot, vedi "Deploy")
@@ -80,7 +81,7 @@ Finché mancano, iOS usa uno screenshot come icona home.
 ## 4. Viste (SPA, `id="view-*"`, toggle via `navigaA`)
 
 - **`view-partita`** — HUD (punteggio PVL/AVV, quarto, Q+1/UNDO/RECAP, banner ultimo evento) + pannello sinistro (roster + AVVERSARI) + pannello destro (griglie TIRI/PALLA/FALLI + overlay contestuali) + barra CAMBI a piena larghezza + striscia "eventi in coda".
-- **`view-stats`** — topbar + tab `Tabellino` / `Andamento` / `Tiri`; barra punteggio nera; toggle `Numeri`/`%`.
+- **`view-stats`** — topbar + tab `Tabellino` / `Andamento` / `Tiri` / `PBP`; barra punteggio (gradiente navy PVL); toggle `Numeri`/`%`.
 - **`view-adv`** — topbar + tab `Squadra` / `Giocatori`; barra punteggio; card metriche + migliori quintetti + stint (tutti ricostruiti da `stintsDaEventi()`).
 - **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, Roster (anagrafica), profilo attivo, Esci.
 - **`view-calendario`** — topbar (hamburger placeholder / select stagione / +) + lista 26 gare con stato e bottone contestuale.
@@ -200,10 +201,20 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 10. `impostaStatoPartita` re-invia la partita con campi locali possibilmente stale → può clobberare modifiche fatte sul foglio.
 11. Minuti/± dipendono dalla disciplina del segnapunti (checkpoint CAMBI + punteggio corretto ai checkpoint).
 12. **Zero test.**
-13. Icone PWA PNG mancanti.
+13. Icone PWA PNG mancanti (icona ancora "tasso del miele" — da riallineare al logo PVL / palette blu).
 
 ### Backlog consigliato (ordine)
-test node del motore stat (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`).
+test node del motore stat (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`) → icone PWA su nuova palette.
+
+---
+
+## Palette e temi (da v21)
+
+Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primario), rosso `#CE2B2B` (energia *e* voci negative + LIVE), verde `#0E7B4E` (solo positivo), neutri **freddi**. Niente arancione. Tutto in `css/tokens.css`; nessun colore hard-coded negli altri CSS (unica eccezione: il pallino bianco dello switch).
+
+- `--color-brand` = riempimento pieno (pairs con `--color-text-on-brand`); `--color-brand-ink` = brand come **testo/icona** su superfici (nel tema Arena diventa più chiaro); `--color-brand-soft` / `--color-brand-strong` per fill tenui / selezione.
+- **Arena mode** (tema scuro, opt-in): `<html data-tema="arena">`. Default **chiaro**. Switch in *Altro → Aspetto*; preferenza per-**device** in `localStorage: bsp_tema`. Applicazione pre-paint via `<script>` inline in `index.html`; toggle e persistenza in `js/tema.js` (`inizializzaTema` chiamato da `app.js`). `tokens.css` ridefinisce ogni token colore sotto `:root[data-tema="arena"]`.
+- `<meta name="theme-color">` e `manifest.theme_color` = `#1E3C8C` (chiaro) / `#0A0F1C` (arena, aggiornato a runtime da `applicaTema`).
 
 ---
 

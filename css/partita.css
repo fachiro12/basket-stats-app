@@ -5,8 +5,8 @@
 
 /* ---------- HEADER / HUD ---------- */
 header.hud {
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 8px 12px;
   margin: 4px;
@@ -38,8 +38,8 @@ header.hud {
   font-variant-numeric: tabular-nums;
   font-family: var(--font-num);
 }
-.blocco-squadra.mia .punti { color: var(--color-brand); }
-.blocco-squadra.opp .punti { color: #000000; }
+.blocco-squadra.mia .punti { color: var(--color-brand-ink); }
+.blocco-squadra.opp .punti { color: var(--color-text-primary); }
 
 .centro-hud { text-align: center; min-width: 92px; flex-shrink: 0; }
 
@@ -100,12 +100,12 @@ header.hud {
 #ultimo-evento-banner {
   margin-top: 8px;
   padding: 8px 12px;
-  background: #F8F9FA;
-  border: 1px solid #E5E7EB;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 700;
-  color: #000000;
+  color: var(--color-text-primary);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -122,7 +122,7 @@ header.hud {
   width: calc(100% - 8px);
   margin: 0 4px 3px;
   background: var(--color-state-warning);
-  color: #FFFFFF;
+  color: var(--color-on-color);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.3px;
@@ -168,8 +168,8 @@ main.corpo-partita {
   position: absolute;
   inset: 0;
   z-index: 30;
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 10px;
   display: flex;
@@ -182,7 +182,7 @@ main.corpo-partita {
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #000000;
+  color: var(--color-text-primary);
 }
 .ao-griglia {
   display: grid;
@@ -192,9 +192,9 @@ main.corpo-partita {
 .ao-btn {
   min-height: 46px;
   border-radius: var(--radius-sm);
-  border: 1px solid #E5E7EB;
-  background: #F8F9FA;
-  color: #000000;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-sunken);
+  color: var(--color-text-primary);
   font-weight: 800;
   font-size: 15px;
   display: flex;
@@ -205,9 +205,9 @@ main.corpo-partita {
   user-select: none;
   -webkit-user-select: none;
 }
-.ao-btn.ao-neutro { background: #EAECEF; color: #6B7280; grid-column: 1 / -1; }
+.ao-btn.ao-neutro { background: var(--color-surface); color: var(--color-text-muted); grid-column: 1 / -1; }
 .ao-btn.ao-annulla {
-  background: #FFFFFF;
+  background: var(--color-surface-raised);
   color: var(--color-text-secondary);
   border: 1.5px solid var(--color-border-strong);
   min-height: 40px;
@@ -219,8 +219,8 @@ main.corpo-partita {
   position: absolute;
   inset: 0;
   z-index: 35;
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 16px 12px;
   display: flex;
@@ -243,18 +243,18 @@ main.corpo-partita {
 }
 #btn-vai-stats {
   background: var(--color-brand);
-  color: #FFFFFF;
+  color: var(--color-text-on-brand);
   border: 1px solid var(--color-brand);
 }
 #btn-nuova-partita {
-  background: #FFFFFF;
-  color: #DC2626;
-  border: 1.5px solid #DC2626;
+  background: var(--color-surface-raised);
+  color: var(--color-state-negative);
+  border: 1.5px solid var(--color-state-negative);
 }
 
 .titolo-pannello {
   font-size: 12px;
-  color: #000000;
+  color: var(--color-text-primary);
   font-weight: 900;
   letter-spacing: 0.6px;
   text-transform: uppercase;
@@ -279,7 +279,7 @@ main.corpo-partita {
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--color-border-strong);
   background: var(--color-surface);
-  color: #000000;
+  color: var(--color-text-primary);
   font-weight: 900;
   font-size: 14px;
   letter-spacing: 0.5px;
@@ -311,7 +311,7 @@ main.corpo-partita {
   color: var(--color-text-secondary);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.btn-giocatore.selezionato .nick { color: #FFFFFF; }
+.btn-giocatore.selezionato .nick { color: var(--color-on-color); }
 .btn-giocatore .falli { font-size: 11px; color: var(--color-text-muted); font-weight: 800; }
 .btn-giocatore .falli.warning-falli { color: var(--color-state-warning); }
 .btn-giocatore .falli.out-falli { color: var(--color-state-negative); }
@@ -328,13 +328,13 @@ main.corpo-partita {
   right: 0;
   top: -7px;
   height: 1px;
-  background: #E5E7EB;
+  background: var(--color-border);
 }
 
 .btn-opp {
-  background: #FFF8E1;
-  color: #B78103;
-  border: 1px solid #FFE082;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-strong);
   padding: 10px 8px;
   min-height: 40px;
   font-size: 13px;
@@ -346,18 +346,18 @@ main.corpo-partita {
 
 /* Stato selezionato — unificato per giocatore / opzione modale */
 .btn-giocatore.selezionato {
-  background: #000000;
-  color: #FFFFFF;
+  background: var(--color-brand-strong);
+  color: var(--color-on-color);
   font-weight: 700;
-  border-color: #000000;
+  border-color: var(--color-brand-strong);
 }
-.btn-giocatore.selezionato .falli { color: #FFFFFF; }
+.btn-giocatore.selezionato .falli { color: var(--color-on-color); }
 
 .opzione-modale.selezionata {
-  border-color: var(--color-brand);
-  background: #FFF5EF;
-  color: #000000;
-  box-shadow: inset 0 0 0 1px var(--color-brand);
+  border-color: var(--color-brand-ink);
+  background: var(--color-brand-soft);
+  color: var(--color-text-primary);
+  box-shadow: inset 0 0 0 1px var(--color-brand-ink);
 }
 .btn-opp.selezionato { border-color: var(--color-state-warning); box-shadow: var(--focus-ring); }
 
@@ -376,9 +376,9 @@ main.corpo-partita {
   letter-spacing: 0.3px;
   text-align: center;
   min-height: 40px;
-  background: #FFFFFF;
-  color: #000000;
-  border: 1px solid #E5E7EB;
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
   border-left-width: 4px;
   display: flex;
   flex-direction: column;
@@ -398,32 +398,32 @@ main.corpo-partita {
 .btn-2p-piu,
 .btn-3p-piu,
 .btn-rec {
-  background: #DCFCE7;
-  border-color: #86EFAC;
-  border-left-color: #16A34A;
+  background: var(--color-state-positive-soft);
+  border-color: var(--color-state-positive-border);
+  border-left-color: var(--color-state-positive);
 }
 .btn-2p-meno,
 .btn-3p-meno,
 .btn-pp {
-  background: #FEE2E2;
-  border-color: #FCA5A5;
-  border-left-color: #DC2626;
+  background: var(--color-state-negative-soft);
+  border-color: var(--color-state-negative-border);
+  border-left-color: var(--color-state-negative);
 }
 .btn-fallo-subito,
 .btn-fallo-fatto {
-  background: #E0E7FF;
-  border-color: #C7D2FE;
-  border-left-color: #2563EB;
+  background: var(--color-foul-soft);
+  border-color: var(--color-foul-border);
+  border-left-color: var(--color-foul);
 }
 
-.separatore-mini { height: 1px; background: #E5E7EB; margin: 3px 0; }
+.separatore-mini { height: 1px; background: var(--color-border); margin: 3px 0; }
 
 /* ---------- OVERLAY / MODALI ---------- */
 .overlay {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(11, 12, 16, 0.55);
+  background: rgba(6, 9, 18, 0.58);
   z-index: 50;
   align-items: flex-end;
   justify-content: center;
@@ -491,12 +491,12 @@ main.corpo-partita {
 }
 .toggle-si-no button.si.attivo {
   background: var(--color-state-positive);
-  color: #fff;
+  color: var(--color-on-color);
   border-color: var(--color-state-positive);
 }
 .toggle-si-no button.no.attivo {
   background: var(--color-state-negative);
-  color: #fff;
+  color: var(--color-on-color);
   border-color: var(--color-state-negative);
 }
 
@@ -543,7 +543,7 @@ main.corpo-partita {
 }
 .btn-conferma {
   background: var(--color-brand);
-  color: #fff;
+  color: var(--color-text-on-brand);
   padding: 15px;
   min-height: var(--tap-target);
   font-size: 16px;
@@ -598,7 +598,7 @@ main.corpo-partita {
   padding: 10px 4px;
 }
 .slot-cambio .freccia { color: var(--color-text-secondary); }
-.slot-cambio .slot-in { font-weight: 900; font-size: 15px; color: #000000; flex-shrink: 0; min-width: 74px; }
+.slot-cambio .slot-in { font-weight: 900; font-size: 15px; color: var(--color-text-primary); flex-shrink: 0; min-width: 74px; }
 .slot-cambio select {
   flex: 1;
   min-width: 0;
@@ -606,8 +606,8 @@ main.corpo-partita {
   padding: 8px 10px;
   font-size: 14px;
   font-weight: 700;
-  color: #000000;
-  background: #FFFFFF;
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
   border: 1.5px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
 }
@@ -617,15 +617,15 @@ main.corpo-partita {
   font-size: 15px;
   font-weight: 800;
   text-align: center;
-  color: #000000;
-  background: #FFFFFF;
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
   border: 1.5px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
 }
 
 .cambi-checkpoint {
-  background: #F8F9FA;
-  border: 1px solid #E5E7EB;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 8px 10px;
   margin-bottom: 12px;
@@ -646,7 +646,7 @@ main.corpo-partita {
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
-.cc-valore { font-weight: 900; color: #000000; }
+.cc-valore { font-weight: 900; color: var(--color-text-primary); }
 .cc-campi { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; }
 .cc-campi input {
   width: 48px;
@@ -654,10 +654,10 @@ main.corpo-partita {
   font-weight: 800;
   font-size: 15px;
   padding: 6px 4px;
-  background: #FFFFFF;
+  background: var(--color-surface-raised);
   border: 1.5px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
-  color: #000000;
+  color: var(--color-text-primary);
 }
 
 /* ==========================================================================

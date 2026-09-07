@@ -10,7 +10,7 @@ Repo: `github.com/fachiro12/basket-stats-app` · Live: `https://fachiro12.github
 - **Niente CDN esterni** nel runtime (grafici SVG fatti a mano, nessuna libreria).
 - **Vanilla JS, funzioni globali.** Ogni file `js/*.js` è uno `<script>` classico (non moduli). Le funzioni sono globali e si chiamano tra file a runtime. Ordine di caricamento in `index.html` conta solo per l'esecuzione top-level, non per le chiamate (che avvengono dopo `DOMContentLoaded`).
 - **Lingua del codice: italiano.** Nomi funzioni, variabili, commenti, stringhe UI in italiano. Mantieni lo stile.
-- **CSS a token.** Colori/spazi/raggi in `css/tokens.css` (`--color-*`, `--space-*`, `--radius-*`). Non hardcodare colori nuovi se esiste il token.
+- **CSS a token.** TUTTI i colori vivono in `css/tokens.css` (`--color-*`, `--space-*`, `--radius-*`). **Mai** hard-codare un colore negli altri CSS (rompe il tema Arena). Palette "PVL" (da v21): brand **blu** `#1E3C8C`, rosso/verde solo per le voci statistiche, neutri freddi — niente arancione. `--color-brand` = fill; `--color-brand-ink` = brand come testo/icona. Tema **Arena** (scuro, opt-in) = `<html data-tema="arena">`, ridefinito in `tokens.css`; default chiaro; switch in "Altro", pref per-device (`bsp_tema`).
 - **Mobile-first.** Testato in frame 430px su desktop e a schermo pieno su telefono. Portrait E landscape vanno entrambi verificati (in landscape su touch la nav diventa sidebar).
 - **Cache-busting:** ogni asset in `index.html` ha `?v=N`, allineato al `CACHE` di `sw.js` (`bsp-vN`). Non modificarli a mano: a ogni deploy `node scripts/bump.mjs` (incrementa e allinea tutto; `--check` per verificare). Sorgente di verità = il numero in `sw.js`.
 - **Verifica sempre** la sintassi JS: `for f in js/*.js; do node -c "$f"; done`.

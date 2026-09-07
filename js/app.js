@@ -129,6 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-nuova-partita").addEventListener("click", nuovaPartita);
 
   /* -------- AVVIO -------- */
+  if (typeof inizializzaTema === "function") inizializzaTema();     // tema chiaro/arena + switch
   navigaA("partita");          // vista di default
   if (typeof renderCalendario === "function") renderCalendario();  // lista partite (cache/seed)
   if (typeof scaricaPartite === "function") scaricaPartite();      // sync calendario dal foglio

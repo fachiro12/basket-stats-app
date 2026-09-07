@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#F4F5F7">
+<meta name="theme-color" content="#1E3C8C">
 <title>Basket Stats Pro</title>
+<script>try{document.documentElement.dataset.tema=(localStorage.getItem("bsp_tema")==="arena")?"arena":"chiaro";}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,14 +13,14 @@
 <meta name="apple-mobile-web-app-title" content="Basket Stats">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon-180.png">
-<link rel="stylesheet" href="css/tokens.css?v=20">
-<link rel="stylesheet" href="css/base.css?v=20">
-<link rel="stylesheet" href="css/shell.css?v=20">
-<link rel="stylesheet" href="css/partita.css?v=20">
-<link rel="stylesheet" href="css/altro.css?v=20">
-<link rel="stylesheet" href="css/calendario.css?v=20">
-<link rel="stylesheet" href="css/roster.css?v=20">
-<link rel="stylesheet" href="css/stats.css?v=20">
+<link rel="stylesheet" href="css/tokens.css?v=21">
+<link rel="stylesheet" href="css/base.css?v=21">
+<link rel="stylesheet" href="css/shell.css?v=21">
+<link rel="stylesheet" href="css/partita.css?v=21">
+<link rel="stylesheet" href="css/altro.css?v=21">
+<link rel="stylesheet" href="css/calendario.css?v=21">
+<link rel="stylesheet" href="css/roster.css?v=21">
+<link rel="stylesheet" href="css/stats.css?v=21">
 </head>
 <body>
 
@@ -73,6 +74,7 @@
   <symbol id="i-trending-up" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></symbol>
   <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
@@ -264,6 +266,21 @@
             <span class="titolo-altro">Storico partite</span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </div>
+        </div>
+
+        <div class="titolo-sezione-altro">Aspetto</div>
+        <div class="lista-altro">
+          <label class="riga-altro riga-switch" for="switch-arena">
+            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-moon"></use></svg>
+            <span class="col-testo">
+              <span class="titolo-altro">Arena mode</span>
+              <span class="sotto-altro">Tema scuro per palestre poco illuminate</span>
+            </span>
+            <span class="switch">
+              <input type="checkbox" id="switch-arena">
+              <span class="switch-slider"></span>
+            </span>
+          </label>
         </div>
 
         <div class="titolo-sezione-altro">Configurazione</div>
@@ -507,17 +524,18 @@
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=20"></script>
-<script src="js/api.js?v=20"></script>
-<script src="js/timer.js?v=20"></script>
-<script src="js/azioni.js?v=20"></script>
-<script src="js/fallo-subito.js?v=20"></script>
-<script src="js/calendario.js?v=20"></script>
-<script src="js/giocatori.js?v=20"></script>
-<script src="js/stats.js?v=20"></script>
-<script src="js/ui.js?v=20"></script>
-<script src="js/pin.js?v=20"></script>
-<script src="js/app.js?v=20"></script>
+<script src="js/state.js?v=21"></script>
+<script src="js/tema.js?v=21"></script>
+<script src="js/api.js?v=21"></script>
+<script src="js/timer.js?v=21"></script>
+<script src="js/azioni.js?v=21"></script>
+<script src="js/fallo-subito.js?v=21"></script>
+<script src="js/calendario.js?v=21"></script>
+<script src="js/giocatori.js?v=21"></script>
+<script src="js/stats.js?v=21"></script>
+<script src="js/ui.js?v=21"></script>
+<script src="js/pin.js?v=21"></script>
+<script src="js/app.js?v=21"></script>
 
 </body>
 </html>

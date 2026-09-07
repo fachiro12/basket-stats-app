@@ -70,10 +70,10 @@ a,
   align-items: stretch;
   padding: 4px;
   touch-action: manipulation;
-  background: #FFFFFF;
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: 20px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.10);
+  box-shadow: var(--shadow-card);
 }
 
 /* ============ TELEFONO RUOTATO: nav → sidebar icone a sinistra ============ */
@@ -123,7 +123,7 @@ a,
   justify-content: center;
   gap: 2px;
   border-radius: 18px;
-  color: #6B7280;
+  color: var(--color-text-muted);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.2px;
@@ -134,8 +134,8 @@ a,
 .tab-btn .icona { font-size: 22px; line-height: 1; }
 .tab-btn .icona .ico { width: 22px; height: 22px; }
 .tab-btn.attivo {
-  background: #EAECEF;
-  color: #000000;
+  background: var(--color-brand-soft);
+  color: var(--color-brand-ink);
 }
 
 /* ---------- Header di sezione generico ---------- */
@@ -190,7 +190,7 @@ a,
 .badge-in-arrivo {
   display: inline-block;
   background: var(--color-brand-soft);
-  color: var(--color-brand);
+  color: var(--color-brand-ink);
   font-size: 11px;
   font-weight: 800;
   padding: 3px 10px;
@@ -226,8 +226,8 @@ a,
 .chip .ico { font-size: 13px; }
 .chip-casa {
   background: var(--color-brand-soft);
-  color: var(--color-brand);
-  border-color: var(--color-brand);
+  color: var(--color-brand-ink);
+  border-color: var(--color-brand-ink);
 }
 
 /* Esiti partita nel calendario */
