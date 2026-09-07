@@ -56,7 +56,7 @@ Finché mancano, iOS usa uno screenshot come icona home.
 | File | Responsabilità |
 |---|---|
 | `state.js` | `CONFIG`, `STORAGE_KEYS`, `state` globale, `statoIniziale()`, `salvaStato/caricaStato`, `nomeQuarto()`, `formatTempo()`, `uuid()` |
-| `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (POST `azione:"VERIFICA_LOGIN"`, risposta JSON) |
+| `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (POST `azione:"VERIFICA_LOGIN"`, risposta JSON), `riconciliaCoda` (pull `getEventi` + re-invio mancanti) |
 | `timer.js` | gestione periodi (**non c'è cronometro**): `avanzaQuarto`, `passaAlPeriodo`, OT, `terminaPartita` (emette evento `FINE`), `nuovaPartita` |
 | `azioni.js` | `registraEvento` (costruisce il payload evento + feed banner), tiri, recupero, palla persa, fallo fatto; macchina a stati overlay Assist/Rimbalzo; helper `etichettaSquadra/etichettaSquadraEstesa/etichettaNum/feed` |
 | `fallo-subito.js` | modale TL "fallo subito"; overlay fallo avversario (fatto/subito), tecnici, doppio/compensati; `apriTlAvversari` (0/1/2/3 TL avversari) |
@@ -182,7 +182,7 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 ## 8. Limiti noti / debolezze (dal review)
 
 1. ~~**Scritture non autenticate**~~ — **RISOLTO in V4.7**: `doPost` valida `data.token === WRITE_TOKEN` (Script Property). Il token è restituito da `verificaLogin`, salvato in `bsp_current_user.token`, allegato a ogni POST da `api.js` (`tokenScrittura()`). Attivazione: impostare la proprietà `WRITE_TOKEN` in Apps Script, poi tutti fanno re-login. *Resta* security-through-obscurity (il token è nella risposta JSONP + localStorage); una auth firmata server-side sarebbe il passo successivo.
-2. **Perdita silenziosa eventi** — `no-cors` `.then()` risolve anche su HTTP 500 → l'evento esce dalla coda e si perde. Retry solo su errore di rete. → riconciliazione via `getEventi`.
+2. ~~**Perdita silenziosa eventi**~~ — **MITIGATO in v20**: `riconciliaCoda()` (`api.js`, ogni 45s + su `online`) confronta gli `id_evento` di `state.eventLog` col foglio (`getEventi`) e rimette in coda i mancanti più vecchi di 30s. Gira solo sul device segnapunti. Non copre gli `ANNULLA` (non sono in `eventLog`); eventuali duplicati da re-invio sono innocui perché `eventiPuliti()` deduplica lato stat. Resta il limite di fondo: `no-cors` non conferma nulla.
 3. ~~**Password**~~ — **RISOLTO in V4.8**: hash SHA-256 **con salt per-utente** (colonna `salt`, `SHA256(salt|password)`); righe legacy senza salt vengono aggiornate al primo login riuscito. Login ora via **POST** (`azione: "VERIFICA_LOGIN"`) → la password non passa più in query string GET (niente log di esecuzione / cronologia / proxy). Il GET `?action=verificaLogin` resta per compatibilità coi client non aggiornati.
 4. **Partita viva solo in `localStorage`** del device segnapunti — nessun "ricostruisci stato dal foglio". Dati cancellati / browser cambiato a metà gara = partita persa.
 5. **UNDO di un CAMBIO** — l'evento `CAMBIO` ha `delta` vuota: UNDO non ripristina `state.roster`/`inCampo`.
@@ -196,7 +196,7 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 13. Icone PWA PNG mancanti.
 
 ### Backlog consigliato (ordine)
-`esc()` HTML → delta reale CAMBIO → riconciliazione coda → "riprendi come segnapunti" → rimuovi `state.stints` → test node del motore stat → auto cache-bust.
+`esc()` HTML → delta reale CAMBIO → "riprendi come segnapunti" → rimuovi `state.stints` → test node del motore stat → auto cache-bust.
 
 ---
 
