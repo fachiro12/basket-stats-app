@@ -302,10 +302,28 @@ function ricostruisciStatoDaEventi(partita, eventiRaw) {
   s.convocati = Object.keys(visti).map(Number).sort((a, b) => a - b).map(n => {
     const g = ana.find(x => String(x.numero_maglia) === String(n)) || {};
     return {
-      id: g.id_giocatore || "", nome: g.nome || "", cognome: g.cognome || "",
-      nickname: g.nickname || "", ruolo: g.ruolo || "", numero: n
+      id: g.id || "", nome: g.nome || "", cognome: g.cognome || "",
+      nickname: (g.nickname || "").toUpperCase(), ruolo: g.ruolo || "", numero: n
     };
   });
+
+  // Panchina non ancora vista negli eventi: pescala dall'anagrafica del team,
+  // così i CAMBI hanno subito i cambi pronti (non solo chi ha già giocato).
+  const teamRic = partita.categoria === "DR1"
+    ? "DR1" : (partita.team || (typeof TEAM_DEFAULT !== "undefined" ? TEAM_DEFAULT : "DR1"));
+  if (typeof giocatoriDelTeam === "function") {
+    const giaNum = new Set(s.convocati.map(c => Number(c.numero)));
+    giocatoriDelTeam(teamRic).forEach(g => {
+      const n = Number(g.numero_maglia);
+      if ((!g.numero_maglia && g.numero_maglia !== 0) || giaNum.has(n)) return;
+      giaNum.add(n);
+      s.convocati.push({
+        id: g.id || "", nome: g.nome || "", cognome: g.cognome || "",
+        nickname: (g.nickname || "").toUpperCase(), ruolo: g.ruolo || "", numero: n
+      });
+    });
+    s.convocati.sort((a, b) => Number(a.numero) - Number(b.numero));
+  }
 
   // Punteggio / periodo / tempo / quintetto in campo dall'ultimo evento utile
   const ultimo = eventi[eventi.length - 1] || null;

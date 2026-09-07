@@ -152,18 +152,36 @@ function popolaTempoCambi() {
   popolaSecondiCambi();
 }
 
+/* Chi è disponibile per un cambio: i convocati non in campo.
+   Fallback (partita ripresa senza lista convocati): l'anagrafica. */
+function panchinaCambi() {
+  const conv = state.convocati || [];
+  const inCampo = state.roster.map(Number);
+  let panca = conv
+    .filter(c => inCampo.indexOf(Number(c.numero)) === -1)
+    .map(c => ({ numero: Number(c.numero), nickname: (c.nickname || "").toUpperCase() }));
+
+  if (!panca.length && !conv.length && typeof caricaGiocatori === "function") {
+    const gia = new Set(inCampo);
+    caricaGiocatori()
+      .filter(g => g.numero_maglia !== "" && g.numero_maglia != null && !gia.has(Number(g.numero_maglia)))
+      .forEach(g => panca.push({ numero: Number(g.numero_maglia), nickname: (g.nickname || "").toUpperCase() }));
+  }
+  return panca.sort((a, b) => a.numero - b.numero);
+}
+
 function renderSlotCambi() {
   const cont = document.getElementById("cambi-slots");
   cont.innerHTML = "";
   const conv = state.convocati || [];
-  const panchina = conv.filter(c => state.roster.indexOf(c.numero) === -1);
+  const panchina = panchinaCambi();
 
   state.roster.forEach((num, idx) => {
     const info = conv.find(c => String(c.numero) === String(num));
     const nick = info && info.nickname ? " " + info.nickname : "";
     const div = document.createElement("div");
     div.className = "slot-cambio";
-    if (panchina.length || conv.length) {
+    if (panchina.length) {
       let opts = '<option value="">resta in campo</option>';
       panchina.forEach(c => {
         opts += '<option value="' + esc(c.numero) + '">↔ #' + esc(c.numero) +
@@ -179,6 +197,19 @@ function renderSlotCambi() {
     }
     cont.appendChild(div);
   });
+
+  // Panchina pronta al cambio — sola lettura, per il colpo d'occhio
+  const pancaEl = document.getElementById("cambi-panchina");
+  if (pancaEl) {
+    if (panchina.length) {
+      pancaEl.innerHTML = '<span class="cp-tit">In panchina</span>' +
+        panchina.map(c => '<span class="cp-chip">#' + esc(c.numero) +
+          (c.nickname ? " " + esc(c.nickname) : "") + '</span>').join("");
+      pancaEl.hidden = false;
+    } else {
+      pancaEl.hidden = true;
+    }
+  }
 }
 
 function apriCambi() {
