@@ -42,4 +42,5 @@ PR body: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
 6. ~~`delta` reale per l'evento CAMBIO~~ — **FATTO (v20)**.
 7. ~~Rimuovere `state.stints`/`stintCorrente`~~ — **FATTO (v20)**.
 8. ~~Automatizzare il cache-busting~~ — **FATTO (v20)**: `scripts/bump.mjs`.
-9. Test node del motore statistiche (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`).
+9. ~~Icone PWA PNG~~ — **FATTO (v22)**: `icon.svg`/`icon-maskable.svg` + 4 PNG, palette PVL; `bash scripts/genera-icone.sh` per rigenerare.
+10. Test node del motore statistiche (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`).

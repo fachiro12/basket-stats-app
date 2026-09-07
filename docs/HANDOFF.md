@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=21` · SW `bsp-v21` · backend V4.8.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=22` · SW `bsp-v22` · backend V4.8.
 
 ---
 
@@ -45,10 +45,10 @@ PWA per segnare le statistiche di una partita di basket **in tempo reale**, pens
 - Se cambia l'URL `/exec`, aggiorna `CONFIG.APPS_SCRIPT_URL` in `js/state.js`.
 - `setupSheet()` è **idempotente e non distruttivo** (crea fogli/intestazioni se mancano, semina l'admin solo se `Utenti` è vuoto). Sicuro da rilanciare.
 
-### Icone PWA — DA FARE
-Servono 4 PNG nella root, generati da `icon.svg` (un tasso del miele stilizzato):
-`icon-180.png` (180²) · `icon-192.png` · `icon-512.png` · `icon-maskable.png` (512², margine ~10%).
-Finché mancano, iOS usa uno screenshot come icona home.
+### Icone PWA — FATTE (v22)
+Sorgenti: `icon.svg` (tasso del miele stilizzato, palette PVL — cresta bianca, maschera scura, occhi ambra) e `icon-maskable.svg` (stesso disegno all'80%, dentro la safe zone Android).
+PNG in root: `icon-180.png` (apple-touch), `icon-192.png`, `icon-512.png`, `icon-maskable.png`.
+Rigenerare dopo una modifica ai `.svg`: `bash scripts/genera-icone.sh` (usa Chrome headless, nessuna dipendenza), poi `node scripts/bump.mjs`.
 
 ---
 
@@ -74,7 +74,7 @@ Finché mancano, iOS usa uno screenshot come icona home.
 `tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`)
 
 ### Altro
-`index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `icon.svg` · `scripts/bump.mjs` (cache-busting one-shot, vedi "Deploy")
+`index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `icon.svg` / `icon-maskable.svg` + i 4 PNG · `scripts/bump.mjs` (cache-busting) · `scripts/genera-icone.sh` (SVG→PNG via Chrome headless)
 
 ---
 
@@ -201,10 +201,10 @@ Valutazione (tabellino) = (PT + RIMB + AS + REC + FS) − (tiri sbagliati + TL s
 10. `impostaStatoPartita` re-invia la partita con campi locali possibilmente stale → può clobberare modifiche fatte sul foglio.
 11. Minuti/± dipendono dalla disciplina del segnapunti (checkpoint CAMBI + punteggio corretto ai checkpoint).
 12. **Zero test.**
-13. Icone PWA PNG mancanti (icona ancora "tasso del miele" — da riallineare al logo PVL / palette blu).
+13. ~~Icone PWA PNG mancanti~~ — **FATTE in v22** (`icon.svg` + `icon-maskable.svg` + 4 PNG, palette PVL; `scripts/genera-icone.sh` per rigenerare).
 
 ### Backlog consigliato (ordine)
-test node del motore stat (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`) → icone PWA su nuova palette.
+test node del motore stat (`stintsDaEventi`, `calcolaBox`, `calcolaAdvanced`).
 
 ---
 
