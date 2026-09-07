@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=29` · SW `bsp-v29` · backend V4.9.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=30` · SW `bsp-v30` · backend V4.9.
 
 ---
 
@@ -149,7 +149,8 @@ fallo_speciale, esito_tl ("SI,NO"), valido (true/false), id_evento_target
 ### Registrazione evento
 Seleziona giocatore PVL o AVVERSARI → tap azione → `registra*()` in `azioni.js`/`fallo-subito.js` → `registraEvento(campi, delta, testoFeed)` → push in `state.eventLog`, aggiorna `#ultimo-evento-banner`, **azzera `state.selezione`** (v26: ogni azione richiede un nuovo tap → niente doppio-evento / mis-attribuzione), `salvaStato()`, `inviaEvento()`, `renderPartita()`.
 - Tiro sbagliato / TL finale sbagliato → overlay **Rimbalzo** (con "Di squadra → di chi?"). Canestro PVL → overlay **Assist** (timeout 4s).
-- **Fallo** (subito/fatto): flusso a passi nell'`#action-overlay` (v29) — non un modale a schermo intero → il **CAMBI resta raggiungibile** (cambio prima dei liberi) e ogni step ha "← indietro" (un mis-tap non fa rifare tutto). And-1: se il giocatore ha appena segnato si salta al singolo TL.
+- **Fallo** (subito/fatto): flusso a passi nell'`#action-overlay` (v29-30) — non un modale a schermo intero → il **CAMBI resta raggiungibile** (cambio prima dei liberi). La schermata esiti mostra **tutti gli N tiri insieme**, SÌ/NO ri-toccabili fino a "✓ Conferma" (`schermataEsitiTL`). And-1: si salta al singolo TL.
+- **Correggi ultimo fallo** (v30): se l'ultimo evento è un `FALLO_SUBITO`/`FALLO_FATTO` con TL, la barra "ultimo evento" diventa cliccabile (`.correggibile`, prefisso ✎) → `modificaUltimoFallo` riapre **solo** la schermata esiti precompilata; alla conferma `annullaUltimoEvento()` del vecchio + registra il nuovo (delta score, non "undo grosso + rifai tutto"). `ffModifica` è il flag.
 - **± dei tiri liberi dopo un cambio**: l'evento `FALLO_SUBITO` si registra a fine flusso → porta il quintetto *di quel momento*. Se il cambio è stato fatto prima dei liberi, i punti TL vanno al **quintetto entrante** (convenzione play-by-play standard: chi è in campo quando i punti entrano).
 - **And-1** (v26): se il selezionato ha appena segnato da 2/3 (`ultimaAzioneEraCanestro`, guarda indietro saltando ASSIST/ANNULLA) → `apriModaleFalloSubito` preseleziona **1 TL** con badge AND-1.
 - **Recupero ⇒ palla persa avversaria**: derivata in `calcolaBox` (`team[altra].pp++`), non registrata come evento. Non registrare anche la PALLA_PERSA speculare.

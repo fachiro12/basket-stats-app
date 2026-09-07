@@ -352,6 +352,8 @@ function ultimoFalloCorreggibile() {
 }
 
 function modificaUltimoFallo() {
+  // solo a mani libere: niente hijack di un overlay già aperto
+  if (typeof aoElemento === "function" && !aoElemento().classList.contains("hidden")) return;
   const c = ultimoFalloCorreggibile();
   if (!c) return;
   ffModifica = true;
