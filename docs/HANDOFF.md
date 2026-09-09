@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=35` · SW `bsp-v35` · backend V4.11.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=36` · SW `bsp-v36` · backend V4.11.
 
 ---
 
@@ -180,7 +180,9 @@ Bottone **"✎ Modifica convocati"** nella modale CAMBI → `#overlay-convocati-
 **Falli di squadra in OT**: contano come 4° quarto (FIBA Art. 41) — `indiceFalli()` = `min(quartoIndice, QUARTI_REGOLAMENTARI−1)`; `falliSquadraPerQuarto` resta lungo 4.
 
 ### Secondo device — "Segui Live"
-Se apri dal calendario una gara "In corso" che **non** stai segnando tu → `avviaModalitaSegui(p)`: va su Stats sola-lettura, `pollSeguiLive` scarica `getEventi` ogni 20s e ricalcola tutto. Quando trova un evento `FINE` → banner "PARTITA TERMINATA", stop polling, ricarica il calendario. La vista Partita è bloccata (`navigaA` reindirizza).
+Se apri dal calendario una gara "In corso" che **non** stai segnando tu → `avviaModalitaSegui(p)`: va su Stats sola-lettura, `pollSeguiLive` scarica `getEventi` ogni ~20s e ricalcola tutto. Quando trova un evento `FINE` → banner "PARTITA TERMINATA", stop polling, ricarica il calendario. La vista Partita è bloccata (`navigaA` reindirizza).
+
+Robustezza (v36): `scaricaEventiPartita` ha un **timeout 12s** — se il JSONP resta appeso chiama comunque `cb(false)`, così la catena del polling non muore (prima poteva "congelarsi" su un dato iniziale); su fallimento `pollSeguiLive` ritenta a 7s invece di 20. Le risposte per una `id_partita` diversa da `seguiLive.id` vengono **ignorate** (prima un tap sul refresh — che usa `state.id_partita` = partita precedente — poteva far "saltare" la vista alla gara sbagliata); `aggiornaStatsDaFoglio` in Segui Live prende `seguiLive.id`. `statsContesto`: con `seguiLive` attivo resta sempre sulla partita remota anche se l'id coincide con `state.id_partita`.
 
 ### Secondo device — subentro come segnapunti
 Card calendario di una gara "In corso" non tua → bottone **"Riprendi come segnapunti"** (anche come **"Prendi controllo"** nella banner Segui Live) → `riprendiComeSegnapunti(p)`: `scaricaEventiPartita` → `ricostruisciStatoDaEventi(p, eventi)` rifà `state` dal foglio → `bsp_segnapunti_di = id`, `fermaSeguiLive()`, va su `view-partita`. Vedi limiti in §8.4.

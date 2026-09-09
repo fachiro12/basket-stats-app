@@ -34,17 +34,22 @@ function fermaSeguiLive() {
 
 function pollSeguiLive() {
   if (!seguiLive) return;
-  scaricaEventiPartita(seguiLive.id, () => {
-    if (!seguiLive) return;
-    const finita = (statsEventiRemoti && statsEventiRemoti.eventi || [])
-      .some(e => String(e.tipo_evento) === "FINE");
+  const idAtteso = String(seguiLive.id);
+  scaricaEventiPartita(idAtteso, (ok) => {
+    if (!seguiLive || String(seguiLive.id) !== idAtteso) return;   // uscito o cambiato partita nel frattempo
+    const evRemoti = (statsEventiRemoti && statsEventiRemoti.eventi) || [];
+    const finita = evRemoti.some(e => String(e.tipo_evento) === "FINE");
     if (finita) {
       seguiLive.terminata = true;
       if (typeof scaricaPartite === "function") scaricaPartite();   // aggiorna lo stato nel calendario
     }
     if (document.getElementById("view-stats").classList.contains("attiva")) renderStats();
     else if (document.getElementById("view-adv").classList.contains("attiva")) renderAdv();
-    if (!seguiLive.terminata) seguiLive.timer = setTimeout(pollSeguiLive, 20000);
+    if (!seguiLive.terminata) {
+      if (seguiLive.timer) clearTimeout(seguiLive.timer);
+      // ~20s dichiarati quando tutto va; ritenta prima se il fetch è fallito
+      seguiLive.timer = setTimeout(pollSeguiLive, ok ? 20000 : 7000);
+    }
   });
 }
 
@@ -127,7 +132,10 @@ function eventiPuliti(eventi) {
 
 /* ---------- Sorgente eventi: live (state) o remota (fetch foglio) ---------- */
 function statsContesto(forzaLive) {
-  const live = forzaLive || !statsEventiRemoti || statsEventiRemoti.id_partita === state.id_partita;
+  // In "Segui live" si resta SEMPRE sulla partita remota seguita, anche se per caso
+  // il suo id coincide con state.id_partita (ri-test con id fissi) → niente salti.
+  const live = forzaLive ||
+    (!seguiLive && (!statsEventiRemoti || String(statsEventiRemoti.id_partita) === String(state.id_partita)));
   if (live) {
     return {
       live: true,
@@ -140,6 +148,14 @@ function statsContesto(forzaLive) {
       minuti: minutiGiocatiLive(),
       tempoOra: state.tempoPartita,
       quartoOra: nomeQuarto()
+    };
+  }
+  if (!statsEventiRemoti) {
+    // "Segui live" appena avviato, primo fetch non ancora arrivato: schermata d'attesa
+    return {
+      live: false, eventi: [], punteggio: { MIA: 0, OPP: 0 }, convocati: [],
+      nome: (seguiLive && seguiLive.nome) || "Partita", oppLabel: "AVV",
+      finita: false, minuti: 0.1, tempoOra: "00:00", quartoOra: "Q1"
     };
   }
   const ev = eventiPuliti(statsEventiRemoti.eventi);
@@ -782,33 +798,48 @@ function miglioriQuintetti(box) {
 function scaricaEventiPartita(idPartita, cb) {
   const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
   if (!base || base.indexOf("INCOLLA_QUI") === 0) { if (cb) cb(false); return; }
-  const nomeCb = "bspEventiCb_" + Date.now();
+  const nomeCb = "bspEventiCb_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
   const script = document.createElement("script");
   let done = false;
-  const pulisci = () => { delete window[nomeCb]; if (script.parentNode) script.parentNode.removeChild(script); };
+  let to = null;
+  const pulisci = () => {
+    delete window[nomeCb];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    if (to) { clearTimeout(to); to = null; }
+  };
+  // Chiude una sola volta: qualsiasi esito (ok / errore / timeout) sblocca il chiamante,
+  // così il polling di "Segui live" non muore se il JSONP resta appeso.
+  const finito = (ok) => { if (done) return; done = true; pulisci(); if (cb) cb(!!ok); };
+  to = setTimeout(() => finito(false), 12000);
+
   window[nomeCb] = function (r) {
-    done = true;
+    if (done) return;
+    // In "Segui live" ignora una risposta che non è della partita seguita
+    // (es. tap sul refresh che userebbe state.id_partita = partita precedente).
+    if (seguiLive && String(seguiLive.id) !== String(idPartita)) { finito(false); return; }
     if (r && r.ok && Array.isArray(r.eventi)) {
       const prec = statsEventiRemoti || {};
+      const stessa = String(prec.id_partita) === String(idPartita);
       statsEventiRemoti = {
         id_partita: String(idPartita),
         eventi: r.eventi,
-        nome: prec.id_partita === String(idPartita) ? prec.nome : undefined,
-        oppLabel: prec.id_partita === String(idPartita) ? prec.oppLabel : undefined,
-        finita: prec.id_partita === String(idPartita) ? prec.finita : undefined
+        nome: stessa ? prec.nome : undefined,
+        oppLabel: stessa ? prec.oppLabel : undefined,
+        finita: stessa ? prec.finita : undefined
       };
-      if (cb) cb(true);
-    } else if (cb) cb(false);
-    pulisci();
+      finito(true);
+    } else {
+      finito(false);
+    }
   };
   script.src = base + (base.indexOf("?") > -1 ? "&" : "?") +
     "action=getEventi&id_partita=" + encodeURIComponent(idPartita) + "&callback=" + nomeCb;
-  script.onerror = () => { if (!done && cb) cb(false); pulisci(); };
+  script.onerror = () => finito(false);
   document.body.appendChild(script);
 }
 
 function aggiornaStatsDaFoglio() {
-  const id = state.id_partita;
+  const id = (seguiLive && seguiLive.id) || state.id_partita;   // in Segui live aggiorna la partita seguita
   mostraToast("Aggiorno dal foglio…");
   scaricaEventiPartita(id, ok => {
     if (!ok) { mostraToast("Fetch non riuscito"); return; }

@@ -1,5 +1,5 @@
 /* Service worker — network-first (sempre fresco online, funziona offline) */
-const CACHE = "bsp-v35";
+const CACHE = "bsp-v36";
 const CORE = ["./", "./index.html", "./manifest.webmanifest"];
 
 self.addEventListener("install", e => {
