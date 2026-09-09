@@ -6,6 +6,7 @@
 let statsTab = "tabellino";
 let advTab = "squadra";
 let statsFmt = "num";   // "num" | "pct"
+let statsPeriodo = "Tot";   // "Tot" | "Q1".."Q4" | "T1" | "T2" | "OT1"...  (solo Tabellino/Tiri)
 let statsEventiRemoti = null;   // { id_partita, eventi, nome } se guardiamo una partita non live
 let seguiLive = null;          // { id, nome, timer } modalità sola-lettura con polling
 
@@ -22,6 +23,7 @@ function avviaModalitaSegui(p) {
   seguiLive = { id: id, nome: nome, timer: null };
   statsEventiRemoti = { id_partita: id, eventi: [], nome: nome, oppLabel: opp };
   statsTab = "tabellino";
+  statsPeriodo = "Tot";
   navigaA("stats");
   mostraToast("Segui live — sola lettura");
   pollSeguiLive();
@@ -378,28 +380,156 @@ function calcolaAdvanced(box, minuti) {
 }
 
 /* ==========================================================================
+   PERIODO — Tot / Q1..Q4 / 1°T / 2°T / OT (solo Tabellino e Tiri)
+   ========================================================================== */
+function ordQuarto_(q) {
+  const m = /^Q(\d)/i.exec(String(q || ""));
+  if (m) return +m[1];
+  const o = /^OT(\d)/i.exec(String(q || ""));
+  if (o) return CONFIG.QUARTI_REGOLAMENTARI + +o[1];
+  return 0;
+}
+function quartiDelPeriodo_(p) {
+  if (!p || p === "Tot") return null;
+  if (p === "T1") return ["Q1", "Q2"];
+  if (p === "T2") return ["Q3", "Q4"];
+  return [p];
+}
+function etichettaPeriodo_(p) {
+  if (p === "Tot") return "Tot";
+  if (p === "T1") return "1°T";
+  if (p === "T2") return "2°T";
+  return p;
+}
+function periodiDisponibili_(eventi, ctx) {
+  const visti = new Set();
+  (eventi || []).forEach(e => { if (e.quarto) visti.add(String(e.quarto)); });
+  if (ctx && ctx.live && ctx.quartoOra) visti.add(String(ctx.quartoOra));
+  const reg = CONFIG.QUARTI_REGOLAMENTARI;
+  const out = ["Tot"];
+  for (let i = 1; i <= reg; i++) if (visti.has("Q" + i)) out.push("Q" + i);
+  if (visti.has("Q1") || visti.has("Q2")) out.push("T1");
+  if (visti.has("Q3") || visti.has("Q4")) out.push("T2");
+  [...visti].filter(q => /^OT\d/i.test(q)).sort((a, b) => ordQuarto_(a) - ordQuarto_(b)).forEach(q => out.push(q));
+  return out;
+}
+/* Punteggio del periodo = progressivo a fine periodo − progressivo appena prima */
+function punteggioPeriodo_(eventi, quarti) {
+  const ordini = quarti.map(ordQuarto_);
+  const minO = Math.min(...ordini), maxO = Math.max(...ordini);
+  const prima = punteggioDaEventi((eventi || []).filter(e => ordQuarto_(e.quarto) > 0 && ordQuarto_(e.quarto) < minO));
+  const fino = punteggioDaEventi((eventi || []).filter(e => ordQuarto_(e.quarto) > 0 && ordQuarto_(e.quarto) <= maxO));
+  return { MIA: Math.max(0, fino.MIA - prima.MIA), OPP: Math.max(0, fino.OPP - prima.OPP) };
+}
+/* box + minuti per il periodo scelto. "Tot" → calcolaBox normale.
+   Le stat di conteggio si filtrano per ev.quarto; minuti/± si ricavano dagli
+   stint dell'INTERA gara filtrati per periodo (filtrare gli eventi romperebbe
+   tIn/scIn degli stint). */
+function boxPeriodo(ctx, periodo) {
+  const quarti = quartiDelPeriodo_(periodo);
+  if (!quarti) {
+    const box = calcolaBox(ctx);
+    return { box: box, minuti: ctx.minuti, punteggio: ctx.punteggio };
+  }
+  const set = new Set(quarti);
+  const evP = (ctx.eventi || []).filter(e => set.has(String(e.quarto)));
+  const scoreP = punteggioPeriodo_(ctx.eventi, quarti);
+  const box = calcolaBox({
+    eventi: evP, punteggio: scoreP, convocati: ctx.convocati,
+    tempoOra: ctx.tempoOra, quartoOra: ctx.quartoOra
+  });
+  // minuti + ± dal computo stint sull'intera gara
+  const stintTutti = stintsDaEventi(ctx.eventi, ctx.tempoOra, ctx.quartoOra);
+  const stintP = stintTutti.filter(s => set.has(String(s.quarto)));
+  const mp = {};
+  stintP.forEach(s => (s.quintetto || []).forEach(n => {
+    mp[n] = mp[n] || { min: 0, pm: 0 };
+    mp[n].min += s.durSec / 60;
+    mp[n].pm += s.plusMinus || 0;
+  }));
+  Object.keys(mp).forEach(n => { if (!box.pg[n]) box.pg[n] = statVuote(); });
+  Object.keys(box.pg).forEach(n => {
+    box.pg[n].min = mp[n] ? mp[n].min : 0;
+    box.pg[n].pm = mp[n] ? mp[n].pm : 0;
+    box.pg[n].val = valutazione(box.pg[n]);
+  });
+  box.stints = stintP;
+  const lung = quarti.reduce((a, q) => a + (/^OT/i.test(q) ? CONFIG.DURATA_OT_SEC : CONFIG.DURATA_QUARTO_SEC), 0);
+  return { box: box, minuti: Math.max(lung / 60, 0.1), punteggio: scoreP };
+}
+
+/* ==========================================================================
    RENDER — STATS
    ========================================================================== */
+function statsSupportaPeriodo_() { return statsTab === "tabellino" || statsTab === "tiri"; }
+
+function scoreCompatto_(ctx, scoreP, periodo) {
+  const per = periodo && periodo !== "Tot";
+  const a = per ? scoreP.MIA : ctx.punteggio.MIA;
+  const b = per ? scoreP.OPP : ctx.punteggio.OPP;
+  const clk = ctx.finita ? "FINALE"
+    : (per ? etichettaPeriodo_(periodo)
+           : (ctx.quartoOra || "") + (ctx.tempoOra && ctx.tempoOra !== "00:00" ? " " + ctx.tempoOra : ""));
+  return '<span class="sh-sc"><span class="sh-n noi">' + a + '</span><span class="sh-d">–</span>' +
+    '<span class="sh-n">' + b + '</span>' +
+    '<span class="sh-t">' + CONFIG.NOME_SQUADRA_MIA + ' · ' + esc(ctx.oppLabel || "AVV") + '</span></span>' +
+    (clk ? '<span class="sh-clk">' + esc(clk) + '</span>' : '') +
+    (per ? '<span class="sh-tot">tot ' + ctx.punteggio.MIA + '–' + ctx.punteggio.OPP + '</span>' : '');
+}
+
+function barraControlliStats_(periodi) {
+  if (!statsSupportaPeriodo_()) return "";
+  const seg = periodi.map(p =>
+    '<button class="sp-chip' + (p === statsPeriodo ? ' on' : '') + '" data-periodo="' + p + '">' +
+    esc(etichettaPeriodo_(p)) + '</button>' +
+    (p === "Q4" && periodi.indexOf("T1") > -1 ? '<span class="sp-div"></span>' : '')).join('');
+  return '<div class="sp-seg">' + seg + '</div>' + toggleFmt();
+}
+
 function renderStats(tab) {
   if (tab) statsTab = tab;
   const ctx = statsContesto();
   const opp = ctx.oppLabel || "AVV";
+  const spettatore = !!seguiLive;
 
-  document.getElementById("stats-titolo").textContent = ctx.nome + (ctx.live && !ctx.finita ? " · LIVE" : "");
+  const periodi = periodiDisponibili_(ctx.eventi, ctx);
+  if (periodi.indexOf(statsPeriodo) === -1) statsPeriodo = "Tot";
+
   document.querySelectorAll("#view-stats .stats-tabs button").forEach(b =>
     b.classList.toggle("attivo", b.dataset.stab === statsTab));
 
+  // header: spettatore → nome + barra piena nel corpo; altrimenti → score compatto in topbar
+  const titEl = document.getElementById("stats-titolo");
+  const ctrlEl = document.getElementById("stats-controlli");
+
   let contenuto = "";
+  let scoreP = ctx.punteggio;
   try {
-    const box = calcolaBox(ctx);
-    if (statsTab === "andamento") contenuto = vistaAndamento(ctx);
-    else if (statsTab === "tiri") contenuto = vistaTiri(box, opp);
-    else if (statsTab === "pbp") contenuto = vistaPbp(ctx);
-    else contenuto = vistaTabellino(ctx, box, opp);
+    if (statsTab === "andamento") { contenuto = vistaAndamento(ctx); }
+    else if (statsTab === "pbp") { contenuto = vistaPbp(ctx); }
+    else if (statsTab === "tiri") {
+      const r = boxPeriodo(ctx, statsPeriodo); scoreP = r.punteggio;
+      contenuto = vistaTiri(r.box, opp, r.minuti);
+    } else {
+      const r = boxPeriodo(ctx, statsPeriodo); scoreP = r.punteggio;
+      contenuto = vistaTabellino(ctx, r.box, opp, statsPeriodo);
+    }
   } catch (e) {
     contenuto = '<div class="st-hint">Errore stats: ' + (e && e.message || e) + '</div>';
   }
-  document.getElementById("stats-body").innerHTML = bannerSegui() + barraPunteggio(ctx) + contenuto;
+
+  const perAttivo = statsSupportaPeriodo_() ? statsPeriodo : "Tot";
+  if (spettatore) {
+    titEl.textContent = ctx.nome + (ctx.live && !ctx.finita ? " · LIVE" : "");
+    titEl.classList.remove("sh-mode");
+  } else {
+    titEl.innerHTML = scoreCompatto_(ctx, scoreP, perAttivo);
+    titEl.classList.add("sh-mode");
+  }
+  if (ctrlEl) ctrlEl.innerHTML = barraControlliStats_(periodi);
+
+  document.getElementById("stats-body").innerHTML =
+    (spettatore ? bannerSegui() + barraPunteggio(ctx) : "") + contenuto;
 }
 
 function rigaSquadra(nome, t, opp, cls) {
@@ -426,41 +556,62 @@ function toggleFmt() {
   '</div>';
 }
 
-function vistaTabellino(ctx, box, opp) {
-  const conv = ctx.convocati.slice();
-  const numeri = conv.length
-    ? conv.map(c => c.numero)
-    : Object.keys(box.pg).map(Number).sort((a, b) => a - b);
-  const p = statsFmt === "pct";
+function celTiri_(g, p) {
+  const fga = g.a2 + g.a3, fgm = g.m2 + g.m3;
   const s = (x, y) => (y ? x / y : 0);
+  return p
+    ? '<td>' + pct(g.m2, g.a2) + '</td><td>' + pct(g.m3, g.a3) + '</td><td>' + pct(g.ftm, g.fta) + '</td>' +
+      '<td>' + (fga ? dec(s(fgm + 0.5 * g.m3, fga) * 100, 0) + '%' : '–') + '</td>' +
+      '<td>' + (fga || g.fta ? dec(s(g.pt, 2 * (fga + 0.44 * g.fta)) * 100, 0) + '%' : '–') + '</td>'
+    : '<td>' + frac(g.m2, g.a2) + '</td><td>' + frac(g.m3, g.a3) + '</td><td>' + frac(g.ftm, g.fta) + '</td>' +
+      '<td class="sm-hide">' + g.ro + '</td><td class="sm-hide">' + g.rd + '</td>';
+}
+function rigaGiocatoreTr_(n, g, p) {
+  return '<tr>' +
+    '<td class="st-n">#' + n + '</td>' +
+    '<td class="st-g">' + esc(nomeGiocatore(n)) + '</td>' +
+    '<td class="sm-hide">' + mmss(g.min) + '</td>' +
+    '<td class="st-pt">' + g.pt + '</td>' + celTiri_(g, p) +
+    '<td>' + (g.ro + g.rd) + '</td>' +
+    '<td>' + g.as + '</td>' +
+    '<td class="sm-hide">' + g.pr + '</td>' +
+    '<td class="sm-hide">' + g.pp + '</td>' +
+    '<td>' + g.ff + '</td>' +
+    '<td class="sm-hide">' + g.fs + '</td>' +
+    '<td class="sm-hide st-val">' + g.val + '</td>' +
+    '<td class="sm-hide">' + (g.pm > 0 ? "+" : "") + dec(g.pm, 0) + '</td>' +
+    '</tr>';
+}
+function rigaSquadraTr_(nome, t, cls, p) {
+  return '<tr class="st-tot ' + (cls || "") + '">' +
+    '<td class="st-n">—</td>' +
+    '<td class="st-g">' + esc(nome) + '</td>' +
+    '<td class="sm-hide">—</td>' +
+    '<td class="st-pt">' + t.pt + '</td>' + celTiri_(t, p) +
+    '<td>' + (t.ro + t.rd) + '</td>' +
+    '<td>' + t.as + '</td>' +
+    '<td class="sm-hide">' + t.pr + '</td>' +
+    '<td class="sm-hide">' + t.pp + '</td>' +
+    '<td>' + t.ff + '</td>' +
+    '<td class="sm-hide">' + t.fs + '</td>' +
+    '<td class="sm-hide st-val">' + (t.val != null ? t.val : "—") + '</td>' +
+    '<td class="sm-hide">—</td>' +
+    '</tr>';
+}
 
-  let righe = "";
-  numeri.forEach(n => {
-    const g = box.pg[n] || statVuote();
-    const fga = g.a2 + g.a3, fgm = g.m2 + g.m3;
-    const cel = p
-      ? '<td>' + pct(g.m2, g.a2) + '</td><td>' + pct(g.m3, g.a3) + '</td><td>' + pct(g.ftm, g.fta) + '</td>' +
-        '<td>' + (fga ? dec(s(fgm + 0.5 * g.m3, fga) * 100, 0) + '%' : '–') + '</td>' +
-        '<td>' + (fga || g.fta ? dec(s(g.pt, 2 * (fga + 0.44 * g.fta)) * 100, 0) + '%' : '–') + '</td>'
-      : '<td>' + frac(g.m2, g.a2) + '</td><td>' + frac(g.m3, g.a3) + '</td><td>' + frac(g.ftm, g.fta) + '</td>' +
-        '<td class="sm-hide">' + g.ro + '</td><td class="sm-hide">' + g.rd + '</td>';
-    righe +=
-      '<tr>' +
-      '<td class="st-n">#' + n + '</td>' +
-      '<td class="st-g">' + esc(nomeGiocatore(n)) + '</td>' +
-      '<td class="sm-hide">' + mmss(g.min) + '</td>' +
-      '<td class="st-pt">' + g.pt + '</td>' +
-      cel +
-      '<td>' + (g.ro + g.rd) + '</td>' +
-      '<td>' + g.as + '</td>' +
-      '<td class="sm-hide">' + g.pr + '</td>' +
-      '<td class="sm-hide">' + g.pp + '</td>' +
-      '<td>' + g.ff + '</td>' +
-      '<td class="sm-hide">' + g.fs + '</td>' +
-      '<td class="sm-hide st-val">' + g.val + '</td>' +
-      '<td class="sm-hide">' + (g.pm > 0 ? "+" : "") + dec(g.pm, 0) + '</td>' +
-      '</tr>';
-  });
+function vistaTabellino(ctx, box, opp, periodo) {
+  const p = statsFmt === "pct";
+  const perFiltro = periodo && periodo !== "Tot";
+  const conv = (ctx.convocati || []).slice();
+  let numeri = conv.length ? conv.map(c => c.numero)
+    : Object.keys(box.pg).map(Number).sort((a, b) => a - b);
+  if (perFiltro) {
+    numeri = numeri.filter(n => {
+      const g = box.pg[n]; if (!g) return false;
+      return (g.min || 0) > 0 || g.pt || g.a2 || g.a3 || g.fta || g.ro || g.rd || g.as || g.pr || g.pp || g.ff || g.fs;
+    });
+  }
+  const righe = numeri.map(n => rigaGiocatoreTr_(n, box.pg[n] || statVuote(), p)).join('');
 
   const th = p
     ? ['#', 'G', 'MIN', 'PT', '2P%', '3P%', 'TL%', 'eFG%', 'TS%', 'RT', 'AS', 'PR', 'PP', 'FF', 'FS', 'VAL', '+/-']
@@ -468,17 +619,18 @@ function vistaTabellino(ctx, box, opp) {
   const hide = { MIN: 1, RO: 1, RD: 1, PR: 1, PP: 1, FS: 1, VAL: 1, '+/-': 1 };
   const thead = '<tr>' + th.map(h => '<th' + (hide[h] ? ' class="sm-hide"' : '') + '>' + h + '</th>').join('') + '</tr>';
 
-  return toggleFmt() +
-    rigaSquadra(CONFIG.NOME_SQUADRA_MIA, box.team.MIA, box.team.OPP, 'noi') +
-    rigaSquadra(opp, box.team.OPP, box.team.MIA, 'avv') +
-    '<div class="st-hint">Ruota il telefono per tutte le colonne · header fisso</div>' +
-    '<div class="st-scroll"><table class="st-box"><thead>' + thead + '</thead><tbody>' + righe + '</tbody></table></div>';
+  return (perFiltro ? '<div class="sp-nota">Solo ' + esc(etichettaPeriodo_(periodo)) +
+      ' · minuti e ± dagli stint di quel periodo</div>' : '') +
+    '<div class="st-scroll"><table class="st-box"><thead>' + thead + '</thead><tbody>' +
+    rigaSquadraTr_(CONFIG.NOME_SQUADRA_MIA, box.team.MIA, 'noi', p) +
+    rigaSquadraTr_(opp, box.team.OPP, 'avv', p) +
+    righe + '</tbody></table></div>';
 }
 
-function vistaTiri(box, opp) {
+function vistaTiri(box, opp, minuti) {
   const A = box.team.MIA, B = box.team.OPP;
   const oe = esc(opp);
-  const adv = calcolaAdvanced(box, statsContesto().minuti);
+  const adv = calcolaAdvanced(box, minuti != null ? minuti : statsContesto().minuti);
   const barra = (label, mA, aA, mB, aB, pA, pB) =>
     '<div class="st-tiro">' +
       '<div class="st-tiro-top"><span>' + label + '</span>' +

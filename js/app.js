@@ -136,6 +136,13 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   document.getElementById("stats-body").addEventListener("click", azioniStats);
   document.getElementById("adv-body").addEventListener("click", azioniStats);
+  const statsCtrl = document.getElementById("stats-controlli");
+  if (statsCtrl) statsCtrl.addEventListener("click", e => {
+    const per = e.target.closest("[data-periodo]");
+    if (per) { statsPeriodo = per.dataset.periodo; renderStats(); return; }
+    const fmt = e.target.closest("[data-fmt]");
+    if (fmt) { statsFmt = fmt.dataset.fmt; renderStats(); }
+  });
 
   /* -------- CALENDARIO -------- */
   document.getElementById("cal-aggiungi").addEventListener("click", apriAggiungiPartita);

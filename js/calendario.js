@@ -246,6 +246,7 @@ function apriStatistichePartita(id) {
   const p = elencoPartite().find(x => String(x.id_partita) === id);
   const nome = p ? nomePartitaDaCalendario(p) : "Gara " + id;
   statsEventiRemoti = { id_partita: id, eventi: [], nome: nome, oppLabel: p ? avversarioBreveAuto(p.avversario) : "AVV", finita: p && p.stato === "Terminata" };
+  if (typeof statsPeriodo !== "undefined") statsPeriodo = "Tot";
   navigaA("stats");
   scaricaEventiPartita(id, ok => {
     if (ok && document.getElementById("view-stats").classList.contains("attiva")) renderStats();
