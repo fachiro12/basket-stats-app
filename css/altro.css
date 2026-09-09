@@ -111,3 +111,13 @@
 .riga-altro.riga-pericolo .ico-riga,
 .riga-altro.riga-pericolo .titolo-altro { color: var(--color-state-negative); }
 .riga-altro.riga-pericolo:active { background: var(--color-state-negative-soft); }
+
+/* ---------- Versione app ---------- */
+.app-ver {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}

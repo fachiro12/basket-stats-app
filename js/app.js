@@ -51,6 +51,37 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnAzzeraGara = document.getElementById("btn-azzera-gara");
   if (btnAzzeraGara && typeof apriAzzeraGara === "function") btnAzzeraGara.addEventListener("click", apriAzzeraGara);
 
+  /* -------- VERSIONE APP + forza-aggiornamento (contro la cache PWA su mobile) -------- */
+  (function mostraVersioneApp() {
+    const el = document.getElementById("app-versione");
+    if (!el) return;
+    const sc = document.querySelector('script[src*="app.js"]');
+    const m = sc && sc.getAttribute("src").match(/[?&]v=(\d+)/);
+    let txt = m ? "app v" + m[1] : "";
+    if (window.caches && caches.keys) {
+      caches.keys().then(ks => {
+        const sw = (ks.find(k => /^bsp-v\d+$/.test(k)) || "").replace("bsp-v", "");
+        if (sw && sw !== (m && m[1])) txt += " · cache v" + sw + " ⚠";
+        el.textContent = txt;
+      }).catch(() => { el.textContent = txt; });
+    } else { el.textContent = txt; }
+  })();
+  const btnAgg = document.getElementById("btn-aggiorna-app");
+  if (btnAgg) btnAgg.addEventListener("click", async () => {
+    if (typeof mostraToast === "function") mostraToast("Aggiorno l'app…");
+    try {
+      if (window.caches && caches.keys) {
+        const ks = await caches.keys();
+        await Promise.all(ks.map(k => caches.delete(k)));
+      }
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+    } catch (e) {}
+    location.reload();
+  });
+
   /* -------- ANALISI STAGIONE -------- */
   const apriAn = document.getElementById("apri-analisi");
   if (apriAn && typeof apriAnalisi === "function") apriAn.addEventListener("click", apriAnalisi);

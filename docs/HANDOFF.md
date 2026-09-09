@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=39` · SW `bsp-v39` · backend V4.11.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=40` · SW `bsp-v40` · backend V4.11.
 
 ---
 
@@ -88,7 +88,7 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 - **`view-stats`** — topbar + tab `Tabellino` / `Andamento` / `Tiri` / `PBP` + **barra controlli** (`#stats-controlli`, fissa) con **selettore periodo** `Tot`(default)·`Q1`–`Q4`·`1°T`·`2°T`(+`OT` se presenti) e toggle `Numeri`/`%`. Il periodo vale solo su **Tabellino** e **Tiri** (Andamento = tutta la gara, PBP = cronologico); si azzera a `Tot` a ogni apertura di una gara. **Colonna compatta (v37):** topbar + punteggio fusi (`.sh-*`, gradiente navy via `:has`); totali squadra = prime 2 righe della tabella (`tr.st-tot`); solo `#stats-body` scrolla. **Spettatore** (`seguiLive`): topbar = nome partita e nel corpo la `barraPunteggio` piena + `bannerSegui()`. Minuti/± per periodo: dagli stint dell'intera gara filtrati per `quarto` (`boxPeriodo`).
 - **`view-adv`** — topbar + tab `Squadra` / `Giocatori`; barra punteggio; card metriche + migliori quintetti + stint (tutti ricostruiti da `stintsDaEventi()`).
 - **`view-analisi`** — Analisi stagione (da Altro → sezione "Analisi"): back + tab `Squadra`/`Giocatori` + barra filtri chip. Aggrega le sole gare `Terminata`; campionato e amichevoli separati. Fetch `getEventiStagione` in cache `bsp_analisi_eventi` (immutabile), pulsante Aggiorna.
-- **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, **Analisi** (Analisi stagione), Roster (anagrafica), **Aspetto** (switch Arena), Configurazione, **Manutenzione** (solo Admin, password + "SVUOTA"): `apriAzzeraGara` → `SVUOTA_EVENTI_GARA` (una gara, tornata a "Da giocare"); `apriResetDati` → `SVUOTA_EVENTI` (tutti gli eventi). Roster e calendario restano. Esci.
+- **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, **Analisi** (Analisi stagione), Roster (anagrafica), **Aspetto** (switch Arena), Configurazione, **Manutenzione**: `#btn-aggiorna-app` (svuota tutte le `caches` + unregister del SW + reload — contro la cache PWA stantìa su mobile, per tutti); poi solo Admin (password + "SVUOTA"): `apriAzzeraGara` → `SVUOTA_EVENTI_GARA`; `apriResetDati` → `SVUOTA_EVENTI`. La riga "Profilo attivo" mostra `#app-versione` = `app vN` dai `?v=` degli asset caricati, + `cache vM ⚠` se il SW è su una versione diversa (diagnostica).
 - **`view-calendario`** — topbar (hamburger placeholder / select stagione / +) + lista 26 gare con stato e bottone contestuale.
 
 Nav: capsula fluttuante in basso (portrait), **sidebar icone a sinistra** (landscape su touch).
