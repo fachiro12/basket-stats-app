@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=37` · SW `bsp-v37` · backend V4.11.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=38` · SW `bsp-v38` · backend V4.11.
 
 ---
 
@@ -159,6 +159,7 @@ Seleziona giocatore PVL o AVVERSARI → tap azione → `registra*()` in `azioni.
 - **± dei tiri liberi dopo un cambio**: l'evento `FALLO_SUBITO` si registra a fine flusso → porta il quintetto *di quel momento*. Se il cambio è stato fatto prima dei liberi, i punti TL vanno al **quintetto entrante** (convenzione play-by-play standard: chi è in campo quando i punti entrano).
 - **And-1** (v26): se il selezionato ha appena segnato da 2/3 (`ultimaAzioneEraCanestro`, guarda indietro saltando ASSIST/ANNULLA) → `apriModaleFalloSubito` preseleziona **1 TL** con badge AND-1.
 - **Recupero ⇒ palla persa avversaria**: derivata in `calcolaBox` (`team[altra].pp++`), non registrata come evento. Non registrare anche la PALLA_PERSA speculare.
+- **Falli speculari** (v38): in `calcolaBox` un `FALLO_SUBITO` fa `team.MIA.fs++` **e** `team.OPP.ff++` (l'avversario ha commesso il fallo); un `FALLO_FATTO` fa `team.MIA.ff++` **e** `team.OPP.fs++`. Prima `team.OPP.ff` restava 0 anche con decine di TL nostri.
 - **Numero 0** lecito (`numValido()` sostituisce `if (num)`).
 - A **partita finita** ogni inserimento è bloccato (roster/AVVERSARI/CAMBI/falli disabilitati); resta solo UNDO.
 

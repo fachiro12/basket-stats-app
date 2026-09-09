@@ -255,13 +255,16 @@ function calcolaBox(ctx) {
     } else if (t === "FALLO_SUBITO") {
       const es = esitiArray(ev.esito_tl);
       const made = es.filter(v => v === "SI").length;
-      team.MIA.ftm += made; team.MIA.fta += es.length; team.MIA.fs++;
+      team.MIA.ftm += made; team.MIA.fta += es.length;
+      team.MIA.fs++;   // fallo subito da noi
+      team.OPP.ff++;   // ⇒ fallo commesso dall'avversario (specularità)
       if (n) { const g = P(n); g.ftm += made; g.fta += es.length; g.pt += Number(ev.punti_segnati) || 0; g.fs++; }
     } else if (t === "FALLO_FATTO") {
       const es = esitiArray(ev.esito_tl);
       const made = es.filter(v => v === "SI").length;
       team.OPP.ftm += made; team.OPP.fta += es.length;
-      team.MIA.ff++;
+      team.MIA.ff++;   // fallo commesso da noi
+      team.OPP.fs++;   // ⇒ fallo subito dall'avversario (specularità)
       if (n) P(n).ff++;
     } else if (t === "RECUPERO") {
       T.pr++; if (sq === "MIA" && n) P(n).pr++;
