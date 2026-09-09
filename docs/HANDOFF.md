@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=38` · SW `bsp-v38` · backend V4.11.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=39` · SW `bsp-v39` · backend V4.11.
 
 ---
 
@@ -183,7 +183,9 @@ Bottone **"✎ Modifica convocati"** nella modale CAMBI → `#overlay-convocati-
 ### Secondo device — "Segui Live"
 Se apri dal calendario una gara "In corso" che **non** stai segnando tu → `avviaModalitaSegui(p)`: va su Stats sola-lettura, `pollSeguiLive` scarica `getEventi` ogni ~20s e ricalcola tutto. Quando trova un evento `FINE` → banner "PARTITA TERMINATA", stop polling, ricarica il calendario. La vista Partita è bloccata (`navigaA` reindirizza).
 
-Robustezza (v36): `scaricaEventiPartita` ha un **timeout 12s** — se il JSONP resta appeso chiama comunque `cb(false)`, così la catena del polling non muore (prima poteva "congelarsi" su un dato iniziale); su fallimento `pollSeguiLive` ritenta a 7s invece di 20. Le risposte per una `id_partita` diversa da `seguiLive.id` vengono **ignorate** (prima un tap sul refresh — che usa `state.id_partita` = partita precedente — poteva far "saltare" la vista alla gara sbagliata); `aggiornaStatsDaFoglio` in Segui Live prende `seguiLive.id`. `statsContesto`: con `seguiLive` attivo resta sempre sulla partita remota anche se l'id coincide con `state.id_partita`.
+**`statsTargetId`** (v39, `stats.js`) = l'`id_partita` che Stats/Adv **deve** mostrare (`null` = la mia partita live). Lo impostano `apriStatistichePartita` (gara storica) e `avviaModalitaSegui`; `fermaSeguiLive()` lo azzera (+ `statsEventiRemoti`). Regole: `scaricaEventiPartita` **scarta** ogni risposta il cui `idPartita ≠ statsTargetId`; `aggiornaStatsDaFoglio` aggiorna `statsTargetId` (non `state.id_partita`); `statsContesto` resta sulla remota finché `statsTargetId != null`; `apriStatistichePartita` chiama `fermaSeguiLive()` all'ingresso. → apri una gara conclusa e **non** ti ritrovi più sulla tua ultima partita, nemmeno premendo "Aggiorna" o con un Segui Live lasciato aperto.
+
+Robustezza (v36): `scaricaEventiPartita` ha un **timeout 12s** — se il JSONP resta appeso chiama comunque `cb(false)`, così la catena del polling non muore (prima poteva "congelarsi" su un dato iniziale); su fallimento `pollSeguiLive` ritenta a 7s invece di 20.
 
 ### Secondo device — subentro come segnapunti
 Card calendario di una gara "In corso" non tua → bottone **"Riprendi come segnapunti"** (anche come **"Prendi controllo"** nella banner Segui Live) → `riprendiComeSegnapunti(p)`: `scaricaEventiPartita` → `ricostruisciStatoDaEventi(p, eventi)` rifà `state` dal foglio → `bsp_segnapunti_di = id`, `fermaSeguiLive()`, va su `view-partita`. Vedi limiti in §8.4.

@@ -9,6 +9,8 @@ let statsFmt = "num";   // "num" | "pct"
 let statsPeriodo = "Tot";   // "Tot" | "Q1".."Q4" | "T1" | "T2" | "OT1"...  (solo Tabellino/Tiri)
 let statsEventiRemoti = null;   // { id_partita, eventi, nome } se guardiamo una partita non live
 let seguiLive = null;          // { id, nome, timer } modalità sola-lettura con polling
+let statsTargetId = null;      // id_partita che Stats DEVE mostrare (null = la mia partita live).
+                               // Ogni fetch/render per un id diverso viene ignorato → niente "salti".
 
 /* ==========================================================================
    SEGUI LIVE — un altro device sta segnando: sola lettura, refresh ~20s
@@ -21,6 +23,7 @@ function avviaModalitaSegui(p) {
     : CONFIG.NOME_SQUADRA_MIA + (p.luogo === "Casa" ? " vs " : " @ ") + (p.avversario || "");
   const opp = typeof avversarioBreveAuto === "function" ? avversarioBreveAuto(p.avversario) : "AVV";
   seguiLive = { id: id, nome: nome, timer: null };
+  statsTargetId = id;
   statsEventiRemoti = { id_partita: id, eventi: [], nome: nome, oppLabel: opp };
   statsTab = "tabellino";
   statsPeriodo = "Tot";
@@ -32,6 +35,10 @@ function avviaModalitaSegui(p) {
 function fermaSeguiLive() {
   if (seguiLive && seguiLive.timer) clearTimeout(seguiLive.timer);
   seguiLive = null;
+  // Torna alla "mia" partita per Stats/Adv. I chiamanti che vogliono mostrare
+  // una gara specifica (avviaModalitaSegui / apriStatistichePartita) reimpostano subito dopo.
+  statsTargetId = null;
+  statsEventiRemoti = null;
 }
 
 function pollSeguiLive() {
@@ -134,10 +141,10 @@ function eventiPuliti(eventi) {
 
 /* ---------- Sorgente eventi: live (state) o remota (fetch foglio) ---------- */
 function statsContesto(forzaLive) {
-  // In "Segui live" si resta SEMPRE sulla partita remota seguita, anche se per caso
-  // il suo id coincide con state.id_partita (ri-test con id fissi) → niente salti.
+  // statsTargetId != null → Stats mostra una partita specifica (storica o "Segui live"):
+  // si resta lì anche se il suo id coincide con state.id_partita (ri-test con id fissi).
   const live = forzaLive ||
-    (!seguiLive && (!statsEventiRemoti || String(statsEventiRemoti.id_partita) === String(state.id_partita)));
+    (statsTargetId == null && (!statsEventiRemoti || String(statsEventiRemoti.id_partita) === String(state.id_partita)));
   if (live) {
     return {
       live: true,
@@ -969,9 +976,9 @@ function scaricaEventiPartita(idPartita, cb) {
 
   window[nomeCb] = function (r) {
     if (done) return;
-    // In "Segui live" ignora una risposta che non è della partita seguita
-    // (es. tap sul refresh che userebbe state.id_partita = partita precedente).
-    if (seguiLive && String(seguiLive.id) !== String(idPartita)) { finito(false); return; }
+    // Ignora una risposta che non è della partita che Stats deve mostrare
+    // (es. tap sul refresh mentre guardi una gara storica, o un vecchio poll di Segui live).
+    if (statsTargetId != null && String(statsTargetId) !== String(idPartita)) { finito(false); return; }
     if (r && r.ok && Array.isArray(r.eventi)) {
       const prec = statsEventiRemoti || {};
       const stessa = String(prec.id_partita) === String(idPartita);
@@ -994,7 +1001,9 @@ function scaricaEventiPartita(idPartita, cb) {
 }
 
 function aggiornaStatsDaFoglio() {
-  const id = (seguiLive && seguiLive.id) || state.id_partita;   // in Segui live aggiorna la partita seguita
+  // aggiorna SEMPRE la partita mostrata ora in Stats/Adv, non la mia partita locale
+  const id = statsTargetId != null ? statsTargetId
+    : (statsEventiRemoti && statsEventiRemoti.id_partita) || state.id_partita;
   mostraToast("Aggiorno dal foglio…");
   scaricaEventiPartita(id, ok => {
     if (!ok) { mostraToast("Fetch non riuscito"); return; }

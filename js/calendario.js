@@ -238,13 +238,16 @@ function iniziaPartita(p) {
 
 function apriStatistichePartita(id) {
   id = String(id);
+  if (typeof fermaSeguiLive === "function") fermaSeguiLive();   // esci da eventuali Segui live lasciati aperti
   if (id === String(state.id_partita)) {
     statsEventiRemoti = null;            // partita live in corso/memoria
+    if (typeof statsTargetId !== "undefined") statsTargetId = null;
     navigaA("stats");
     return;
   }
   const p = elencoPartite().find(x => String(x.id_partita) === id);
   const nome = p ? nomePartitaDaCalendario(p) : "Gara " + id;
+  if (typeof statsTargetId !== "undefined") statsTargetId = id;
   statsEventiRemoti = { id_partita: id, eventi: [], nome: nome, oppLabel: p ? avversarioBreveAuto(p.avversario) : "AVV", finita: p && p.stato === "Terminata" };
   if (typeof statsPeriodo !== "undefined") statsPeriodo = "Tot";
   navigaA("stats");
@@ -374,6 +377,7 @@ function riprendiComeSegnapunti(p) {
     "Lo stato viene ricostruito dagli eventi già sul foglio. Eventi non ancora sincronizzati da un altro dispositivo andranno persi.")) return;
 
   mostraToast("Recupero eventi dal foglio…");
+  if (typeof statsTargetId !== "undefined") statsTargetId = String(p.id_partita);   // fa passare la guardia del fetch
   scaricaEventiPartita(String(p.id_partita), ok => {
     const ev = (statsEventiRemoti && Array.isArray(statsEventiRemoti.eventi)) ? statsEventiRemoti.eventi : [];
     if (!ok || !ev.length) { mostraToast("Nessun evento sul foglio: impossibile ricostruire"); return; }
@@ -383,6 +387,7 @@ function riprendiComeSegnapunti(p) {
     localStorage.setItem(STORAGE_KEYS.segnapunti, String(p.id_partita));
     if (typeof fermaSeguiLive === "function") fermaSeguiLive();
     statsEventiRemoti = null;
+    if (typeof statsTargetId !== "undefined") statsTargetId = null;   // ora è la MIA partita live
     impostaStatoPartita(p.id_partita, "In corso");
     renderCalendario();
     navigaA("partita");
@@ -428,6 +433,7 @@ function apriResetDati() {
       codaInvio = [];
       state = statoIniziale();
       statsEventiRemoti = null;
+      if (typeof statsTargetId !== "undefined") statsTargetId = null;
       if (typeof fermaSeguiLive === "function") fermaSeguiLive();
       salvaStato();
       if (typeof aggiornaBadgeOffline === "function") aggiornaBadgeOffline();
@@ -491,6 +497,7 @@ function azzeraGara(p, u) {
         if (typeof aggiornaBadgeOffline === "function") aggiornaBadgeOffline();
       }
       if (statsEventiRemoti && String(statsEventiRemoti.id_partita) === id) statsEventiRemoti = null;
+      if (typeof statsTargetId !== "undefined" && String(statsTargetId) === id) statsTargetId = null;
       if (typeof seguiLive !== "undefined" && seguiLive && String(seguiLive.id) === id
           && typeof fermaSeguiLive === "function") fermaSeguiLive();
 

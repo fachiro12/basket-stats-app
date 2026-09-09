@@ -125,6 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (t.id === "segui-stop") {
       fermaSeguiLive();
       statsEventiRemoti = null;
+      statsTargetId = null;
       navigaA("calendario");
     } else if (t.id === "segui-prendi") {
       if (seguiLive && seguiLive.id && typeof riprendiComeSegnapuntiId === "function")
