@@ -109,3 +109,9 @@ button:disabled { opacity: 0.4; cursor: default; }
   box-shadow: var(--shadow-raised);
 }
 #toast.visibile { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Senza capsula nav in basso (desktop / telefono ruotato) il toast sta più in basso */
+@media (min-width: 900px) and (pointer: fine),
+       (orientation: landscape) and (pointer: coarse) {
+  #toast { bottom: calc(20px + env(safe-area-inset-bottom)); }
+}

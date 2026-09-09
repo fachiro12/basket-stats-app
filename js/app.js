@@ -201,6 +201,18 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("btn-nuova-partita").addEventListener("click", nuovaPartita);
 
+  /* -------- Hint una-tantum: telefono ruotato = niente nav, si ruota per navigare -------- */
+  try {
+    const mqL = window.matchMedia("(orientation: landscape) and (pointer: coarse)");
+    const hintLandscape = () => {
+      if (!mqL.matches || localStorage.getItem("bsp_hint_landscape")) return;
+      if (typeof mostraToast === "function") mostraToast("Ruota in verticale per cambiare schermata");
+      try { localStorage.setItem("bsp_hint_landscape", "1"); } catch (e) {}
+    };
+    mqL.addEventListener ? mqL.addEventListener("change", hintLandscape) : mqL.addListener(hintLandscape);
+    setTimeout(hintLandscape, 1200);
+  } catch (e) {}
+
   /* -------- AVVIO -------- */
   if (typeof inizializzaTema === "function") inizializzaTema();     // tema chiaro/arena + switch
   navigaA("partita");          // vista di default

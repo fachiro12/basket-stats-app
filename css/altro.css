@@ -121,3 +121,8 @@
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Desktop: hub più arioso ---------- */
+@media (min-width: 900px) and (pointer: fine) {
+  .griglia-accesso-rapido { grid-template-columns: repeat(4, 1fr); }
+}

@@ -76,42 +76,70 @@ a,
   box-shadow: var(--shadow-card);
 }
 
-/* ============ TELEFONO RUOTATO: nav → sidebar icone a sinistra ============ */
+/* ====== TELEFONO/TABLET RUOTATO: nessuna nav — si ruota in verticale per navigare ======
+   Le tab interne (Stats/Adv/Analisi) restano: dentro una vista ci si muove comunque. */
 @media (orientation: landscape) and (pointer: coarse) {
+  #app-shell {
+    flex-direction: column;
+    max-width: 100%;
+    box-shadow: none;
+  }
+  .tab-bar { display: none; }
+  .view,
+  #view-partita { padding-bottom: env(safe-area-inset-bottom, 0px); }
+}
+
+/* ============ DESKTOP / LAPTOP (mouse): sidebar sinistra + contenuto centrato ============ */
+@media (min-width: 900px) and (pointer: fine) {
   #app-shell {
     flex-direction: row;
     max-width: 100%;
     box-shadow: none;
   }
+  #view-container { flex: 1; min-width: 0; }
+
   .tab-bar {
     order: -1;
     position: static;
     transform: none;
+    align-self: stretch;
     flex-direction: column;
     justify-content: flex-start;
-    align-self: stretch;
-    width: 56px;
-    min-width: 56px;
-    max-width: 56px;
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
     min-height: 0;
+    padding: 12px 8px;
+    gap: 4px;
     border: 0;
     border-right: 1px solid var(--color-border);
     border-radius: 0;
-    padding: 6px 0;
-    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.06);
-    gap: 2px;
+    box-shadow: none;
+    background: var(--color-surface-raised);
   }
   .tab-btn {
     flex: 0 0 auto;
-    padding: 9px 2px;
-    font-size: 8px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
     border-radius: var(--radius-sm);
   }
-  .tab-btn .icona { font-size: 21px; }
+  .tab-btn .icona { font-size: 20px; }
+  .tab-btn .icona .ico { width: 20px; height: 20px; }
 
-  .view,
-  #view-partita { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .view { padding-bottom: var(--space-5); }
+
+  /* Colonna contenuto centrata — larga per le tabelle, stretta "da lettura" per il resto */
+  #view-stats > *,
+  #view-adv > *,
+  #view-analisi > * { max-width: 1120px; margin-inline: auto; width: 100%; }
+  #view-calendario > * { max-width: 1040px; margin-inline: auto; width: 100%; }
+  #view-squadra > *,
+  #view-partita > * { max-width: 760px; margin-inline: auto; width: 100%; }
 }
 
 .tab-btn {

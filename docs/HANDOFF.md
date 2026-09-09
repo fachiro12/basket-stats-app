@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=40` · SW `bsp-v40` · backend V4.11.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=41` · SW `bsp-v41` · backend V4.11.
 
 ---
 
@@ -75,7 +75,19 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 | `app.js` | `DOMContentLoaded`: registra tutti i listener + avvio (`navigaA`, `renderCalendario`, `scaricaPartite`, `scaricaGiocatori`, `inizializzaPinGate`, `processaCoda`); registra il service worker |
 
 ### CSS (`css/`)
-`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell 430px, nav bottom/sidebar) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`, **Analisi stagione** `#analisi-filtri`/`.an-*`)
+`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell, nav) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`, **Analisi stagione** `#analisi-filtri`/`.an-*`)
+
+### Responsive (v41) — 3 modalità
+
+Lo shell è 430px di default (mobile). Due media query aggiuntive, **discriminate da `pointer`**:
+
+| Contesto | Media query | Layout |
+|---|---|---|
+| Telefono/tablet **verticale** | default | shell 430px, **capsula nav in basso** (`position: fixed`) |
+| Telefono/tablet **orizzontale** | `(orientation: landscape) and (pointer: coarse)` | full-bleed, **nessuna nav** (`.tab-bar { display: none }`) — si ruota in verticale per navigare; toast una-tantum (`bsp_hint_landscape`, `app.js`) |
+| **Desktop/laptop** | `(min-width: 900px) and (pointer: fine)` | shell full-width, **sidebar sinistra 200px** con label (`.tab-bar` restilizzata); contenuto centrato per tipo: Stats/Adv/Analisi ~1120px, Calendario ~1040px, Altro/Partita ~760px (`#view-* > * { max-width; margin-inline: auto }` in `shell.css`) |
+
+Le **tab interne** (`.stats-tabs` ecc.) restano sempre. `.sm-hide` (colonne estese tabelle): nascoste solo su `(orientation: portrait) and (pointer: coarse)` e su desktop stretto `(pointer: fine) and (max-width: 720px)` → sul monitor tutte le colonne sono sempre visibili. Nessun wrapper HTML nuovo, nessun cambio ai render JS.
 
 ### Altro
 `index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `mockup-src.jpg` + i 5 PNG icona · `scripts/bump.mjs` (cache-busting) · `scripts/ritaglia-icona.mjs` (crop mockup → PNG via Chrome headless)

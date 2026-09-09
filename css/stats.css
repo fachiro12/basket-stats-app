@@ -236,8 +236,12 @@ table.st-box tbody tr:nth-child(even) { background: var(--color-surface); }
 table.st-box td.pos { color: var(--color-state-positive); font-weight: 800; }
 table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
 
-/* Verticale: nascondi le colonne estese. Orizzontale: mostrale tutte. */
-@media (orientation: portrait) {
+/* Telefono verticale: nascondi le colonne estese. Orizzontale + desktop: mostrale tutte. */
+@media (orientation: portrait) and (pointer: coarse) {
+  .sm-hide { display: none; }
+}
+/* Finestra desktop stretta: torna a nascondere le colonne estese */
+@media (pointer: fine) and (max-width: 720px) {
   .sm-hide { display: none; }
 }
 
@@ -397,3 +401,17 @@ table.st-box td.neg { color: var(--color-state-negative); font-weight: 800; }
 .an-barl { fill: var(--color-state-negative); }
 table.an-tab th[data-sort] { cursor: pointer; white-space: nowrap; }
 table.an-tab th.an-sorted { background: var(--color-brand-ink); }
+
+/* ---------- Desktop: tabelle e grafici respirano ---------- */
+@media (min-width: 900px) and (pointer: fine) {
+  table.st-box { font-size: 13px; }
+  table.st-box th, table.st-box td { padding: 8px 11px; }
+  table.st-box thead th { font-size: 11px; }
+  .st-scroll { max-height: none; }
+  .st-chart { max-width: 900px; margin-inline: auto; }
+  .st-team { font-size: 13px; }
+  .adv-griglia { grid-template-columns: repeat(4, 1fr); }
+  .pbp-riga { font-size: 13px; grid-template-columns: 92px 1fr auto; }
+  .mq-riga, .mq-teo { font-size: 13px; }
+  .st-hint { font-size: 12px; }
+}
