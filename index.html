@@ -11,17 +11,18 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Basket Stats">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=41">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=41">
-<link rel="apple-touch-icon" href="icon-180.png?v=41">
-<link rel="stylesheet" href="css/tokens.css?v=41">
-<link rel="stylesheet" href="css/base.css?v=41">
-<link rel="stylesheet" href="css/shell.css?v=41">
-<link rel="stylesheet" href="css/partita.css?v=41">
-<link rel="stylesheet" href="css/altro.css?v=41">
-<link rel="stylesheet" href="css/calendario.css?v=41">
-<link rel="stylesheet" href="css/roster.css?v=41">
-<link rel="stylesheet" href="css/stats.css?v=41">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=42">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=42">
+<link rel="apple-touch-icon" href="icon-180.png?v=42">
+<link rel="stylesheet" href="css/tokens.css?v=42">
+<link rel="stylesheet" href="css/base.css?v=42">
+<link rel="stylesheet" href="css/shell.css?v=42">
+<link rel="stylesheet" href="css/partita.css?v=42">
+<link rel="stylesheet" href="css/altro.css?v=42">
+<link rel="stylesheet" href="css/calendario.css?v=42">
+<link rel="stylesheet" href="css/roster.css?v=42">
+<link rel="stylesheet" href="css/stats.css?v=42">
+<link rel="stylesheet" href="css/possessi.css?v=42">
 </head>
 <body>
 
@@ -238,6 +239,33 @@
       <div class="contenuto-pagina" id="analisi-body"></div>
     </div><!-- /view-analisi -->
 
+    <!-- ============ VIEW: DEBRIEF POSSESSI (sperimentale) ============ -->
+    <div class="view" id="view-debrief">
+      <header class="cal-topbar">
+        <button class="cal-tb-btn" id="debrief-indietro" aria-label="Torna ad Altro">
+          <svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg>
+        </button>
+        <span class="st-titolo">Debrief possessi</span>
+      </header>
+      <div id="debrief-selettori">
+        <select id="debrief-gara-sel" aria-label="Gara"></select>
+        <div id="debrief-quarti">
+          <button data-quarto="Q1" class="attivo">Q1</button>
+          <button data-quarto="Q2">Q2</button>
+          <button data-quarto="Q3">Q3</button>
+          <button data-quarto="Q4">Q4</button>
+          <button data-quarto="OT1">OT</button>
+        </div>
+      </div>
+      <div class="stats-tabs" id="debrief-tabs">
+        <button data-dtab="inserisci" class="attivo">Inserisci</button>
+        <button data-dtab="report">Report</button>
+        <button data-dtab="giochi">Giochi</button>
+      </div>
+      <div class="contenuto-pagina" id="debrief-body"></div>
+      <input type="file" accept="image/*" capture="environment" id="debrief-foto-input" class="hidden">
+    </div><!-- /view-debrief -->
+
     <!-- ============ VIEW: ALTRO ============ -->
     <div class="view" id="view-squadra">
       <div class="header-pagina">
@@ -277,6 +305,18 @@
             <span class="col-testo">
               <span class="titolo-altro">Analisi stagione</span>
               <span class="sotto-altro">Riepiloghi e filtri su tutte le gare concluse</span>
+            </span>
+            <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          </div>
+        </div>
+
+        <div class="titolo-sezione-altro">Debrief</div>
+        <div class="lista-altro">
+          <div class="riga-altro" id="apri-debrief">
+            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-target"></use></svg>
+            <span class="col-testo">
+              <span class="titolo-altro">Debrief possessi <span class="beta-badge">beta</span></span>
+              <span class="sotto-altro">Tracker parallelo per il coaching — possesso per possesso, con foto del foglio</span>
             </span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </div>
@@ -579,19 +619,20 @@
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=41"></script>
-<script src="js/tema.js?v=41"></script>
-<script src="js/api.js?v=41"></script>
-<script src="js/timer.js?v=41"></script>
-<script src="js/azioni.js?v=41"></script>
-<script src="js/fallo-subito.js?v=41"></script>
-<script src="js/calendario.js?v=41"></script>
-<script src="js/giocatori.js?v=41"></script>
-<script src="js/stats.js?v=41"></script>
-<script src="js/analisi.js?v=41"></script>
-<script src="js/ui.js?v=41"></script>
-<script src="js/pin.js?v=41"></script>
-<script src="js/app.js?v=41"></script>
+<script src="js/state.js?v=42"></script>
+<script src="js/tema.js?v=42"></script>
+<script src="js/api.js?v=42"></script>
+<script src="js/timer.js?v=42"></script>
+<script src="js/azioni.js?v=42"></script>
+<script src="js/fallo-subito.js?v=42"></script>
+<script src="js/calendario.js?v=42"></script>
+<script src="js/giocatori.js?v=42"></script>
+<script src="js/stats.js?v=42"></script>
+<script src="js/analisi.js?v=42"></script>
+<script src="js/possessi.js?v=42"></script>
+<script src="js/ui.js?v=42"></script>
+<script src="js/pin.js?v=42"></script>
+<script src="js/app.js?v=42"></script>
 
 </body>
 </html>

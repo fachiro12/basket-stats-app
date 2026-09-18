@@ -108,6 +108,56 @@ document.addEventListener("DOMContentLoaded", () => {
     if (fb && typeof impostaFmtAnalisi === "function") impostaFmtAnalisi(fb.dataset.anfmt);
   });
 
+  /* -------- DEBRIEF POSSESSI (sperimentale) -------- */
+  const apriDeb = document.getElementById("apri-debrief");
+  if (apriDeb && typeof apriDebrief === "function") apriDeb.addEventListener("click", apriDebrief);
+  const debIndietro = document.getElementById("debrief-indietro");
+  if (debIndietro) debIndietro.addEventListener("click", () => navigaA("squadra"));
+  const debGaraSel = document.getElementById("debrief-gara-sel");
+  if (debGaraSel && typeof cambiaGaraDebrief === "function")
+    debGaraSel.addEventListener("change", e => cambiaGaraDebrief(e.target.value));
+  const debQuarti = document.getElementById("debrief-quarti");
+  if (debQuarti) debQuarti.addEventListener("click", e => {
+    const b = e.target.closest("button[data-quarto]");
+    if (b && typeof cambiaQuartoDebrief === "function") cambiaQuartoDebrief(b.dataset.quarto);
+  });
+  document.querySelectorAll("#debrief-tabs button").forEach(b =>
+    b.addEventListener("click", () => {
+      possTab = b.dataset.dtab;
+      if (typeof renderDebrief === "function") renderDebrief();
+    }));
+  const debFotoInput = document.getElementById("debrief-foto-input");
+  if (debFotoInput) debFotoInput.addEventListener("change", e => {
+    if (typeof gestisciFotoSelezionata === "function") gestisciFotoSelezionata(e.target.files[0]);
+    e.target.value = "";
+  });
+  const debBody = document.getElementById("debrief-body");
+  if (debBody) debBody.addEventListener("click", e => {
+    const t = e.target;
+    const numBtn = t.closest(".ps-num");
+    if (numBtn) { possRigaTmp.giocatore_num = numBtn.dataset.num; renderDebrief(); return; }
+    const esBtn = t.closest(".ps-esito[data-esito]");
+    if (esBtn) { possRigaTmp.esito = (possRigaTmp.esito === esBtn.dataset.esito ? "" : esBtn.dataset.esito); renderDebrief(); return; }
+    const togAttr = t.closest(".ps-tog[data-attrib]");
+    if (togAttr) { const k = togAttr.dataset.attrib; possRigaTmp[k] = !possRigaTmp[k]; renderDebrief(); return; }
+    const togTiro = t.closest(".ps-tog[data-tiro]");
+    if (togTiro) { const v = togTiro.dataset.tiro; possRigaTmp.tiro = (possRigaTmp.tiro === v ? "" : v); renderDebrief(); return; }
+    const chipG = t.closest(".ps-chip[data-gioco]");
+    if (chipG) { possRigaTmp.gioco = (possRigaTmp.gioco === chipG.dataset.gioco ? "" : chipG.dataset.gioco); renderDebrief(); return; }
+    if (t.closest("#ps-gioco-add") || t.closest("#ps-gioco-add2")) {
+      if (typeof aggiungiCodiceLegenda === "function") aggiungiCodiceLegenda(); return;
+    }
+    if (t.closest("#ps-aggiungi")) { if (typeof aggiungiRigaDebrief === "function") aggiungiRigaDebrief(); return; }
+    if (t.closest("#ps-salva-quarto")) { if (typeof salvaQuartoDebrief === "function") salvaQuartoDebrief(); return; }
+    if (t.closest("#ps-foto-scatta") || t.closest("#ps-foto-cambia")) {
+      const inp = document.getElementById("debrief-foto-input"); if (inp) inp.click(); return;
+    }
+    const delBtn = t.closest(".ps-del[data-i]");
+    if (delBtn) { if (typeof rimuoviRigaDebrief === "function") rimuoviRigaDebrief(+delBtn.dataset.i); return; }
+    const rmLeg = t.closest(".ps-del[data-rm]");
+    if (rmLeg) { if (typeof rimuoviCodiceLegenda === "function") rimuoviCodiceLegenda(rmLeg.dataset.rm); return; }
+  });
+
   /* -------- ROSTER / ANAGRAFICA GIOCATORI -------- */
   document.querySelectorAll('[data-apri="roster"]').forEach(el =>
     el.addEventListener("click", apriRoster));

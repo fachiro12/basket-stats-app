@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=41` · SW `bsp-v41` · backend V4.11.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=42` · SW `bsp-v42` · backend V4.12.
 
 ---
 
@@ -70,12 +70,13 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 | `giocatori.js` | anagrafica giocatori (`bsp_giocatori`, sync JSONP `getGiocatori` + POST `SALVA_GIOCATORE`), CRUD UI (nickname max 6); **flusso pre-partita 2 step** (convocati tap-riga → quintetto base → avvio); **`apriConvocatiLive` / `salvaConvocatiLive` / `haGiocatoEventi`** (modifica convocati in partita) |
 | `stats.js` | motore stat: `statsContesto`, `eventiPuliti` (dedup + drop ANNULLA/valido=FALSE), `calcolaBox`, `stintsDaEventi`, `calcolaAdvanced`; **periodo** (`boxPeriodo`, `periodiDisponibili_`, `punteggioPeriodo_` — Tot/Q1-Q4/1°T/2°T); render Stats (tabellino/andamento/tiri/**PBP**, `descriviEvento`, header compatto `scoreCompatto_`, barra controlli `barraControlliStats_`) e Adv (squadra/giocatori); **Segui Live** (`avviaModalitaSegui`, `pollSeguiLive` ~20s, timeout JSONP anti-freeze); `barraPunteggio`; fetch storico `scaricaEventiPartita` |
 | `analisi.js` | **Analisi stagione** (Altro → sezione dedicata, `#view-analisi`): aggrega le sole gare `stato==="Terminata"` riusando `calcolaBox`/`calcolaAdvanced` in sola lettura. `apriAnalisi`, `caricaEventiStagione` (JSONP `getEventiStagione` + cache `bsp_analisi_eventi`), `garePerAnalisi` (filtri Campionato⁄Amichevoli · Casa⁄Trasferta · Vinte⁄Perse — campionato e amichevoli **mai insieme**), `aggregaStagione`, viste Squadra (record, Four Factors, ratings, grafico margini) e Giocatori (tabella ordinabile, USG%/AST%/TOV%) |
+| `possessi.js` | **Debrief possessi** (Altro → sezione "Debrief", `#view-debrief`, sperimentale/beta) — tracker **parallelo** possesso-per-possesso pensato per il coaching (foglio cartaceo v7 come riferimento a schermo durante l'inserimento), **indipendente** dal live ufficiale: nuovo foglio `Possessi`, non tocca Eventi/Partite/Giocatori né `calcolaBox`/`calcolaAdvanced` (solo lettura). Fase 1 = inserimento guidato, **nessun OCR**: `apriDebrief`, `cambiaGaraDebrief`/`cambiaQuartoDebrief`, `gestisciFotoSelezionata` (compressione via `<canvas>`, max 1400px, jpeg 0.72), `caricaFotoPossessi`/`salvaPossessiQuarto`/`caricaPossessi` (POST/JSONP verso `CARICA_FOTO_POSSESSI`/`SALVA_POSSESSI_QUARTO`/`getPossessi`), `aggiungiRigaDebrief`/`salvaQuartoDebrief`, `reportPossessi` (PPP/eFG%/split area-zona-ritmo-gioco, TL pesati 0,44 come in `calcolaAdvanced`), legenda giochi editabile in `localStorage: bsp_possessi_legenda`. Fase 2 (crocette via canvas) e Fase 3 (OCR Drive) non ancora costruite. |
 | `ui.js` | `renderPartita` (HUD, roster, selezione), `mostraToast`, `aggiornaBadgeOffline`, modale CAMBI (`apriCambi`/`confermaCambi` + select tempo con vincolo), `apriRecap`, `navigaA` (router viste + hook render) |
 | `pin.js` | login gate (`inizializzaPinGate`, `tentaLogin`, fallback offline, `logout`, `aggiornaProfiloAttivo`) |
 | `app.js` | `DOMContentLoaded`: registra tutti i listener + avvio (`navigaA`, `renderCalendario`, `scaricaPartite`, `scaricaGiocatori`, `inizializzaPinGate`, `processaCoda`); registra il service worker |
 
 ### CSS (`css/`)
-`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell, nav) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`, **Analisi stagione** `#analisi-filtri`/`.an-*`)
+`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell, nav) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`, **Analisi stagione** `#analisi-filtri`/`.an-*`) · `possessi.css` (**Debrief possessi** — selettori gara/quarto, griglie tap giocatore/esito/gioco, foto di riferimento; riusa `.adv-card`/`.st-box`/`.btn-conferma` esistenti)
 
 ### Responsive (v41) — 3 modalità
 
@@ -100,6 +101,7 @@ Le **tab interne** (`.stats-tabs` ecc.) restano sempre. `.sm-hide` (colonne este
 - **`view-stats`** — topbar + tab `Tabellino` / `Andamento` / `Tiri` / `PBP` + **barra controlli** (`#stats-controlli`, fissa) con **selettore periodo** `Tot`(default)·`Q1`–`Q4`·`1°T`·`2°T`(+`OT` se presenti) e toggle `Numeri`/`%`. Il periodo vale solo su **Tabellino** e **Tiri** (Andamento = tutta la gara, PBP = cronologico); si azzera a `Tot` a ogni apertura di una gara. **Colonna compatta (v37):** topbar + punteggio fusi (`.sh-*`, gradiente navy via `:has`); totali squadra = prime 2 righe della tabella (`tr.st-tot`); solo `#stats-body` scrolla. **Spettatore** (`seguiLive`): topbar = nome partita e nel corpo la `barraPunteggio` piena + `bannerSegui()`. Minuti/± per periodo: dagli stint dell'intera gara filtrati per `quarto` (`boxPeriodo`).
 - **`view-adv`** — topbar + tab `Squadra` / `Giocatori`; barra punteggio; card metriche + migliori quintetti + stint (tutti ricostruiti da `stintsDaEventi()`).
 - **`view-analisi`** — Analisi stagione (da Altro → sezione "Analisi"): back + tab `Squadra`/`Giocatori` + barra filtri chip. Aggrega le sole gare `Terminata`; campionato e amichevoli separati. Fetch `getEventiStagione` in cache `bsp_analisi_eventi` (immutabile), pulsante Aggiorna.
+- **`view-debrief`** — **Debrief possessi** (da Altro → sezione "Debrief", sperimentale/beta): back + selettore gara + quarti `Q1`–`Q4`/`OT` + tab `Inserisci`/`Report`/`Giochi`. "Inserisci": foto di riferimento (allegata via `<input type="file" capture="environment">`, compressa via canvas prima dell'upload) + tap giocatore → tap esito (`2✓/2✗/3✓/3✗/TL✓/TL✗/PERSA`) → crocette Area/2ª opp./vs zona + Forzato/Ritmo → codice gioco (chip da legenda locale, estendibile) → riga aggiunta alla lista del quarto → "Salva quarto" (sostituisce tutte le righe di quel `id_partita`+quarto sul foglio `Possessi`). "Report": PPP/eFG%/split calcolati **sui soli dati di questa vista** (indipendenti dal live ufficiale). "Giochi": legenda codici, editabile. Nessun OCR in Fase 1: la foto è solo riferimento a schermo.
 - **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, **Analisi** (Analisi stagione), Roster (anagrafica), **Aspetto** (switch Arena), Configurazione, **Manutenzione**: `#btn-aggiorna-app` (svuota tutte le `caches` + unregister del SW + reload — contro la cache PWA stantìa su mobile, per tutti); poi solo Admin (password + "SVUOTA"): `apriAzzeraGara` → `SVUOTA_EVENTI_GARA`; `apriResetDati` → `SVUOTA_EVENTI`. La riga "Profilo attivo" mostra `#app-versione` = `app vN` dai `?v=` degli asset caricati, + `cache vM ⚠` se il SW è su una versione diversa (diagnostica).
 - **`view-calendario`** — topbar (hamburger placeholder / select stagione / +) + lista 26 gare con stato e bottone contestuale.
 
@@ -149,6 +151,7 @@ fallo_speciale, esito_tl ("SI,NO"), valido (true/false), id_evento_target
 - **Partite** — `id_partita, data_ora, avversario, luogo, tipo, stagione, categoria, stato, note`
 - **Giocatori** — `id_giocatore, nome, cognome, ruolo, numero_maglia, team, nickname`
 - **Utenti** — `id_utente, username, ruolo, password_hash, attivo, salt` (admin di default `admin`/`1234`; `password_hash = SHA256(salt|password)`)
+- **Possessi** (V4.12, Debrief possessi) — `COLONNE_POSSESSI` (sopra, §9); una riga = un possesso o un singolo tiro libero; `salvaPossessiQuarto_` sostituisce sempre tutte le righe di `(id_partita, quarto)`, stesso stile idempotente di `svuotaEventiGara_`
 
 ---
 
@@ -258,7 +261,7 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 
 ---
 
-## 9. Backend — codice completo attuale (V4.11)
+## 9. Backend — codice completo attuale (V4.12)
 
 > Da incollare nell'editor Apps Script. Poi lanciare `setupSheet()` una volta (aggiunge la colonna `salt` a `Utenti` e ricalcola l'hash dell'admin se il foglio è nuovo) e **ripubblicare il deployment**. `setupSheet()` è idempotente.
 > Deploy Web App: eseguito come "me", accesso "chiunque".
@@ -274,14 +277,16 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 
 ```javascript
 /**
- * BASKET STATS PRO — Backend Google Apps Script (V4.11)
- * Eventi · Partite · Giocatori · Utenti — cloud-sync, JSONP, multiutente,
- * token scrittura (V4.7) + password con salt e login via POST (V4.8) + SVUOTA_EVENTI (V4.9) + SVUOTA_EVENTI_GARA (V4.10) + getEventiStagione (V4.11)
+ * BASKET STATS PRO — Backend Google Apps Script (V4.12)
+ * Eventi · Partite · Giocatori · Utenti · Possessi — cloud-sync, JSONP, multiutente,
+ * token scrittura (V4.7) + password con salt e login via POST (V4.8) + SVUOTA_EVENTI (V4.9)
+ * + SVUOTA_EVENTI_GARA (V4.10) + getEventiStagione (V4.11) + Debrief possessi (V4.12)
  */
 const SHEET_EVENTI = "Eventi";
 const SHEET_PARTITE = "Partite";
 const SHEET_GIOCATORI = "Giocatori";
 const SHEET_UTENTI = "Utenti";
+const SHEET_POSSESSI = "Possessi";
 
 const COLONNE_EVENTI = [
   "id_partita","id_evento","timestamp","quarto","tempo_partita",
@@ -292,6 +297,13 @@ const COLONNE_EVENTI = [
 const COLONNE_PARTITE = ["id_partita","data_ora","avversario","luogo","tipo","stagione","categoria","stato","note"];
 const COLONNE_GIOCATORI = ["id_giocatore","nome","cognome","ruolo","numero_maglia","team","nickname"];
 const COLONNE_UTENTI = ["id_utente","username","ruolo","password_hash","attivo","salt"];
+/* Debrief possessi (V4.12) — tracker parallelo per il coaching, sperimentale.
+   Non tocca Eventi/Partite/Giocatori. Una riga = un possesso (o un singolo tiro
+   libero — vedi js/possessi.js). esito ∈ 2v,2x,3v,3x,tlv,tlx,pp. */
+const COLONNE_POSSESSI = [
+  "id_partita","id_possesso","quarto","riga_n","gioco","giocatore_num","esito",
+  "area","opp2","zona","tiro_qualita","stato_riga","fonte","timestamp","foto_url"
+];
 
 function getWriteToken_() {
   return PropertiesService.getScriptProperties().getProperty("WRITE_TOKEN") || "";
@@ -341,6 +353,7 @@ function setupSheet() {
   inizializzaFoglio_(ss, SHEET_GIOCATORI, COLONNE_GIOCATORI);
   const u = inizializzaFoglio_(ss, SHEET_UTENTI, COLONNE_UTENTI);
   assicuraColonna_(u, "salt");                 // migrazione V4.8 su Utenti già popolato
+  inizializzaFoglio_(ss, SHEET_POSSESSI, COLONNE_POSSESSI);   // V4.12
   if (u.getLastRow() <= 1) {
     const s = nuovoSalt_();
     u.appendRow(["usr_admin","admin","Admin",hashPassword_(s,"1234"),"SI",s]);
@@ -372,6 +385,8 @@ function doPost(e) {
     if (data.azione === "SALVA_GIOCATORE")        return salvaGiocatore_(data);
     if (data.azione === "SVUOTA_EVENTI")          return svuotaEventi_(data);
     if (data.azione === "SVUOTA_EVENTI_GARA")     return svuotaEventiGara_(data);
+    if (data.azione === "SALVA_POSSESSI_QUARTO")  return salvaPossessiQuarto_(data);
+    if (data.azione === "CARICA_FOTO_POSSESSI")   return caricaFotoPossessi_(data);
     if (data.tipo_evento === "ANNULLA")           return handleAnnulla_(data);
     appendEvento_(data, true);
     return jsonResponse_({ ok: true, azione: "evento_salvato" });
@@ -396,10 +411,16 @@ function doGet(e) {
     const ev = leggiFoglio_(ss, SHEET_EVENTI, false).filter(x => finite[String(x.id_partita)]);
     return rispostaDati_(params, "eventi", ev);
   }
+  if (params.action === "getPossessi") {   // V4.12: Debrief possessi, filtrati per gara
+    const idp = String(params.id_partita || "");
+    let ps = leggiFoglio_(ss, SHEET_POSSESSI, false);
+    if (idp) ps = ps.filter(x => String(x.id_partita) === idp);
+    return rispostaDati_(params, "possessi", ps);
+  }
   if (params.action === "verificaLogin") {   // compat: vecchi client via JSONP GET
     return rispostaJsonp_(params, verificaLogin_(params.username, params.password));
   }
-  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.11", stato: "attivo" });
+  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.12", stato: "attivo" });
 }
 
 function leggiFoglio_(ss, nome, formatDate) {
@@ -497,6 +518,50 @@ function svuotaEventiGara_(data) {
   }
   return jsonResponse_({ ok: true, azione: "gara_svuotata", rimossi: rimossi });
 }
+
+/* ==========================================================================
+   Debrief possessi (V4.12) — tracker parallelo, sperimentale. Non tocca
+   Eventi/Partite/Giocatori. "Salva quarto" sostituisce SEMPRE tutte le righe
+   di quel (id_partita, quarto) con quelle inviate — idempotente, stesso stile
+   di svuotaEventiGara_: riscrive il foglio invece di cercare riga per riga.
+   ========================================================================== */
+function salvaPossessiQuarto_(data) {
+  const idp = String(data.id_partita || ""), quarto = String(data.quarto || "");
+  if (!idp || !quarto) return jsonResponse_({ ok: false, error: "id_partita/quarto mancante" });
+  const righe = Array.isArray(data.righe) ? data.righe : [];
+  const sheet = inizializzaFoglio_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_POSSESSI, COLONNE_POSSESSI);
+  const v = sheet.getLastRow() > 1 ? sheet.getDataRange().getValues() : [COLONNE_POSSESSI];
+  const idI = COLONNE_POSSESSI.indexOf("id_partita"), qI = COLONNE_POSSESSI.indexOf("quarto");
+  const resto = v.slice(1).filter(row => !(String(row[idI]) === idp && String(row[qI]) === quarto));
+  const nuove = righe.map(r => COLONNE_POSSESSI.map(c => {
+    if (c === "id_partita") return idp;
+    if (c === "quarto") return quarto;
+    const val = r[c];
+    return (val !== undefined && val !== null) ? val : "";
+  }));
+  const tutte = resto.concat(nuove);
+  if (sheet.getLastRow() > 1) sheet.getRange(2, 1, sheet.getLastRow() - 1, COLONNE_POSSESSI.length).clearContent();
+  if (tutte.length) sheet.getRange(2, 1, tutte.length, COLONNE_POSSESSI.length).setValues(tutte);
+  return jsonResponse_({ ok: true, azione: "possessi_salvati", righe: nuove.length });
+}
+
+/* Salva la foto del foglio su Drive (cartella dedicata, creata se manca).
+   data.foto_base64 = "data:image/jpeg;base64,...." dal client (già ridimensionata/compressa). */
+function caricaFotoPossessi_(data) {
+  const b64 = String(data.foto_base64 || "");
+  const m = b64.match(/^data:(image\/\w+);base64,(.+)$/);
+  if (!m) return jsonResponse_({ ok: false, error: "immagine mancante" });
+  const bytes = Utilities.base64Decode(m[2]);
+  const blob = Utilities.newBlob(bytes, m[1], "possesso.jpg");
+  const NOME_CARTELLA = "Basket Stats Pro — Foto possessi";
+  const it = DriveApp.getFoldersByName(NOME_CARTELLA);
+  const cartella = it.hasNext() ? it.next() : DriveApp.createFolder(NOME_CARTELLA);
+  const nome = "gara" + String(data.id_partita || "?") + "_" + String(data.quarto || "?") + "_" + Date.now() + ".jpg";
+  const file = cartella.createFile(blob).setName(nome);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return jsonResponse_({ ok: true, azione: "foto_caricata", url: file.getUrl() });
+}
+
 function salvaPartita_(data) {
   const sheet = inizializzaFoglio_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_PARTITE, COLONNE_PARTITE);
   const v = sheet.getDataRange().getValues(), idI = COLONNE_PARTITE.indexOf("id_partita");
