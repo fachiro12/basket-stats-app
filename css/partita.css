@@ -195,6 +195,9 @@ main.corpo-partita {
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
+/* Elenco giocatori "chi?" (rimbalzo/fallo): una colonna, stesso ordine
+   verticale del roster nel pannello sinistro invece della griglia 2x. */
+.ao-griglia.ao-griglia-v { grid-template-columns: 1fr; }
 .ao-btn {
   min-height: 46px;
   border-radius: var(--radius-sm);

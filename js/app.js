@@ -152,6 +152,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (t.closest("#ps-foto-scatta") || t.closest("#ps-foto-cambia")) {
       const inp = document.getElementById("debrief-foto-input"); if (inp) inp.click(); return;
     }
+    if (t.closest("#ps-leggi-foglio")) { if (typeof leggiFoglioPossessi === "function") leggiFoglioPossessi(); return; }
+    const editBtn = t.closest(".ps-riga-testo[data-edit]");
+    if (editBtn) { if (typeof modificaRigaDebrief === "function") modificaRigaDebrief(+editBtn.dataset.edit); return; }
     const delBtn = t.closest(".ps-del[data-i]");
     if (delBtn) { if (typeof rimuoviRigaDebrief === "function") rimuoviRigaDebrief(+delBtn.dataset.i); return; }
     const rmLeg = t.closest(".ps-del[data-rm]");

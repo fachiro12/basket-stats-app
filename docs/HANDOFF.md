@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=42` · SW `bsp-v42` · backend V4.12.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=44` · SW `bsp-v44` · backend V4.12.
 
 ---
 
@@ -70,7 +70,7 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 | `giocatori.js` | anagrafica giocatori (`bsp_giocatori`, sync JSONP `getGiocatori` + POST `SALVA_GIOCATORE`), CRUD UI (nickname max 6); **flusso pre-partita 2 step** (convocati tap-riga → quintetto base → avvio); **`apriConvocatiLive` / `salvaConvocatiLive` / `haGiocatoEventi`** (modifica convocati in partita) |
 | `stats.js` | motore stat: `statsContesto`, `eventiPuliti` (dedup + drop ANNULLA/valido=FALSE), `calcolaBox`, `stintsDaEventi`, `calcolaAdvanced`; **periodo** (`boxPeriodo`, `periodiDisponibili_`, `punteggioPeriodo_` — Tot/Q1-Q4/1°T/2°T); render Stats (tabellino/andamento/tiri/**PBP**, `descriviEvento`, header compatto `scoreCompatto_`, barra controlli `barraControlliStats_`) e Adv (squadra/giocatori); **Segui Live** (`avviaModalitaSegui`, `pollSeguiLive` ~20s, timeout JSONP anti-freeze); `barraPunteggio`; fetch storico `scaricaEventiPartita` |
 | `analisi.js` | **Analisi stagione** (Altro → sezione dedicata, `#view-analisi`): aggrega le sole gare `stato==="Terminata"` riusando `calcolaBox`/`calcolaAdvanced` in sola lettura. `apriAnalisi`, `caricaEventiStagione` (JSONP `getEventiStagione` + cache `bsp_analisi_eventi`), `garePerAnalisi` (filtri Campionato⁄Amichevoli · Casa⁄Trasferta · Vinte⁄Perse — campionato e amichevoli **mai insieme**), `aggregaStagione`, viste Squadra (record, Four Factors, ratings, grafico margini) e Giocatori (tabella ordinabile, USG%/AST%/TOV%) |
-| `possessi.js` | **Debrief possessi** (Altro → sezione "Debrief", `#view-debrief`, sperimentale/beta) — tracker **parallelo** possesso-per-possesso pensato per il coaching (foglio cartaceo v7 come riferimento a schermo durante l'inserimento), **indipendente** dal live ufficiale: nuovo foglio `Possessi`, non tocca Eventi/Partite/Giocatori né `calcolaBox`/`calcolaAdvanced` (solo lettura). Fase 1 = inserimento guidato, **nessun OCR**: `apriDebrief`, `cambiaGaraDebrief`/`cambiaQuartoDebrief`, `gestisciFotoSelezionata` (compressione via `<canvas>`, max 1400px, jpeg 0.72), `caricaFotoPossessi`/`salvaPossessiQuarto`/`caricaPossessi` (POST/JSONP verso `CARICA_FOTO_POSSESSI`/`SALVA_POSSESSI_QUARTO`/`getPossessi`), `aggiungiRigaDebrief`/`salvaQuartoDebrief`, `reportPossessi` (PPP/eFG%/split area-zona-ritmo-gioco, TL pesati 0,44 come in `calcolaAdvanced`), legenda giochi editabile in `localStorage: bsp_possessi_legenda`. Fase 2 (crocette via canvas) e Fase 3 (OCR Drive) non ancora costruite. |
+| `possessi.js` | **Debrief possessi** (Altro → sezione "Debrief", `#view-debrief`, sperimentale/beta) — tracker **parallelo** possesso-per-possesso pensato per il coaching (foglio cartaceo v7), **indipendente** dal live ufficiale: nuovo foglio `Possessi`, non tocca Eventi/Partite/Giocatori né `calcolaBox`/`calcolaAdvanced` (solo lettura). Fase 1 = inserimento guidato: `apriDebrief`, `cambiaGaraDebrief`/`cambiaQuartoDebrief`, `gestisciFotoSelezionata` (compressione via `<canvas>`, max 1400px, jpeg 0.72), `caricaFotoPossessi`/`salvaPossessiQuarto`/`caricaPossessi` (POST/JSONP verso `CARICA_FOTO_POSSESSI`/`SALVA_POSSESSI_QUARTO`/`getPossessi`), `aggiungiRigaDebrief`/`modificaRigaDebrief`/`salvaQuartoDebrief`, `reportPossessi` (PPP/eFG%/split area-zona-ritmo-gioco, TL pesati 0,44 come in `calcolaAdvanced`), legenda giochi editabile in `localStorage: bsp_possessi_legenda`. **Fase 3 (V4.13, sperimentale)**: `leggiFoglioPossessi` — POST `LEGGI_FOGLIO_POSSESSI`, prova a pre-compilare le righe leggendo la foto via OCR Drive lato backend (righe proposte marcate `fonte:"ocr"`, sempre da confermare/correggere prima di salvare); se la tabella non viene riconosciuta, fallback a testo grezzo mostrato come riferimento. Fase 2 (crocette via canvas) non ancora costruita. |
 | `ui.js` | `renderPartita` (HUD, roster, selezione), `mostraToast`, `aggiornaBadgeOffline`, modale CAMBI (`apriCambi`/`confermaCambi` + select tempo con vincolo), `apriRecap`, `navigaA` (router viste + hook render) |
 | `pin.js` | login gate (`inizializzaPinGate`, `tentaLogin`, fallback offline, `logout`, `aggiornaProfiloAttivo`) |
 | `app.js` | `DOMContentLoaded`: registra tutti i listener + avvio (`navigaA`, `renderCalendario`, `scaricaPartite`, `scaricaGiocatori`, `inizializzaPinGate`, `processaCoda`); registra il service worker |
@@ -261,7 +261,7 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 
 ---
 
-## 9. Backend — codice completo attuale (V4.12)
+## 9. Backend — codice completo attuale (V4.13)
 
 > Da incollare nell'editor Apps Script. Poi lanciare `setupSheet()` una volta (aggiunge la colonna `salt` a `Utenti` e ricalcola l'hash dell'admin se il foglio è nuovo) e **ripubblicare il deployment**. `setupSheet()` è idempotente.
 > Deploy Web App: eseguito come "me", accesso "chiunque".
@@ -274,13 +274,16 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 > Il token viene restituito da `verificaLogin` e salvato in `bsp_current_user.token` sul client.
 > **Dopo aver impostato la proprietà: tutti gli utenti devono fare logout e login una volta** per ricevere il token.
 > Nota: il token non è un segreto forte (transita nella risposta JSONP del login ed è in localStorage). Serve a bloccare le scritture anonime verso l'URL `/exec` e a poter ruotare la chiave se abusata. La difesa vera resterebbe una auth server-side firmata.
+>
+> **Lettura automatica foglio possessi (V4.13):** usa l'OCR di Google Drive, che richiede il servizio avanzato **Drive API** abilitato nel progetto — Apps Script → editor → **Servizi** (icona ➕ nel pannello sinistro) → cerca "Drive API" → **Aggiungi**. Una tantum, come il `WRITE_TOKEN`. Senza questo passaggio l'azione `LEGGI_FOGLIO_POSSESSI` carica comunque la foto ma risponde `tabella_rilevata:false` invece di leggerla davvero (fallisce in modo silenzioso e innocuo, non blocca nulla).
 
 ```javascript
 /**
- * BASKET STATS PRO — Backend Google Apps Script (V4.12)
+ * BASKET STATS PRO — Backend Google Apps Script (V4.13)
  * Eventi · Partite · Giocatori · Utenti · Possessi — cloud-sync, JSONP, multiutente,
  * token scrittura (V4.7) + password con salt e login via POST (V4.8) + SVUOTA_EVENTI (V4.9)
  * + SVUOTA_EVENTI_GARA (V4.10) + getEventiStagione (V4.11) + Debrief possessi (V4.12)
+ * + lettura automatica foglio possessi via OCR Drive (V4.13)
  */
 const SHEET_EVENTI = "Eventi";
 const SHEET_PARTITE = "Partite";
@@ -387,6 +390,7 @@ function doPost(e) {
     if (data.azione === "SVUOTA_EVENTI_GARA")     return svuotaEventiGara_(data);
     if (data.azione === "SALVA_POSSESSI_QUARTO")  return salvaPossessiQuarto_(data);
     if (data.azione === "CARICA_FOTO_POSSESSI")   return caricaFotoPossessi_(data);
+    if (data.azione === "LEGGI_FOGLIO_POSSESSI")  return leggiFoglioPossessi_(data);
     if (data.tipo_evento === "ANNULLA")           return handleAnnulla_(data);
     appendEvento_(data, true);
     return jsonResponse_({ ok: true, azione: "evento_salvato" });
@@ -420,7 +424,7 @@ function doGet(e) {
   if (params.action === "verificaLogin") {   // compat: vecchi client via JSONP GET
     return rispostaJsonp_(params, verificaLogin_(params.username, params.password));
   }
-  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.12", stato: "attivo" });
+  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.13", stato: "attivo" });
 }
 
 function leggiFoglio_(ss, nome, formatDate) {
@@ -546,20 +550,94 @@ function salvaPossessiQuarto_(data) {
 }
 
 /* Salva la foto del foglio su Drive (cartella dedicata, creata se manca).
-   data.foto_base64 = "data:image/jpeg;base64,...." dal client (già ridimensionata/compressa). */
-function caricaFotoPossessi_(data) {
-  const b64 = String(data.foto_base64 || "");
-  const m = b64.match(/^data:(image\/\w+);base64,(.+)$/);
-  if (!m) return jsonResponse_({ ok: false, error: "immagine mancante" });
+   base64 = "data:image/jpeg;base64,...." dal client (già ridimensionata/compressa).
+   Condivisa da caricaFotoPossessi_ e leggiFoglioPossessi_ (V4.13) — un solo posto
+   che tocca DriveApp per l'upload della foto. */
+function salvaFotoDrivePossessi_(base64, idPartita, quarto) {
+  const m = String(base64 || "").match(/^data:(image\/\w+);base64,(.+)$/);
+  if (!m) return null;
   const bytes = Utilities.base64Decode(m[2]);
   const blob = Utilities.newBlob(bytes, m[1], "possesso.jpg");
   const NOME_CARTELLA = "Basket Stats Pro — Foto possessi";
   const it = DriveApp.getFoldersByName(NOME_CARTELLA);
   const cartella = it.hasNext() ? it.next() : DriveApp.createFolder(NOME_CARTELLA);
-  const nome = "gara" + String(data.id_partita || "?") + "_" + String(data.quarto || "?") + "_" + Date.now() + ".jpg";
+  const nome = "gara" + String(idPartita || "?") + "_" + String(quarto || "?") + "_" + Date.now() + ".jpg";
   const file = cartella.createFile(blob).setName(nome);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  return jsonResponse_({ ok: true, azione: "foto_caricata", url: file.getUrl() });
+  return { url: file.getUrl(), fileId: file.getId(), blob: blob };
+}
+
+function caricaFotoPossessi_(data) {
+  const salvata = salvaFotoDrivePossessi_(data.foto_base64, data.id_partita, data.quarto);
+  if (!salvata) return jsonResponse_({ ok: false, error: "immagine mancante" });
+  return jsonResponse_({ ok: true, azione: "foto_caricata", url: salvata.url });
+}
+
+/* Lettura automatica del foglio possessi (V4.13, sperimentale) — carica la foto
+   (come sopra) POI prova a leggerla con l'OCR di Google Drive (richiede il servizio
+   avanzato "Drive API" abilitato, vedi nota nel §9). Layout fisso del foglio v7,
+   13 colonne: N° | GIOCO | 2v 2x 3v 3x TLv TLx PERSA | AREA 2aOPP ZONA | TIRO F/R —
+   le 7 colonne esito sono nello stesso ordine di ESITI_POSSESSO in js/possessi.js.
+   Tutto in try/catch: un OCR fallito/non abilitato non deve mai bloccare l'upload
+   della foto, degrada solo a tabella_rilevata:false. Nessuna riga viene mai salvata
+   da qui — sono solo suggerimenti che il client mostra da confermare/correggere. */
+function leggiFoglioPossessi_(data) {
+  const salvata = salvaFotoDrivePossessi_(data.foto_base64, data.id_partita, data.quarto);
+  if (!salvata) return jsonResponse_({ ok: false, error: "immagine mancante" });
+
+  const risposta = { ok: true, azione: "foglio_letto", url: salvata.url, tabella_rilevata: false, righe_suggerite: [], testo_grezzo: "" };
+  let ocrFileId = null;
+  try {
+    const ocrFile = Drive.Files.insert(
+      { title: "OCR possessi tmp " + Date.now(), mimeType: "application/vnd.google-apps.document" },
+      salvata.blob, { ocr: true, ocrLanguage: "it" }
+    );
+    ocrFileId = ocrFile.id;
+    const body = DocumentApp.openById(ocrFileId).getBody();
+
+    const ESITI_ORDINE = ["2v", "2x", "3v", "3x", "tlv", "tlx", "pp"];
+    let tabella = null, righeMax = 0;
+    for (let i = 0; i < body.getNumChildren(); i++) {
+      const el = body.getChild(i);
+      if (el.getType() === DocumentApp.ElementType.TABLE) {
+        const t = el.asTable();
+        if (t.getNumRows() > righeMax) { tabella = t; righeMax = t.getNumRows(); }
+      }
+    }
+    if (tabella) {
+      const suggerite = [];
+      for (let r = 0; r < tabella.getNumRows(); r++) {
+        const row = tabella.getRow(r);
+        if (row.getNumCells() < 13) continue;   // riga non conforme al template, la saltiamo
+        const cella = c => row.getCell(c).getText().trim();
+        let esito = "", numero = "";
+        for (let c = 0; c < 7; c++) {
+          const txt = cella(2 + c).replace(/\D/g, "");
+          if (txt) { esito = ESITI_ORDINE[c]; numero = txt; break; }
+        }
+        if (!esito) continue;   // riga vuota (es. header o riga non compilata)
+        const tiro = cella(12).toUpperCase();
+        suggerite.push({
+          gioco: cella(1).toUpperCase(),
+          giocatore_num: numero,
+          esito: esito,
+          area: !!cella(9),
+          opp2: !!cella(10),
+          zona: !!cella(11),
+          tiro: (tiro === "F" || tiro === "R") ? tiro : "",
+          fonte: "ocr"
+        });
+      }
+      risposta.tabella_rilevata = suggerite.length > 0;
+      risposta.righe_suggerite = suggerite;
+    }
+    if (!risposta.tabella_rilevata) risposta.testo_grezzo = body.getText();
+  } catch (err) {
+    risposta.errore_ocr = String(err);
+  } finally {
+    if (ocrFileId) try { DriveApp.getFileById(ocrFileId).setTrashed(true); } catch (e2) {}
+  }
+  return jsonResponse_(risposta);
 }
 
 function salvaPartita_(data) {

@@ -34,7 +34,7 @@ function chiediGiocatoreCheHaFattoFallo() {
     chiudiActionOverlay();
     apriTlAvversari(n);   // 0 / 1 / 2 / 3 TL agli avversari
   }));
-  mostraActionOverlay("Chi dei nostri ha fatto il fallo?", btns, 0);
+  mostraActionOverlay("Chi dei nostri ha fatto il fallo?", btns, 0, true);
 }
 
 function faseEsitoTecnicoNostro() {
@@ -68,7 +68,7 @@ function chiediGiocatoreMiaFallo() {
     renderPartita();
     avviaFalloSubito(n);
   }));
-  mostraActionOverlay("Chi ha subito il fallo?", bottoni, 0);
+  mostraActionOverlay("Chi ha subito il fallo?", bottoni, 0, true);
 }
 
 /* ==========================================================================
@@ -89,12 +89,12 @@ function faseGiocatoreFalloSenzaTl() {
     registraFalloSubitoSenzaTl(n);
     chiudiActionOverlay();
   }));
-  mostraActionOverlay("Chi ha subito il fallo?", btns, 0);
+  mostraActionOverlay("Chi ha subito il fallo?", btns, 0, true);
 }
 
 function faseTiratoreTecnico(tipoSpeciale) {
   const btns = state.roster.map(n => aoBottone(etichettaNum(n), () => faseEsitoTecnico(n, tipoSpeciale)));
-  mostraActionOverlay("Chi tira il TL tecnico?", btns, 0);
+  mostraActionOverlay("Chi tira il TL tecnico?", btns, 0, true);
 }
 function faseEsitoTecnico(num, tipoSpeciale) {
   mostraActionOverlay("TL tecnico " + etichettaNum(num) + " — realizzato?", [
@@ -105,7 +105,7 @@ function faseEsitoTecnico(num, tipoSpeciale) {
 
 function faseDoppioGiocatore() {
   const btns = state.roster.map(n => aoBottone(etichettaNum(n), () => faseSottotipoDoppio(n)));
-  mostraActionOverlay("Nostro giocatore sanzionato?", btns, 0);
+  mostraActionOverlay("Nostro giocatore sanzionato?", btns, 0, true);
 }
 function faseSottotipoDoppio(num) {
   mostraActionOverlay("Si compensano · 0 TL · 0 punti", [

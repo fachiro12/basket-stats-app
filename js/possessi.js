@@ -2,11 +2,13 @@
    possessi.js — Debrief possessi (Altro, sperimentale)
    Tracker PARALLELO al live ufficiale, possesso-per-possesso, pensato per il
    coaching (paint touch, qualità tiro, gioco chiamato, vs zona). Foglio
-   cartaceo di riferimento a schermo durante l'inserimento — Fase 1: nessun
-   OCR, l'utente conferma ogni riga. Dato indipendente: nuovo foglio
-   "Possessi" sul backend, NON tocca Eventi/Partite/Giocatori né le funzioni
-   del motore stat esistente (calcolaBox/calcolaAdvanced) — solo lettura di
-   dati propri.
+   cartaceo di riferimento a schermo durante l'inserimento. Fase 3 (V4.13):
+   "Leggi foglio" prova a pre-compilare le righe via OCR lato backend — sono
+   sempre proposte (fonte:"ocr") da confermare/correggere, mai salvate alla
+   cieca; se l'OCR non riconosce la tabella, fallback a testo grezzo. Dato
+   indipendente: nuovo foglio "Possessi" sul backend, NON tocca
+   Eventi/Partite/Giocatori né le funzioni del motore stat esistente
+   (calcolaBox/calcolaAdvanced) — solo lettura di dati propri.
    ========================================================================== */
 
 const KEY_POSS_LEGENDA = "bsp_possessi_legenda";
@@ -35,6 +37,9 @@ let possRighe = [];            // righe salvate sul foglio, per la gara selezion
 let possRigheQuarto = [];      // copia di lavoro del quarto corrente (salvate + aggiunte in sessione)
 let possCaricamento = false;
 let possFotoQuarto = {};       // { "Q1": dataURL locale non ancora caricata, ... }
+let possFotoUrlOcr = {};       // { "Q1": url già caricata su Drive via "Leggi foglio", per non ricaricarla a "Salva quarto" }
+let possTestoOcr = {};         // { "Q1": testo grezzo OCR se la tabella non è stata riconosciuta }
+let possLetturaInCorso = false;
 let possLegenda = caricaLegendaPoss();
 
 function rigaVuota() {
@@ -136,6 +141,9 @@ function gestisciFotoSelezionata(file) {
       cv.width = w; cv.height = h;
       cv.getContext("2d").drawImage(img, 0, 0, w, h);
       possFotoQuarto[possQuartoSel] = cv.toDataURL("image/jpeg", 0.72);
+      // Foto nuova ⇒ l'eventuale lettura/URL della foto precedente non vale più
+      delete possFotoUrlOcr[possQuartoSel];
+      delete possTestoOcr[possQuartoSel];
       renderDebrief();
     };
     img.src = ev.target.result;
@@ -171,6 +179,44 @@ function salvaPossessiQuarto(righe, fotoUrl, cb) {
     })
   }).then(r => r.json()).then(r => cb(!!(r && r.ok))).catch(() => cb(false));
 }
+/* Fase 3 (V4.13): carica la foto + prova a leggerla via OCR lato backend.
+   Risposta sempre "leggibile" (non no-cors), stesso pattern delle altre azioni.
+   Non salva mai nulla da sola: al massimo aggiunge righe PROPOSTE (fonte:"ocr")
+   a possRigheQuarto, da confermare/correggere come una riga scritta a mano. */
+function leggiFoglioPossessi() {
+  const fotoLocale = possFotoQuarto[possQuartoSel];
+  if (!fotoLocale) { mostraToast("Allega prima una foto del foglio"); return; }
+  const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
+  if (!base || base.indexOf("INCOLLA_QUI") === 0) { mostraToast("Backend non configurato"); return; }
+  possLetturaInCorso = true;
+  renderDebrief();
+  fetch(base, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      azione: "LEGGI_FOGLIO_POSSESSI", id_partita: String(possGaraSel), quarto: possQuartoSel,
+      foto_base64: fotoLocale, token: (typeof tokenScrittura === "function" ? tokenScrittura() : "")
+    })
+  }).then(r => r.json()).then(r => {
+    possLetturaInCorso = false;
+    if (!r || !r.ok) { mostraToast("Lettura non riuscita"); renderDebrief(); return; }
+    if (r.url) possFotoUrlOcr[possQuartoSel] = r.url;   // evita un secondo upload a "Salva quarto"
+    if (r.tabella_rilevata && Array.isArray(r.righe_suggerite) && r.righe_suggerite.length) {
+      delete possTestoOcr[possQuartoSel];
+      r.righe_suggerite.forEach(s => possRigheQuarto.push({
+        giocatore_num: s.giocatore_num || "", esito: s.esito || "",
+        area: !!s.area, opp2: !!s.opp2, zona: !!s.zona, tiro: s.tiro || "",
+        gioco: s.gioco || "", fonte: "ocr"
+      }));
+      mostraToast(r.righe_suggerite.length + " righe proposte — controllale");
+    } else {
+      possTestoOcr[possQuartoSel] = r.testo_grezzo || "";
+      mostraToast("Tabella non riconosciuta — testo grezzo come riferimento");
+    }
+    renderDebrief();
+  }).catch(() => { possLetturaInCorso = false; mostraToast("Lettura non riuscita"); renderDebrief(); });
+}
+
 function caricaPossessi(idPartita, cb) {
   const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
   if (!base || base.indexOf("INCOLLA_QUI") === 0) { cb(false); return; }
@@ -203,6 +249,15 @@ function rimuoviRigaDebrief(i) {
   possRigheQuarto.splice(i, 1);
   renderDebrief();
 }
+/* Rimette una riga già inserita (tipicamente una proposta OCR) nell'editor in
+   cima, per correggerla invece di doverla ricreare da zero. */
+function modificaRigaDebrief(i) {
+  const r = possRigheQuarto[i];
+  if (!r) return;
+  possRigheQuarto.splice(i, 1);
+  possRigaTmp = Object.assign(rigaVuota(), r);
+  renderDebrief();
+}
 function salvaQuartoDebrief() {
   if (!possRigheQuarto.length) { mostraToast("Nessuna riga da salvare"); return; }
   mostraToast("Salvo…");
@@ -214,10 +269,13 @@ function salvaQuartoDebrief() {
     timestamp: r.timestamp || new Date().toISOString()
   }));
   const fotoLocale = possFotoQuarto[possQuartoSel];
+  const urlGiaCaricata = possFotoUrlOcr[possQuartoSel];   // già su Drive via "Leggi foglio"
   const dopoUpload = (url) => {
     salvaPossessiQuarto(righe, url, ok => {
       if (!ok) { mostraToast("Salvataggio non riuscito"); return; }
       delete possFotoQuarto[possQuartoSel];
+      delete possFotoUrlOcr[possQuartoSel];
+      delete possTestoOcr[possQuartoSel];
       mostraToast("Quarto salvato");
       possCaricamento = true; renderDebrief();
       caricaPossessi(possGaraSel, () => {
@@ -227,7 +285,8 @@ function salvaQuartoDebrief() {
       });
     });
   };
-  if (fotoLocale) caricaFotoPossessi(fotoLocale, url => dopoUpload(url || rigaFotoUrlPerQuarto(possQuartoSel)));
+  if (urlGiaCaricata) dopoUpload(urlGiaCaricata);
+  else if (fotoLocale) caricaFotoPossessi(fotoLocale, url => dopoUpload(url || rigaFotoUrlPerQuarto(possQuartoSel)));
   else dopoUpload(rigaFotoUrlPerQuarto(possQuartoSel));
 }
 
@@ -325,8 +384,11 @@ function rigaListaHtml(r, i) {
   if (r.opp2) bits.push("2ªopp");
   if (r.zona) bits.push("zona");
   if (r.tiro) bits.push(r.tiro);
-  return '<div class="ps-riga-lista"><span class="ps-riga-n">' + (i + 1) + '.</span>' +
-    '<span class="ps-riga-testo">' + bits.join(" · ") + '</span>' +
+  const ocr = r.fonte === "ocr";
+  return '<div class="ps-riga-lista' + (ocr ? " ps-riga-ocr" : "") + '"><span class="ps-riga-n">' + (i + 1) + '.</span>' +
+    '<button class="ps-riga-testo" data-edit="' + i + '">' +
+      (ocr ? '<span class="ps-badge-ocr">OCR</span>' : '') + bits.join(" · ") +
+    '</button>' +
     '<button class="ps-del" data-i="' + i + '">&times;</button></div>';
 }
 
@@ -334,13 +396,24 @@ function vistaInserimentoDebrief() {
   const roster = rosterPerPossessi();
   const fotoLocale = possFotoQuarto[possQuartoSel];
   const fotoSrc = fotoLocale || rigaFotoUrlPerQuarto(possQuartoSel);
+  const letturaBtn = fotoLocale
+    ? (possLetturaInCorso
+      ? '<button class="btn-annulla-modale" disabled>Leggo il foglio…</button>'
+      : '<button class="btn-annulla-modale" id="ps-leggi-foglio">🔎 ' +
+        (possFotoUrlOcr[possQuartoSel] !== undefined || possTestoOcr[possQuartoSel] !== undefined ? "Rileggi foglio" : "Leggi foglio (beta)") +
+        '</button>')
+    : '';
   const fotoBlock = fotoLocale
     ? '<div class="ps-foto"><img src="' + fotoLocale + '" alt="Foglio possessi">' +
-      '<button class="btn-annulla-modale" id="ps-foto-cambia">Cambia foto</button></div>'
+      '<div class="ps-foto-azioni"><button class="btn-annulla-modale" id="ps-foto-cambia">Cambia foto</button>' + letturaBtn + '</div></div>'
     : (fotoSrc
       ? '<div class="ps-foto"><a href="' + esc(fotoSrc) + '" target="_blank" rel="noopener">Foto già caricata per ' + esc(possQuartoSel) + ' — apri</a>' +
         '<button class="btn-annulla-modale" id="ps-foto-cambia">Sostituisci foto</button></div>'
       : '<button class="btn-conferma" id="ps-foto-scatta">📷 Allega foto del foglio</button>');
+  const testoOcr = possTestoOcr[possQuartoSel];
+  const testoOcrBlock = testoOcr
+    ? '<details class="ps-ocr-testo"><summary>Tabella non riconosciuta — testo letto dalla foto (riferimento)</summary><pre>' + esc(testoOcr) + '</pre></details>'
+    : '';
 
   const giocBtns = roster.length ? roster.map(g =>
     '<button class="ps-num' + (String(possRigaTmp.giocatore_num) === String(g.numero) ? " on" : "") + '" data-num="' + esc(g.numero) + '">#' + esc(g.numero) +
@@ -361,7 +434,7 @@ function vistaInserimentoDebrief() {
     ? possRigheQuarto.map(rigaListaHtml).join('')
     : '<div class="st-hint">Nessuna riga ancora per ' + esc(possQuartoSel) + '.</div>';
 
-  return fotoBlock +
+  return fotoBlock + testoOcrBlock +
     '<div class="ps-sez"><div class="ps-tit">Chi chiude</div><div class="ps-griglia-num">' + giocBtns + '</div></div>' +
     '<div class="ps-sez"><div class="ps-tit">Esito</div><div class="ps-griglia-esito">' + esitoBtns + '</div></div>' +
     (mostraAttrib ?

@@ -108,10 +108,13 @@ function aoBottone(testo, onTap, neutro) {
   return b;
 }
 
-function mostraActionOverlay(titolo, bottoni, timeoutMs) {
+function mostraActionOverlay(titolo, bottoni, timeoutMs, verticale) {
   document.getElementById("ao-titolo").textContent = titolo;
   const g = document.getElementById("ao-griglia");
   g.innerHTML = "";
+  // Elenco giocatori "chi?" (rimbalzo/fallo): una colonna, stesso ordine del
+  // pannello sinistro (state.roster) — più veloce da leggere a colpo d'occhio.
+  g.classList.toggle("ao-griglia-v", !!verticale);
   bottoni.forEach(b => g.appendChild(b));
   // Via di fuga sempre presente: annulla / chiudi senza registrare nulla
   const annulla = aoBottone("✕ Annulla", chiudiActionOverlay, true);
@@ -201,7 +204,7 @@ function chiediRimbalzistaMIA(tipo) {
     registraRimbalzo(tipo, "MIA", n);
     chiudiActionOverlay();
   }));
-  mostraActionOverlay("Rimbalzo " + tipo.toLowerCase() + " — chi?", bottoni, 0);
+  mostraActionOverlay("Rimbalzo " + tipo.toLowerCase() + " — chi?", bottoni, 0, true);
 }
 
 function registraRimbalzo(tipo, squadra, num) {

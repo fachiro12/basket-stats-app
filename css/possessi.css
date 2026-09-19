@@ -57,6 +57,13 @@
 .ps-foto { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
 .ps-foto img { width: 100%; max-height: 260px; object-fit: contain; border-radius: var(--radius-sm); border: 1px solid var(--color-border); background: var(--color-surface); }
 .ps-foto a { font-size: 13px; font-weight: 700; color: var(--color-brand-ink); }
+.ps-foto-azioni { display: flex; gap: 8px; flex-wrap: wrap; }
+.ps-foto-azioni .btn-annulla-modale { flex: 1; min-width: 140px; }
+
+/* Fase 3 — lettura automatica (OCR, sperimentale) */
+.ps-ocr-testo { margin-bottom: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface-raised); }
+.ps-ocr-testo summary { padding: 8px 10px; font-size: 12px; font-weight: 800; color: var(--color-text-secondary); cursor: pointer; }
+.ps-ocr-testo pre { margin: 0; padding: 10px; border-top: 1px solid var(--color-border); font-size: 11px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; color: var(--color-text-primary); max-height: 220px; overflow-y: auto; }
 
 .ps-sez { margin-bottom: 12px; }
 .ps-tit {
@@ -136,7 +143,18 @@
   font-size: 12px;
 }
 .ps-riga-n { font-weight: 800; color: var(--color-text-muted); flex-shrink: 0; min-width: 18px; }
-.ps-riga-testo { flex: 1; min-width: 0; color: var(--color-text-primary); font-weight: 600; }
+.ps-riga-testo {
+  flex: 1; min-width: 0; color: var(--color-text-primary); font-weight: 600;
+  background: none; border: none; padding: 0; text-align: left; font-size: 12px;
+  touch-action: manipulation;
+}
+.ps-riga-ocr { border-left: 3px solid var(--color-state-warning); }
+.ps-badge-ocr {
+  display: inline-block; font-size: 9px; font-weight: 800; letter-spacing: 0.04em;
+  padding: 1px 5px; border-radius: var(--radius-pill);
+  background: var(--color-state-warning-soft); color: var(--color-state-warning);
+  border: 1px solid var(--color-state-warning); margin-right: 6px; vertical-align: middle;
+}
 .ps-del {
   flex-shrink: 0;
   width: 26px; height: 26px;
