@@ -608,6 +608,16 @@ main.corpo-partita {
 .recap-tabella td.neg { color: var(--color-state-negative); font-weight: 800; }
 .recap-tabella { font-variant-numeric: tabular-nums; }
 
+/* Recap squadre (PVL/avversari) sopra il tabellino giocatori */
+.recap-squadre { margin-bottom: var(--space-4); }
+.recap-squadre td:first-child { font-weight: 800; }
+
+/* Il recap ha più colonne del solito: un po' più largo del modale standard */
+.modale-recap { max-width: 560px; }
+@media (min-width: 900px) and (pointer: fine) {
+  .modale-recap { max-width: 640px; }
+}
+
 .slot-cambio {
   display: flex;
   align-items: center;

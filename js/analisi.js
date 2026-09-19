@@ -342,7 +342,8 @@ function vistaAnalisiSquadra(agg) {
     '</tbody></table></div>';
 
   return record + sintesi + ff + graficoMargini(agg) + box +
-    '<div class="st-hint">Le percentuali sono calcolate sui totali di stagione, non come media di percentuali.</div>';
+    '<div class="st-hint">Le percentuali sono calcolate sui totali di stagione, non come media di percentuali.</div>' +
+    bottoniAnalisiAvanzata();
 }
 function rigaBoxSquadra(nome, t, n, cls) {
   const md = x => dec(x / n, 1);
@@ -474,7 +475,8 @@ function vistaAnalisiGiocatori(agg) {
       '<button data-anfmt="medie" class="' + (analisiFmt === 'medie' ? 'attivo' : '') + '">Medie</button>' +
     '</div>' +
     '<div class="st-scroll"><table class="st-box an-tab"><thead>' + thead + '</thead><tbody>' + body + '</tbody></table></div>' +
-    '<div class="st-hint">Tocca un\'intestazione per ordinare · PG = presenze · USG/AST%/TOV% approssimati a livello gara · nomi e numeri dall\'anagrafica attuale.</div>';
+    '<div class="st-hint">Tocca un\'intestazione per ordinare · PG = presenze · USG/AST%/TOV% approssimati a livello gara · nomi e numeri dall\'anagrafica attuale.</div>' +
+    bottoniAnalisiAvanzata();
 }
 
 function impostaOrdineAnalisi(col) {

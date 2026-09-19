@@ -105,8 +105,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const th = e.target.closest("th[data-sort]");
     if (th && typeof impostaOrdineAnalisi === "function") { impostaOrdineAnalisi(th.dataset.sort); return; }
     const fb = e.target.closest("[data-anfmt]");
-    if (fb && typeof impostaFmtAnalisi === "function") impostaFmtAnalisi(fb.dataset.anfmt);
+    if (fb && typeof impostaFmtAnalisi === "function") { impostaFmtAnalisi(fb.dataset.anfmt); return; }
+    const avzBtn = e.target.closest("[data-avzopen]");
+    if (avzBtn && typeof apriAnalisiAvanzata === "function") apriAnalisiAvanzata(avzBtn.dataset.avzopen);
   });
+
+  /* -------- ANALISI AVANZATA: AIS / BPM·VORP / Def. Rating (sperimentale) -------- */
+  const avzIndietro = document.getElementById("avz-indietro");
+  if (avzIndietro) avzIndietro.addEventListener("click", () => navigaA("analisi"));
+  document.querySelectorAll("#avz-tabs button").forEach(b =>
+    b.addEventListener("click", () => {
+      if (typeof cambiaTabAvz === "function") cambiaTabAvz(b.dataset.avztab);
+    }));
 
   /* -------- DEBRIEF POSSESSI (sperimentale) -------- */
   const apriDeb = document.getElementById("apri-debrief");

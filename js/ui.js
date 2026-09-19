@@ -339,11 +339,13 @@ function chiudiCambi() {
 /* ---------- MODALE RECAP ---------- */
 function apriRecap() {
   const tab = document.getElementById("recap-tabella");
+  const tabSq = document.getElementById("recap-squadre");
   const overlay = document.getElementById("overlay-recap");
   const nomeG = n => (typeof nomeGiocatore === "function" ? nomeGiocatore(n) : "");
 
   if (typeof statsContesto !== "function" || typeof calcolaBox !== "function") {
     tab.innerHTML = '<tr><td>Statistiche non disponibili: modulo <code>stats.js</code> non caricato.</td></tr>';
+    if (tabSq) tabSq.innerHTML = "";
     overlay.classList.add("visibile");
     return;
   }
@@ -351,31 +353,47 @@ function apriRecap() {
   try {
     const ctx = statsContesto(true);   // sempre la partita live
     const box = calcolaBox(ctx);
+
+    if (tabSq) {
+      const rigaSquadra = (nome, t) =>
+        "<tr><td style=\"text-align:left\">" + esc(nome) + "</td>" +
+        "<td>" + (t.m2 || 0) + "/" + (t.a2 || 0) + "</td>" +
+        "<td>" + (t.m3 || 0) + "/" + (t.a3 || 0) + "</td>" +
+        "<td>" + (t.ftm || 0) + "/" + (t.fta || 0) + "</td>" +
+        "<td>" + (t.pp || 0) + "</td>" +
+        "<td>" + (t.ff || 0) + "</td></tr>";
+      tabSq.innerHTML =
+        "<tr><th></th><th>2PT</th><th>3PT</th><th>TL</th><th>PP</th><th>FF</th></tr>" +
+        rigaSquadra(CONFIG.NOME_SQUADRA_MIA, box.team.MIA) +
+        rigaSquadra(state.avversarioBreve || "AVV", box.team.OPP);
+    }
+
     const conv = state.convocati || [];
     const numeri = conv.length
       ? conv.map(c => c.numero)
       : Object.keys(box.pg).map(Number).sort((a, b) => a - b);
     const s = (x, y) => (y ? x / y : 0);
 
-    let html = "<tr><th>#</th><th>G</th><th>PT</th><th>+/-</th><th>eFG%</th><th>Net/40</th><th>FF</th></tr>";
+    let html = "<tr><th>#</th><th>G</th><th>PT</th><th>+/-</th><th>eFG%</th><th>Min</th><th>FF</th></tr>";
     numeri.forEach(n => {
       const g = box.pg[n] || {};
       const fga = (g.a2 || 0) + (g.a3 || 0), fgm = (g.m2 || 0) + (g.m3 || 0);
       const efg = fga ? Math.round(s(fgm + 0.5 * (g.m3 || 0), fga) * 100) + "%" : "–";
       const pm = Math.round(g.pm || 0);
-      const net = g.min ? Math.round((g.pm || 0) / g.min * 40) : 0;
+      const min = (typeof mmss === "function") ? mmss(g.min) : Math.round(g.min || 0);
       html += `<tr>
         <td>#${esc(n)}</td><td style="text-align:left">${esc(nomeG(n))}</td>
         <td>${g.pt || 0}</td>
         <td class="${pm >= 0 ? "pos" : "neg"}">${pm > 0 ? "+" : ""}${pm}</td>
         <td>${efg}</td>
-        <td class="${net >= 0 ? "pos" : "neg"}">${net > 0 ? "+" : ""}${net}</td>
+        <td>${min}</td>
         <td>${g.ff || 0}</td>
       </tr>`;
     });
     tab.innerHTML = html;
   } catch (e) {
     tab.innerHTML = '<tr><td>Errore nel recap: ' + esc(e && e.message || e) + '</td></tr>';
+    if (tabSq) tabSq.innerHTML = "";
   }
   overlay.classList.add("visibile");
 }

@@ -1,0 +1,20 @@
+/* ==========================================================================
+   ANALISI AVANZATA — AIS / BPM·VORP / Defensive Rating (sperimentale)
+   Riusa .adv-card/.st-box/.st-hint/.an-tab/.stats-tabs già esistenti.
+   ========================================================================== */
+
+.avz-apri-bottoni {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+.avz-apri-bottoni .btn-annulla-modale { flex: 1; min-width: 120px; }
+
+/* Livelli AIS — riusano i token di stato esistenti */
+.avz-t-alto { color: var(--color-state-positive); font-weight: 800; }
+.avz-t-buono { color: var(--color-text-primary); font-weight: 800; }
+.avz-t-basso { color: var(--color-state-warning); font-weight: 800; }
+.avz-t-neg { color: var(--color-state-negative); font-weight: 800; }
