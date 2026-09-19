@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=51` · SW `bsp-v51` · backend V4.12.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=52` · SW `bsp-v52` · backend V4.12.
 
 ---
 

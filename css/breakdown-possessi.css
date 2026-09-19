@@ -9,3 +9,7 @@
 .brk-grp-off { color: var(--color-brand-ink); }
 .brk-grp-def { color: var(--color-text-secondary); }
 .brk-sep { width: 10px; border: none !important; background: var(--color-border); padding: 0 !important; }
+
+.brk-prompt { margin-top: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface-raised); }
+.brk-prompt summary { padding: 8px 10px; font-size: 12px; font-weight: 800; color: var(--color-text-secondary); cursor: pointer; }
+.brk-prompt pre { margin: 0; padding: 10px; border-top: 1px solid var(--color-border); font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; color: var(--color-text-primary); font-family: inherit; }

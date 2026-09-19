@@ -102,7 +102,14 @@ function segmentaPossessi(eventi) {
         chiudi("Dopo rimbalzo difensivo");   // DIFENSIVO o SQUADRA: la palla cambia squadra
       }
     } else if (t === "PALLA_PERSA" || t === "RECUPERO") {
-      if (possAperta) possAperta.turnover = true;
+      // squadra che perde palla: sé stessa se PALLA_PERSA, l'avversaria se RECUPERO.
+      // assicura() apre un possesso "vuoto" (0 tiri) se non ce n'era già uno —
+      // un turnover immediato dopo la rimessa (palla rubata subito, violazione
+      // di campo/24") non ha nessun altro evento prima: senza questo la
+      // possessione svaniva del tutto, sottostimando i turnover reali.
+      const squadraPersa = (t === "PALLA_PERSA") ? sq : (sq === "MIA" ? "OPP" : "MIA");
+      assicura(squadraPersa);
+      possAperta.turnover = true;
       chiudi("Dopo palla persa");
     } else if (t === "FALLO_SUBITO" || t === "FALLO_FATTO") {
       const squadraTiratrice = (t === "FALLO_SUBITO") ? sq : (sq === "MIA" ? "OPP" : "MIA");
@@ -239,5 +246,19 @@ function vistaBreakdown(r) {
     '<div class="st-hint">"Dopo palla persa" include sia i recuperi avversari sia le palle perse non forzate (voce unica). ' +
     '"Rtg" = punti ogni 100 possessi di quel tipo. Niente ORB%/DRB% qui (la definizione standard non si presta a un conteggio ' +
     'per-possessione con questi dati — li trovi nei Four Factors di Analisi stagione) e niente confronto di lega (non abbiamo il ' +
-    'campionato DR1 completo).</div>';
+    'campionato DR1 completo).</div>' +
+    '<details class="brk-prompt"><summary>📋 Prompt per farla leggere a un\'AI</summary><pre>' +
+      esc(PROMPT_AI_BREAKDOWN) +
+    '</pre></details>';
 }
+
+/* Da copiare insieme a uno screenshot della tabella. */
+const PROMPT_AI_BREAKDOWN =
+  'Agisci da data analyst sportivo esperto di basket. Ti allego lo screenshot di una ' +
+  'tabella "Team Possession Breakdown" di una squadra amatoriale (DR1 Lombardia): per ogni ' +
+  'tipo di innesco del possesso (dopo canestro, dopo rimbalzo difensivo, dopo palla persa, ' +
+  'altro) mostra Poss, Freq%, Rtg (punti ogni 100 possessi), TS%, TOV%, FT Ratio, sia in ' +
+  'attacco (OFF) sia in difesa (DEF, cosa concede la squadra). Analizza i dati in profondità: ' +
+  'individua gli squilibri più significativi tra OFF e DEF, i punti di forza/debolezza per ' +
+  'tipo di possesso, e proponi 2-3 indicazioni concrete di lavoro per gli allenamenti, ' +
+  'motivando ognuna con i numeri che vedi.';
