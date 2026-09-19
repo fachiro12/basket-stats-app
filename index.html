@@ -11,20 +11,21 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Basket Stats">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=49">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=49">
-<link rel="apple-touch-icon" href="icon-180.png?v=49">
-<link rel="stylesheet" href="css/tokens.css?v=49">
-<link rel="stylesheet" href="css/base.css?v=49">
-<link rel="stylesheet" href="css/shell.css?v=49">
-<link rel="stylesheet" href="css/partita.css?v=49">
-<link rel="stylesheet" href="css/altro.css?v=49">
-<link rel="stylesheet" href="css/calendario.css?v=49">
-<link rel="stylesheet" href="css/roster.css?v=49">
-<link rel="stylesheet" href="css/stats.css?v=49">
-<link rel="stylesheet" href="css/possessi.css?v=49">
-<link rel="stylesheet" href="css/analisi-avanzata.css?v=49">
-<link rel="stylesheet" href="css/rotazioni.css?v=49">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=51">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=51">
+<link rel="apple-touch-icon" href="icon-180.png?v=51">
+<link rel="stylesheet" href="css/tokens.css?v=51">
+<link rel="stylesheet" href="css/base.css?v=51">
+<link rel="stylesheet" href="css/shell.css?v=51">
+<link rel="stylesheet" href="css/partita.css?v=51">
+<link rel="stylesheet" href="css/altro.css?v=51">
+<link rel="stylesheet" href="css/calendario.css?v=51">
+<link rel="stylesheet" href="css/roster.css?v=51">
+<link rel="stylesheet" href="css/stats.css?v=51">
+<link rel="stylesheet" href="css/possessi.css?v=51">
+<link rel="stylesheet" href="css/analisi-avanzata.css?v=51">
+<link rel="stylesheet" href="css/rotazioni.css?v=51">
+<link rel="stylesheet" href="css/breakdown-possessi.css?v=51">
 </head>
 <body>
 
@@ -287,7 +288,7 @@
     <!-- ============ VIEW: ROTAZIONI (sperimentale) ============ -->
     <div class="view" id="view-rotazioni">
       <header class="cal-topbar">
-        <button class="cal-tb-btn" id="rot-indietro" aria-label="Torna ad Analisi stagione">
+        <button class="cal-tb-btn" id="rot-indietro" aria-label="Torna ad Altro">
           <svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg>
         </button>
         <span class="st-titolo">Rotazioni</span>
@@ -295,6 +296,18 @@
       <div id="rot-filtri"></div>
       <div class="contenuto-pagina" id="rot-body"></div>
     </div><!-- /view-rotazioni -->
+
+    <!-- ============ VIEW: TEAM POSSESSION BREAKDOWN (sperimentale) ============ -->
+    <div class="view" id="view-breakdown">
+      <header class="cal-topbar">
+        <button class="cal-tb-btn" id="brk-indietro" aria-label="Torna ad Altro">
+          <svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg>
+        </button>
+        <span class="st-titolo">Possession Breakdown</span>
+      </header>
+      <div id="brk-filtri"></div>
+      <div class="contenuto-pagina" id="brk-body"></div>
+    </div><!-- /view-breakdown -->
 
     <!-- ============ VIEW: ALTRO ============ -->
     <div class="view" id="view-squadra">
@@ -335,6 +348,22 @@
             <span class="col-testo">
               <span class="titolo-altro">Analisi stagione</span>
               <span class="sotto-altro">Riepiloghi e filtri su tutte le gare concluse</span>
+            </span>
+            <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          </div>
+          <div class="riga-altro" id="apri-rotazioni">
+            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-swap"></use></svg>
+            <span class="col-testo">
+              <span class="titolo-altro">Rotazioni <span class="beta-badge">beta</span></span>
+              <span class="sotto-altro">Chi è in campo minuto per minuto sulla stagione</span>
+            </span>
+            <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          </div>
+          <div class="riga-altro" id="apri-breakdown">
+            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-zap"></use></svg>
+            <span class="col-testo">
+              <span class="titolo-altro">Team Possession Breakdown <span class="beta-badge">beta</span></span>
+              <span class="sotto-altro">Rendimento per tipo di possesso, dal play-by-play</span>
             </span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </div>
@@ -650,22 +679,23 @@
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=49"></script>
-<script src="js/tema.js?v=49"></script>
-<script src="js/api.js?v=49"></script>
-<script src="js/timer.js?v=49"></script>
-<script src="js/azioni.js?v=49"></script>
-<script src="js/fallo-subito.js?v=49"></script>
-<script src="js/calendario.js?v=49"></script>
-<script src="js/giocatori.js?v=49"></script>
-<script src="js/stats.js?v=49"></script>
-<script src="js/analisi.js?v=49"></script>
-<script src="js/analisi-avanzata.js?v=49"></script>
-<script src="js/rotazioni.js?v=49"></script>
-<script src="js/possessi.js?v=49"></script>
-<script src="js/ui.js?v=49"></script>
-<script src="js/pin.js?v=49"></script>
-<script src="js/app.js?v=49"></script>
+<script src="js/state.js?v=51"></script>
+<script src="js/tema.js?v=51"></script>
+<script src="js/api.js?v=51"></script>
+<script src="js/timer.js?v=51"></script>
+<script src="js/azioni.js?v=51"></script>
+<script src="js/fallo-subito.js?v=51"></script>
+<script src="js/calendario.js?v=51"></script>
+<script src="js/giocatori.js?v=51"></script>
+<script src="js/stats.js?v=51"></script>
+<script src="js/analisi.js?v=51"></script>
+<script src="js/analisi-avanzata.js?v=51"></script>
+<script src="js/rotazioni.js?v=51"></script>
+<script src="js/breakdown-possessi.js?v=51"></script>
+<script src="js/possessi.js?v=51"></script>
+<script src="js/ui.js?v=51"></script>
+<script src="js/pin.js?v=51"></script>
+<script src="js/app.js?v=51"></script>
 
 </body>
 </html>

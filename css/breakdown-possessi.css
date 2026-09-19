@@ -1,0 +1,11 @@
+/* ==========================================================================
+   TEAM POSSESSION BREAKDOWN (Analisi, sperimentale)
+   Riusa .st-box/.st-scroll/.st-hint/.an-chip esistenti — solo l'intestazione
+   a due gruppi (OFF/DEF) e il separatore centrale sono nuovi.
+   ========================================================================== */
+
+.brk-tab th, .brk-tab td { text-align: center; white-space: nowrap; }
+.brk-trigger { text-align: left !important; font-weight: 800; }
+.brk-grp-off { color: var(--color-brand-ink); }
+.brk-grp-def { color: var(--color-text-secondary); }
+.brk-sep { width: 10px; border: none !important; background: var(--color-border); padding: 0 !important; }
