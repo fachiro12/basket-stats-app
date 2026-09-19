@@ -93,8 +93,24 @@ function rosterPerPossessi() {
 /* ==========================================================================
    Apertura vista + selezione gara/quarto
    ========================================================================== */
+/* Gare per il menu a tendina: la/le "In corso" (live, su questo o un altro
+   device) prima di tutto, poi le altre dalla più recente alla meno recente. */
+function gareOrdinatePerDebrief() {
+  const gare = elencoPartite().slice().reverse();   // elencoPartite() = crescente per data
+  const live = gare.filter(p => p.stato === "In corso");
+  const altre = gare.filter(p => p.stato !== "In corso");
+  return live.concat(altre);
+}
+/* Gara preselezionata: la live (di questo device, o "In corso" sul foglio se
+   un altro device la sta segnando), altrimenti la più recente. */
+function garaPredefinitaDebrief() {
+  const gare = gareOrdinatePerDebrief();
+  if (gare.length && gare[0].stato === "In corso") return String(gare[0].id_partita);
+  if (state && state.id_partita) return String(state.id_partita);
+  return gare.length ? String(gare[0].id_partita) : "";
+}
 function apriDebrief() {
-  if (!possGaraSel) possGaraSel = (state && state.id_partita) ? String(state.id_partita) : "";
+  if (!possGaraSel) possGaraSel = garaPredefinitaDebrief();
   possTab = "inserisci";
   navigaA("debrief");
   cambiaGaraDebrief(possGaraSel);
@@ -339,9 +355,10 @@ function reportPossessi(righe) {
 function popolaSelettoreGaraDebrief() {
   const sel = document.getElementById("debrief-gara-sel");
   if (!sel) return;
-  const gare = (typeof elencoPartite === "function" ? elencoPartite() : []).slice().reverse();
+  const gare = typeof elencoPartite === "function" ? gareOrdinatePerDebrief() : [];
   sel.innerHTML = '<option value="">— scegli una gara —</option>' + gare.map(p =>
     '<option value="' + esc(p.id_partita) + '"' + (String(p.id_partita) === String(possGaraSel) ? " selected" : "") + '>' +
+    (p.stato === "In corso" ? "🔴 " : "") +
     esc((typeof nomePartitaDaCalendario === "function" ? nomePartitaDaCalendario(p) : (p.avversario || "")) +
       " · " + (p.stato || "")) + '</option>').join('');
 }
