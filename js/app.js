@@ -146,6 +146,20 @@ document.addEventListener("DOMContentLoaded", () => {
       impostaFiltroBreakdown(grp.dataset.fil, btn.dataset.val);
   });
 
+  /* -------- RATING NET (sperimentale) -------- */
+  const apriRN = document.getElementById("apri-rating-net");
+  if (apriRN && typeof apriRatingNet === "function") apriRN.addEventListener("click", apriRatingNet);
+  const rnIndietro = document.getElementById("rn-indietro");
+  if (rnIndietro) rnIndietro.addEventListener("click", () => navigaA("squadra"));
+  const rnFiltri = document.getElementById("rn-filtri");
+  if (rnFiltri) rnFiltri.addEventListener("click", e => {
+    const btn = e.target.closest(".an-chip");
+    if (!btn) return;
+    const grp = btn.closest(".an-chip-grp");
+    if (grp && typeof impostaFiltroRatingNet === "function")
+      impostaFiltroRatingNet(grp.dataset.fil, btn.dataset.val);
+  });
+
   /* -------- DEBRIEF POSSESSI (sperimentale) -------- */
   const apriDeb = document.getElementById("apri-debrief");
   if (apriDeb && typeof apriDebrief === "function") apriDeb.addEventListener("click", apriDebrief);

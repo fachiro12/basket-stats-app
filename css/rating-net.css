@@ -1,0 +1,32 @@
+/* ==========================================================================
+   RATING NET (Analisi, sperimentale)
+   Gauge Off/Def/Net/Pace + trend gara per gara. Riusa .adv-tit/.st-hint/
+   .st-chart/.st-grid/.st-zero/.st-axis/.st-qt/.an-barw/.an-barl esistenti.
+   Colori solo da token — il segno di riferimento usa il testo primario
+   (neutro), non il rosso "negativo" già usato altrove per non confonderlo
+   con un giudizio di merito.
+   ========================================================================== */
+
+.rn-griglia {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 10px 0 4px;
+}
+.rn-gauge {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 6px 4px 10px;
+  text-align: center;
+}
+.rn-gauge-svg { width: 100%; height: auto; display: block; }
+.rn-track { fill: none; stroke: var(--color-border-strong); stroke-width: 10; stroke-linecap: round; }
+.rn-fill { fill: none; stroke: var(--color-brand); stroke-width: 10; stroke-linecap: round; }
+.rn-tick { stroke: var(--color-text-primary); stroke-width: 2.5; }
+.rn-val { font-size: 20px; font-weight: 800; fill: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.rn-lbl { font-size: 11px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; color: var(--color-text-secondary); margin-top: 2px; }
+.rn-ticklbl { font-size: 10px; color: var(--color-text-muted); margin-top: 1px; font-variant-numeric: tabular-nums; }
+
+.rn-roll { fill: none; stroke: var(--color-brand-ink); stroke-width: 2; }
+.rn-media { stroke: var(--color-text-secondary); stroke-width: 1.5; stroke-dasharray: 5 4; }

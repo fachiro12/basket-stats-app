@@ -11,21 +11,22 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Basket Stats">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=52">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=52">
-<link rel="apple-touch-icon" href="icon-180.png?v=52">
-<link rel="stylesheet" href="css/tokens.css?v=52">
-<link rel="stylesheet" href="css/base.css?v=52">
-<link rel="stylesheet" href="css/shell.css?v=52">
-<link rel="stylesheet" href="css/partita.css?v=52">
-<link rel="stylesheet" href="css/altro.css?v=52">
-<link rel="stylesheet" href="css/calendario.css?v=52">
-<link rel="stylesheet" href="css/roster.css?v=52">
-<link rel="stylesheet" href="css/stats.css?v=52">
-<link rel="stylesheet" href="css/possessi.css?v=52">
-<link rel="stylesheet" href="css/analisi-avanzata.css?v=52">
-<link rel="stylesheet" href="css/rotazioni.css?v=52">
-<link rel="stylesheet" href="css/breakdown-possessi.css?v=52">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=53">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=53">
+<link rel="apple-touch-icon" href="icon-180.png?v=53">
+<link rel="stylesheet" href="css/tokens.css?v=53">
+<link rel="stylesheet" href="css/base.css?v=53">
+<link rel="stylesheet" href="css/shell.css?v=53">
+<link rel="stylesheet" href="css/partita.css?v=53">
+<link rel="stylesheet" href="css/altro.css?v=53">
+<link rel="stylesheet" href="css/calendario.css?v=53">
+<link rel="stylesheet" href="css/roster.css?v=53">
+<link rel="stylesheet" href="css/stats.css?v=53">
+<link rel="stylesheet" href="css/possessi.css?v=53">
+<link rel="stylesheet" href="css/analisi-avanzata.css?v=53">
+<link rel="stylesheet" href="css/rotazioni.css?v=53">
+<link rel="stylesheet" href="css/breakdown-possessi.css?v=53">
+<link rel="stylesheet" href="css/rating-net.css?v=53">
 </head>
 <body>
 
@@ -309,6 +310,18 @@
       <div class="contenuto-pagina" id="brk-body"></div>
     </div><!-- /view-breakdown -->
 
+    <!-- ============ VIEW: RATING NET (sperimentale) ============ -->
+    <div class="view" id="view-rating-net">
+      <header class="cal-topbar">
+        <button class="cal-tb-btn" id="rn-indietro" aria-label="Torna ad Altro">
+          <svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg>
+        </button>
+        <span class="st-titolo">Rating Net</span>
+      </header>
+      <div id="rn-filtri"></div>
+      <div class="contenuto-pagina" id="rn-body"></div>
+    </div><!-- /view-rating-net -->
+
     <!-- ============ VIEW: ALTRO ============ -->
     <div class="view" id="view-squadra">
       <div class="header-pagina">
@@ -364,6 +377,14 @@
             <span class="col-testo">
               <span class="titolo-altro">Team Possession Breakdown <span class="beta-badge">beta</span></span>
               <span class="sotto-altro">Rendimento per tipo di possesso, dal play-by-play</span>
+            </span>
+            <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          </div>
+          <div class="riga-altro" id="apri-rating-net">
+            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-calc"></use></svg>
+            <span class="col-testo">
+              <span class="titolo-altro">Rating Net <span class="beta-badge">beta</span></span>
+              <span class="sotto-altro">Off/Def/Net Rating e Pace, con trend gara per gara</span>
             </span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </div>
@@ -679,23 +700,24 @@
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=52"></script>
-<script src="js/tema.js?v=52"></script>
-<script src="js/api.js?v=52"></script>
-<script src="js/timer.js?v=52"></script>
-<script src="js/azioni.js?v=52"></script>
-<script src="js/fallo-subito.js?v=52"></script>
-<script src="js/calendario.js?v=52"></script>
-<script src="js/giocatori.js?v=52"></script>
-<script src="js/stats.js?v=52"></script>
-<script src="js/analisi.js?v=52"></script>
-<script src="js/analisi-avanzata.js?v=52"></script>
-<script src="js/rotazioni.js?v=52"></script>
-<script src="js/breakdown-possessi.js?v=52"></script>
-<script src="js/possessi.js?v=52"></script>
-<script src="js/ui.js?v=52"></script>
-<script src="js/pin.js?v=52"></script>
-<script src="js/app.js?v=52"></script>
+<script src="js/state.js?v=53"></script>
+<script src="js/tema.js?v=53"></script>
+<script src="js/api.js?v=53"></script>
+<script src="js/timer.js?v=53"></script>
+<script src="js/azioni.js?v=53"></script>
+<script src="js/fallo-subito.js?v=53"></script>
+<script src="js/calendario.js?v=53"></script>
+<script src="js/giocatori.js?v=53"></script>
+<script src="js/stats.js?v=53"></script>
+<script src="js/analisi.js?v=53"></script>
+<script src="js/analisi-avanzata.js?v=53"></script>
+<script src="js/rotazioni.js?v=53"></script>
+<script src="js/breakdown-possessi.js?v=53"></script>
+<script src="js/rating-net.js?v=53"></script>
+<script src="js/possessi.js?v=53"></script>
+<script src="js/ui.js?v=53"></script>
+<script src="js/pin.js?v=53"></script>
+<script src="js/app.js?v=53"></script>
 
 </body>
 </html>
