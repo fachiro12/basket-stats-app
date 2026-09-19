@@ -107,7 +107,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const fb = e.target.closest("[data-anfmt]");
     if (fb && typeof impostaFmtAnalisi === "function") { impostaFmtAnalisi(fb.dataset.anfmt); return; }
     const avzBtn = e.target.closest("[data-avzopen]");
-    if (avzBtn && typeof apriAnalisiAvanzata === "function") apriAnalisiAvanzata(avzBtn.dataset.avzopen);
+    if (avzBtn && typeof apriAnalisiAvanzata === "function") { apriAnalisiAvanzata(avzBtn.dataset.avzopen); return; }
+    if (e.target.closest("#apri-rotazioni") && typeof apriRotazioni === "function") apriRotazioni();
   });
 
   /* -------- ANALISI AVANZATA: AIS / BPM·VORP / Def. Rating (sperimentale) -------- */
@@ -117,6 +118,18 @@ document.addEventListener("DOMContentLoaded", () => {
     b.addEventListener("click", () => {
       if (typeof cambiaTabAvz === "function") cambiaTabAvz(b.dataset.avztab);
     }));
+
+  /* -------- ROTAZIONI (sperimentale) -------- */
+  const rotIndietro = document.getElementById("rot-indietro");
+  if (rotIndietro) rotIndietro.addEventListener("click", () => navigaA("analisi"));
+  const rotFiltri = document.getElementById("rot-filtri");
+  if (rotFiltri) rotFiltri.addEventListener("click", e => {
+    const btn = e.target.closest(".an-chip");
+    if (!btn) return;
+    const grp = btn.closest(".an-chip-grp");
+    if (grp && typeof impostaFiltroRotazioni === "function")
+      impostaFiltroRotazioni(grp.dataset.fil, btn.dataset.val);
+  });
 
   /* -------- DEBRIEF POSSESSI (sperimentale) -------- */
   const apriDeb = document.getElementById("apri-debrief");

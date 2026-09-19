@@ -34,6 +34,7 @@ function bottoniAnalisiAvanzata() {
     '<button class="btn-annulla-modale" data-avzopen="ais">📊 AIS</button>' +
     '<button class="btn-annulla-modale" data-avzopen="bpm">📈 BPM · VORP</button>' +
     '<button class="btn-annulla-modale" data-avzopen="defrtg">🛡️ Def. Rating</button>' +
+    '<button class="btn-annulla-modale" id="apri-rotazioni">🔄 Rotazioni</button>' +
     '</div>';
 }
 
