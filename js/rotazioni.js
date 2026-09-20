@@ -12,7 +12,7 @@ let rotTab = "chart";                              // "chart" | "lineup"
 let rotLineupSort = { col: "min", dir: -1 };
 let rotLineupFiltroTesto = "";                      // uno o più nomi separati da virgola (AND)
 let rotLineupNascondiRumore = true;                 // nasconde i quintetti con minuti trascurabili
-const ROT_LINEUP_SOGLIA_RUMORE_MIN = 1;             // soglia fissa dichiarata in UI
+const ROT_LINEUP_PCT_RUMORE = 0.05;                 // soglia = 5% della media dei 3 quintetti più usati (scala da sola in stagione)
 let rotLineupMostraDifesa = false;                  // colonne PTS SUB/REC/OREB%/DREB%/REB SQ
 let rotLineupSoglie = { pace: null, pct2: null, pct3: null, ftr: null, tovpct: null };   // filtri "≥" in AND tra loro
 
@@ -308,7 +308,12 @@ function calcolaLineupBox() {
     let idx = 0;
     (eventiPuliti(g.eventi) || []).forEach(e => {
       const t = elapsedAt(e.quarto, tempoInSec(e.tempo_partita));
-      while (idx < range.length - 1 && t >= range[idx].end) idx++;
+      // ">" e non ">=": un evento registrato allo stesso secondo esatto del
+      // cambio (tempo_partita ha risoluzione al secondo, capita) resta nello
+      // stint che si sta chiudendo, non in quello nuovo — altrimenti un
+      // canestro segnato "insieme" alla sostituzione finirebbe accreditato
+      // al quintetto sbagliato.
+      while (idx < range.length - 1 && t > range[idx].end) idx++;
       accumulaEventoLocaleRot(localBox[idx], e);
     });
 
@@ -378,8 +383,16 @@ function vistaLineupBox(r) {
   if (!r.righe.length) return '<div class="st-hint">Nessuna gara conclusa con questi filtri.</div>';
   const cols = COLS_LINEUP_BASE.concat(rotLineupMostraDifesa ? COLS_LINEUP_DIFESA : []);
 
+  // soglia "rumore" relativa: % della media minuti dei 3 quintetti più usati,
+  // calcolata sull'insieme COMPLETO (prima di ricerca/soglie numeriche, che non
+  // devono far "scivolare" la soglia) — così scala da sola con l'avanzare della
+  // stagione invece di restare fissa a un numero di minuti scelto oggi.
+  const top3 = r.righe.slice().sort((a, b) => b.min - a.min).slice(0, 3);
+  const mediaTop3 = top3.length ? top3.reduce((s, x) => s + x.min, 0) / top3.length : 0;
+  const sogliaRumore = mediaTop3 * ROT_LINEUP_PCT_RUMORE;
+
   let righe = r.righe.slice();
-  if (rotLineupNascondiRumore) righe = righe.filter(x => x.min > ROT_LINEUP_SOGLIA_RUMORE_MIN);
+  if (rotLineupNascondiRumore) righe = righe.filter(x => x.min > sogliaRumore);
 
   const termini = rotLineupFiltroTesto.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
   if (termini.length) righe = righe.filter(x => {
@@ -442,7 +455,7 @@ function vistaLineupBox(r) {
     ' quintetti mostrati · POSS/RTG/PACE/TS% calcolati con la stessa formula del resto dell\'app.</div>' +
     '<div class="rot-lineup-filtri">' +
       '<input type="text" id="rot-lineup-filtro" class="rot-lineup-input" placeholder="Cerca uno o più giocatori, es. Rossi, Bianchi…" value="' + esc(rotLineupFiltroTesto) + '">' +
-      '<label class="rot-toggle"><input type="checkbox" id="rot-lineup-rumore"' + (rotLineupNascondiRumore ? ' checked' : '') + '> Nascondi quintetti con ≤ ' + ROT_LINEUP_SOGLIA_RUMORE_MIN + ' min (rumore statistico)</label>' +
+      '<label class="rot-toggle"><input type="checkbox" id="rot-lineup-rumore"' + (rotLineupNascondiRumore ? ' checked' : '') + '> Nascondi quintetti con utilizzo marginale (< ' + dec(sogliaRumore, 1) + ' min · ' + (ROT_LINEUP_PCT_RUMORE * 100) + '% della media dei 3 più usati)</label>' +
       '<label class="rot-toggle"><input type="checkbox" id="rot-lineup-difesa"' + (rotLineupMostraDifesa ? ' checked' : '') + '> Mostra statistiche difensive</label>' +
       '<div class="rot-soglie">' + sogliePanel + '</div>' +
     '</div>' +
