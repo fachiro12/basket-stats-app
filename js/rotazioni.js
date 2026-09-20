@@ -338,8 +338,9 @@ function calcolaLineupBox() {
     const grp = gruppi[k];
     const minuti = grp.minSec / 60;
     const adv = calcolaAdvanced({ team: grp.team }, minuti || 0.1);
-    const A = grp.team.MIA;
+    const A = grp.team.MIA, B = grp.team.OPP;
     const fga = A.a2 + A.a3, fgm = A.m2 + A.m3;
+    const rimbTot = A.ro + A.rd + B.ro + B.rd;
     return {
       nomi: grp.nomi, chiave: k,
       gp: Object.keys(grp.gareSet).length,
@@ -353,8 +354,8 @@ function calcolaLineupBox() {
       ftr: fga ? A.fta / fga : 0,
       ts: adv.tsA,
       tov: A.pp, tovpct: adv.possA ? A.pp / adv.possA * 100 : 0,
-      ptOpp: grp.team.OPP.pt, rec: A.pr, orb: adv.orbA, drb: adv.drbA, rq: A.rq,
-      pmStint: grp.pmStint   // per verifica incrociata (non mostrato in tabella)
+      ptOpp: B.pt, pm: grp.pmStint, rec: A.pr, orb: adv.orbA, drb: adv.drbA,
+      trb: rimbTot ? (A.ro + A.rd) / rimbTot * 100 : null, rq: A.rq
     };
   });
   return { righe: righe, nGare: gare.length };
@@ -372,11 +373,14 @@ const COLS_LINEUP_BASE = [
   ["ts", "TS%"], ["tov", "TOV"], ["tovpct", "TOV%"]
 ];
 const COLS_LINEUP_DIFESA = [
-  ["ptOpp", "PTS SUB"], ["rec", "REC"], ["orb", "OREB%"], ["drb", "DREB%"], ["rq", "REB SQ"]
+  ["ptOpp", "PTS SUB"], ["pm", "+/-"], ["rec", "REC"], ["orb", "OREB%"], ["drb", "DREB%"], ["trb", "REB TOT%"]
 ];
-/* soglie "≥" impostabili — chiave campo dati, etichetta, decimali */
+/* soglie impostabili — chiave campo dati, etichetta, decimali, operatore
+   ("gte" = tieni solo ≥ soglia, "lte" = tieni solo ≤ soglia — per TOV% si
+   cercano i quintetti con MENO palle perse, quindi "al massimo") */
 const SOGLIE_LINEUP = [
-  ["pace", "Pace ≥", 1], ["pct2", "2P% ≥", 1], ["pct3", "3P% ≥", 1], ["ftr", "FT Ratio ≥", 2], ["tovpct", "TOV% ≥", 1]
+  ["pace", "Pace ≥", 1, "gte"], ["pct2", "2P% ≥", 1, "gte"], ["pct3", "3P% ≥", 1, "gte"],
+  ["ftr", "FT Ratio ≥", 2, "gte"], ["tovpct", "TOV% ≤", 1, "lte"]
 ];
 
 function vistaLineupBox(r) {
@@ -401,8 +405,12 @@ function vistaLineupBox(r) {
   });
 
   SOGLIE_LINEUP.forEach(s => {
-    const campo = s[0], soglia = rotLineupSoglie[campo];
-    if (soglia != null && !Number.isNaN(soglia)) righe = righe.filter(x => (x[campo] != null ? x[campo] : -Infinity) >= soglia);
+    const campo = s[0], soglia = rotLineupSoglie[campo], lte = s[3] === "lte";
+    if (soglia == null || Number.isNaN(soglia)) return;
+    righe = righe.filter(x => {
+      const v = x[campo] != null ? x[campo] : (lte ? Infinity : -Infinity);
+      return lte ? v <= soglia : v >= soglia;
+    });
   });
 
   const dir = rotLineupSort.dir, col = rotLineupSort.col;
@@ -422,7 +430,9 @@ function vistaLineupBox(r) {
 
   const perc = v => v == null ? '–' : dec(v, 1) + '%';
   const celleDifesa = x => !rotLineupMostraDifesa ? '' :
-    '<td>' + x.ptOpp + '</td><td>' + x.rec + '</td><td>' + perc(x.orb) + '</td><td>' + perc(x.drb) + '</td><td>' + x.rq + '</td>';
+    '<td>' + x.ptOpp + '</td>' +
+    '<td class="' + (x.pm >= 0 ? "pos" : "neg") + '">' + (x.pm >= 0 ? "+" : "") + x.pm + '</td>' +
+    '<td>' + x.rec + '</td><td>' + perc(x.orb) + '</td><td>' + perc(x.drb) + '</td><td>' + perc(x.trb) + '</td>';
   const corpo = righe.length ? righe.map(x =>
     '<tr>' +
       '<td class="st-g rot-quintetto-cella" title="' + esc(x.chiave) + '">' + esc(x.nomi.join(', ')) + '</td>' +
@@ -448,7 +458,7 @@ function vistaLineupBox(r) {
   const sogliePanel = SOGLIE_LINEUP.map(s => {
     const v = rotLineupSoglie[s[0]];
     return '<label class="rot-soglia">' + s[1] +
-      '<input type="number" step="any" id="rot-lineup-min-' + s[0] + '" data-soglia="' + s[0] + '" value="' + (v == null ? '' : v) + '"></label>';
+      '<input type="text" inputmode="decimal" id="rot-lineup-min-' + s[0] + '" data-soglia="' + s[0] + '" value="' + (v == null ? '' : v) + '"></label>';
   }).join('');
 
   return '<div class="st-hint">' + r.nGare + ' gare con questi filtri · ' + righe.length + '/' + r.righe.length +
