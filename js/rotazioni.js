@@ -8,13 +8,15 @@
    ========================================================================== */
 
 let filtriRotazioni = { competizione: "Campionato", campo: "tutte", esito: "tutte", stagione: "2026/27" };
-let rotTab = "chart";                              // "chart" | "lineup"
+let rotTab = "chart";                              // "chart" | "lineup" | "giocatori"
 let rotLineupSort = { col: "min", dir: -1 };
 let rotLineupFiltroTesto = "";                      // uno o più nomi separati da virgola (AND)
 let rotLineupNascondiRumore = true;                 // nasconde i quintetti con minuti trascurabili
 const ROT_LINEUP_PCT_RUMORE = 0.05;                 // soglia = 5% della media dei 3 quintetti più usati (scala da sola in stagione)
 let rotLineupMostraDifesa = false;                  // colonne PTS SUB/REC/OREB%/DREB%/REB SQ
 let rotLineupSoglie = { pace: null, pct2: null, pct3: null, ftr: null, tovpct: null };   // filtri "≥" in AND tra loro
+let rotGiocatoriQuintettoSel = null;                // chiave del quintetto scelto nella tab "Giocatori"
+let rotGiocatoriSort = { col: "pt", dir: -1 };
 
 /* ---------- selezione gare (copia di garePerAnalisi, legge filtriRotazioni) ---------- */
 function garePerRotazioni() {
@@ -142,8 +144,23 @@ function impostaFiltroRotazioni(fil, val) {
   renderRotazioni();
 }
 function cambiaTabRot(tab) {
-  if (tab !== "chart" && tab !== "lineup") return;
+  if (tab !== "chart" && tab !== "lineup" && tab !== "giocatori") return;
   rotTab = tab;
+  renderRotazioni();
+}
+function impostaQuintettoSelGiocatori(chiave) {
+  rotGiocatoriQuintettoSel = chiave || null;
+  renderRotazioni();
+}
+function apriGiocatoriQuintetto(chiave) {
+  rotGiocatoriQuintettoSel = chiave || null;
+  rotTab = "giocatori";
+  renderRotazioni();
+}
+function impostaOrdineGiocatoriQuintetto(col) {
+  if (!col) return;
+  if (rotGiocatoriSort.col === col) rotGiocatoriSort.dir *= -1;
+  else rotGiocatoriSort = { col: col, dir: (col === "nome") ? 1 : -1 };
   renderRotazioni();
 }
 function impostaOrdineLineup(col) {
@@ -193,7 +210,9 @@ function renderRotazioni() {
 
   if (!cacheEventiStagione) { body.innerHTML = '<div class="st-hint">Nessun dato in cache — apri prima Analisi stagione.</div>'; return; }
   try {
-    body.innerHTML = (rotTab === "lineup") ? vistaLineupBox(calcolaLineupBox()) : vistaRotazioniChart(calcolaRotazioni());
+    body.innerHTML = rotTab === "lineup" ? vistaLineupBox(calcolaLineupBox())
+      : rotTab === "giocatori" ? vistaGiocatoriQuintetto(calcolaLineupBox())
+      : vistaRotazioniChart(calcolaRotazioni());
   } catch (e) {
     body.innerHTML = '<div class="st-hint">Errore: ' + esc(e && e.message || e) + '</div>';
   }
@@ -262,33 +281,42 @@ function vistaRotazioniChart(r) {
    esistente (stessa metodologia OFF/DEF/NET/PACE/TS% di tutta l'app).
    ========================================================================== */
 function statVuoteLocaleRot() { return { pt: 0, m2: 0, a2: 0, m3: 0, a3: 0, ftm: 0, fta: 0, ro: 0, rd: 0, rq: 0, pp: 0, pr: 0 }; }
-function accumulaEventoLocaleRot(team, ev) {
+/* giocatori (opzionale): oltre al box di squadra, accredita anche il singolo
+   giocatore MIA autore dell'azione — stessa identica logica, un dizionario in
+   più. Retrocompatibile: se omesso, si comporta come prima (solo squadra). */
+function accumulaEventoLocaleRot(team, ev, giocatori) {
   const sq = ev.squadra === "OPP" ? "OPP" : "MIA";
   const t = ev.tipo_evento, d = String(ev.dettaglio || "");
   const T = team[sq];
+  const n = ev.giocatore_num;
+  const P = (giocatori && sq === "MIA" && n) ? (giocatori[n] = giocatori[n] || statVuoteLocaleRot()) : null;
   if (t === "TIRO") {
     const pt = Number(ev.punti_segnati) || 0;
     const seg = d.indexOf("SEGNATO") > -1 || pt >= 2;
     const tre = /3/.test(d.split("_")[0]) || pt === 3;
-    if (tre) { T.a3++; if (seg) T.m3++; } else { T.a2++; if (seg) T.m2++; }
-    T.pt += pt;
+    if (tre) { T.a3++; if (seg) T.m3++; if (P) { P.a3++; if (seg) P.m3++; } }
+    else { T.a2++; if (seg) T.m2++; if (P) { P.a2++; if (seg) P.m2++; } }
+    T.pt += pt; if (P) P.pt += pt;
   } else if (t === "FALLO_SUBITO") {
     const es = String(ev.esito_tl || "").split(",").map(x => x.trim()).filter(Boolean);
     const made = es.filter(v => v.toUpperCase() === "SI").length;
     T.ftm += made; T.fta += es.length; T.pt += made;
+    if (P) { P.ftm += made; P.fta += es.length; P.pt += made; }
   } else if (t === "FALLO_FATTO") {
     const es = String(ev.esito_tl || "").split(",").map(x => x.trim()).filter(Boolean);
     const made = es.filter(v => v.toUpperCase() === "SI").length;
     const O = team[sq === "MIA" ? "OPP" : "MIA"];
     O.ftm += made; O.fta += es.length; O.pt += made;
+    // chi ha commesso il fallo è MIA ma il beneficio è dell'avversario: non
+    // c'è produzione/sofferenza individuale da accreditare qui.
   } else if (t === "RECUPERO") {
-    T.pr++;
+    T.pr++; if (P) P.pr++;
     team[sq === "MIA" ? "OPP" : "MIA"].pp++;   // specularità, come in calcolaBox
   } else if (t === "PALLA_PERSA") {
-    T.pp++;
+    T.pp++; if (P) P.pp++;
   } else if (t === "RIMBALZO") {
-    if (d === "OFFENSIVO") T.ro++;
-    else if (d === "DIFENSIVO") T.rd++;
+    if (d === "OFFENSIVO") { T.ro++; if (P) P.ro++; }
+    else if (d === "DIFENSIVO") { T.rd++; if (P) P.rd++; }
     else T.rq++;   // "SQUADRA"
   }
 }
@@ -303,7 +331,7 @@ function calcolaLineupBox() {
     if (!stints.length) return;
 
     const range = stints.map(s => ({ start: elapsedAt(s.quarto, s.tIn), end: elapsedAt(s.quarto, s.tFine), s: s }));
-    const localBox = range.map(() => ({ MIA: statVuoteLocaleRot(), OPP: statVuoteLocaleRot() }));
+    const localBox = range.map(() => ({ MIA: statVuoteLocaleRot(), OPP: statVuoteLocaleRot(), giocatori: {} }));
 
     let idx = 0;
     (eventiPuliti(g.eventi) || []).forEach(e => {
@@ -314,7 +342,8 @@ function calcolaLineupBox() {
       // canestro segnato "insieme" alla sostituzione finirebbe accreditato
       // al quintetto sbagliato.
       while (idx < range.length - 1 && t > range[idx].end) idx++;
-      accumulaEventoLocaleRot(localBox[idx], e);
+      const lb = localBox[idx];
+      accumulaEventoLocaleRot({ MIA: lb.MIA, OPP: lb.OPP }, e, lb.giocatori);
     });
 
     const vistiGara = {};
@@ -323,12 +352,21 @@ function calcolaLineupBox() {
       if (q.length !== 5) return;   // dato anomalo (rarissimo): salto questo stint
       const nomi = q.map(n => ((typeof nomeAnalisi === "function" ? nomeAnalisi(n) : "") || ("#" + n))).sort();
       const chiave = nomi.join(" · ");
-      if (!gruppi[chiave]) gruppi[chiave] = { nomi: nomi, minSec: 0, pmStint: 0, team: { MIA: statVuoteLocaleRot(), OPP: statVuoteLocaleRot() }, gareSet: {} };
+      if (!gruppi[chiave]) gruppi[chiave] = { nomi: nomi, minSec: 0, pmStint: 0, team: { MIA: statVuoteLocaleRot(), OPP: statVuoteLocaleRot() }, giocatori: {}, gareSet: {} };
       const grp = gruppi[chiave];
       grp.minSec += rg.s.durSec;
       grp.pmStint += rg.s.plusMinus || 0;
       const lb = localBox[i];
       ["MIA", "OPP"].forEach(sq => { Object.keys(grp.team[sq]).forEach(k => { grp.team[sq][k] += lb[sq][k]; }); });
+      // solo i 5 di QUESTO stint: un CAMBIO/FINE registrato allo stesso secondo
+      // esatto della chiusura (vedi nota sul puntatore sopra) porta con sé il
+      // numero del giocatore che sta ENTRANDO — non è ancora del quintetto che
+      // si sta chiudendo, quindi non va attribuito a lui.
+      Object.keys(lb.giocatori).forEach(num => {
+        if (q.indexOf(num) === -1) return;
+        grp.giocatori[num] = grp.giocatori[num] || statVuoteLocaleRot();
+        Object.keys(lb.giocatori[num]).forEach(k => { grp.giocatori[num][k] += lb.giocatori[num][k]; });
+      });
       vistiGara[chiave] = 1;
     });
     Object.keys(vistiGara).forEach(k => { gruppi[k].gareSet[g.partita.id_partita] = 1; });
@@ -341,8 +379,27 @@ function calcolaLineupBox() {
     const A = grp.team.MIA, B = grp.team.OPP;
     const fga = A.a2 + A.a3, fgm = A.m2 + A.m3;
     const rimbTot = A.ro + A.rd + B.ro + B.rd;
+
+    // giocatori dentro il quintetto: stessi minuti del quintetto per tutti e 5
+    // (per definizione — sono sempre stati in campo insieme), stessa formula
+    // USG%/TS% già usata in Analisi stagione (js/analisi.js:vistaAnalisiGiocatori).
+    const teamPlays = fga + 0.44 * A.fta + A.pp;
+    const giocatoriRiga = Object.keys(grp.giocatori).map(num => {
+      const Pg = grp.giocatori[num];
+      const pFga = Pg.a2 + Pg.a3, pFgm = Pg.m2 + Pg.m3;
+      const plays = pFga + 0.44 * Pg.fta + Pg.pp;
+      return {
+        num: num, nome: ((typeof nomeAnalisi === "function" ? nomeAnalisi(num) : "") || ("#" + num)),
+        pt: Pg.pt,
+        usg: (minuti && teamPlays) ? 100 * plays * (minuti / 5) / (minuti * teamPlays) : 0,
+        ts: (pFga || Pg.fta) ? Pg.pt / (2 * (pFga + 0.44 * Pg.fta)) * 100 : null,
+        fgm: pFgm, fga: pFga, fgpct: pFga ? pFgm / pFga * 100 : null,
+        orb: Pg.ro, drb: Pg.rd, tov: Pg.pp, rec: Pg.pr
+      };
+    }).sort((a, b) => b.pt - a.pt);
+
     return {
-      nomi: grp.nomi, chiave: k,
+      nomi: grp.nomi, chiave: k, giocatori: giocatoriRiga,
       gp: Object.keys(grp.gareSet).length,
       min: minuti, pt: A.pt,
       ortg: adv.ortg, drtg: adv.drtg, net: adv.net, poss: adv.possA, pace: adv.pace,
@@ -435,7 +492,11 @@ function vistaLineupBox(r) {
     '<td>' + x.rec + '</td><td>' + perc(x.orb) + '</td><td>' + perc(x.drb) + '</td><td>' + perc(x.trb) + '</td>';
   const corpo = righe.length ? righe.map(x =>
     '<tr>' +
-      '<td class="st-g rot-quintetto-cella" title="' + esc(x.chiave) + '">' + esc(x.nomi.join(', ')) + '</td>' +
+      '<td class="st-g rot-quintetto-cella" title="' + esc(x.chiave) + '">' +
+        '<button class="rot-apri-giocatori" data-apri-giocatori="' + esc(x.chiave) + '" title="Vedi i singoli giocatori di questo quintetto" aria-label="Vedi i singoli giocatori">' +
+          '<svg class="ico" aria-hidden="true"><use href="#i-plus"></use></svg>' +
+        '</button>' + esc(x.nomi.join(', ')) +
+      '</td>' +
       '<td>' + x.gp + '</td>' +
       '<td>' + mmss(x.min) + '</td>' +
       '<td class="st-pt">' + x.pt + '</td>' +
@@ -473,4 +534,75 @@ function vistaLineupBox(r) {
     '<div class="st-hint">Tocca un\'intestazione per ordinare · quintetti raggruppati per nome (non per numero di maglia, stabile ai ' +
     'cambi di numero durante la stagione) · GP = gare in cui quel quintetto è comparso almeno una volta · nomi separati da virgola nel ' +
     'campo di ricerca = tutti richiesti insieme nello stesso quintetto · i filtri "≥" si combinano tra loro (AND).</div>';
+}
+
+/* ==========================================================================
+   GIOCATORI NEI QUINTETTI — chi produce/soffre dentro un quintetto scelto
+   ========================================================================== */
+const COLS_GIOCATORI_QUINTETTO = [
+  ["nome", "Giocatore"], ["pt", "PTS"], ["usg", "USG%"], ["ts", "TS%"],
+  [null, "FGM/FGA"], ["fgpct", "FG%"], ["orb", "ORB"], ["drb", "DRB"], ["tov", "TOV"], ["rec", "REC"]
+];
+
+function vistaGiocatoriQuintetto(r) {
+  if (!r.righe.length) return '<div class="st-hint">Nessuna gara conclusa con questi filtri.</div>';
+
+  // stessa soglia "rumore" della tab Quintetti, per proporre nel selettore solo
+  // quintetti con un minutaggio sensato (evita un elenco lunghissimo di comparse).
+  const top3 = r.righe.slice().sort((a, b) => b.min - a.min).slice(0, 3);
+  const mediaTop3 = top3.length ? top3.reduce((s, x) => s + x.min, 0) / top3.length : 0;
+  const sogliaRumore = mediaTop3 * ROT_LINEUP_PCT_RUMORE;
+  const disponibili = (rotLineupNascondiRumore ? r.righe.filter(x => x.min > sogliaRumore) : r.righe.slice())
+    .sort((a, b) => b.min - a.min);
+  if (!disponibili.length) return '<div class="st-hint">Nessun quintetto sopra la soglia di utilizzo — disattiva "nascondi rumore" nella tab Quintetti.</div>';
+
+  let riga = disponibili.find(x => x.chiave === rotGiocatoriQuintettoSel) || disponibili[0];
+
+  const selettore = '<select id="rot-giocatori-quintetto-sel" class="rot-lineup-input">' +
+    disponibili.map(x => '<option value="' + esc(x.chiave) + '"' + (x.chiave === riga.chiave ? ' selected' : '') + '>' +
+      esc(x.nomi.join(', ')) + ' · ' + mmss(x.min) + '</option>').join('') +
+    '</select>';
+
+  if (!riga.giocatori.length) {
+    return selettore + '<div class="st-hint">Nessun dato individuale per questo quintetto (nessun evento con giocatore attribuito).</div>';
+  }
+
+  // evidenzio chi spicca dentro QUESTO quintetto: PTS/USG% più alti, TS% più basso
+  const maxPt = Math.max(...riga.giocatori.map(x => x.pt));
+  const maxUsg = Math.max(...riga.giocatori.map(x => x.usg));
+  const tsValidi = riga.giocatori.filter(x => x.ts != null).map(x => x.ts);
+  const minTs = tsValidi.length ? Math.min(...tsValidi) : null;
+
+  const dir = rotGiocatoriSort.dir, col = rotGiocatoriSort.col;
+  const giocatori = riga.giocatori.slice().sort((a, b) => {
+    const va = a[col] == null ? -Infinity : a[col], vb = b[col] == null ? -Infinity : b[col];
+    if (col === "nome") return String(a.nome).localeCompare(String(b.nome)) * dir;
+    if (va === vb) return 0;
+    return (va < vb ? -1 : 1) * dir;
+  });
+
+  const thead = '<tr>' + COLS_GIOCATORI_QUINTETTO.map(c =>
+    (c[0]
+      ? '<th data-sort="' + c[0] + '"' + (rotGiocatoriSort.col === c[0] ? ' class="an-sorted"' : '') + '>' +
+        c[1] + (rotGiocatoriSort.col === c[0] ? (dir < 0 ? ' ▾' : ' ▴') : '') + '</th>'
+      : '<th>' + c[1] + '</th>')).join('') + '</tr>';
+
+  const perc = v => v == null ? '–' : dec(v, 1) + '%';
+  const corpo = giocatori.map(x =>
+    '<tr>' +
+      '<td class="st-g">' + esc(x.nome) + '</td>' +
+      '<td class="st-pt' + (x.pt === maxPt && maxPt > 0 ? ' pos' : '') + '">' + x.pt + '</td>' +
+      '<td class="' + (x.usg === maxUsg && maxUsg > 0 ? 'pos' : '') + '">' + dec(x.usg, 1) + '%</td>' +
+      '<td class="' + (x.ts != null && x.ts === minTs ? 'neg' : '') + '">' + perc(x.ts) + '</td>' +
+      '<td>' + x.fgm + '/' + x.fga + '</td><td>' + perc(x.fgpct) + '</td>' +
+      '<td>' + x.orb + '</td><td>' + x.drb + '</td><td>' + x.tov + '</td><td>' + x.rec + '</td>' +
+    '</tr>'
+  ).join('');
+
+  return '<div class="st-hint">Scegli un quintetto (minuti giocati insieme in questa stagione filtrata) per vedere il contributo dei 5 singoli.</div>' +
+    selettore +
+    '<div class="st-scroll"><table class="st-box an-tab">' + thead + '<tbody>' + corpo + '</tbody></table></div>' +
+    '<div class="st-hint">MIN non in tabella: dentro un quintetto i 5 giocatori condividono per definizione gli stessi minuti (' + mmss(riga.min) + '). ' +
+    'USG% e TS% con la stessa formula di Analisi stagione — in un quintetto equilibrato ogni giocatore sta intorno al 20% di USG (5 che si dividono i possessi). ' +
+    'In verde il PTS/USG% più alto, in rosso il TS% più basso del gruppo — solo un aiuto visivo, non un giudizio.</div>';
 }

@@ -79,6 +79,14 @@
 }
 .rot-lineup-input::placeholder { color: var(--color-text-muted); font-weight: 600; }
 .rot-quintetto-cella { max-width: 112px; white-space: normal !important; line-height: 1.25; font-size: 11px; }
+.rot-apri-giocatori {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; margin: 0 4px 2px 0;
+  border-radius: var(--radius-pill); border: 1px solid var(--color-brand-ink);
+  background: var(--color-brand-soft); color: var(--color-brand-ink);
+  vertical-align: middle; touch-action: manipulation; flex-shrink: 0;
+}
+.rot-apri-giocatori .ico { width: 11px; height: 11px; }
 
 .rot-lineup-filtri { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
 .rot-toggle {

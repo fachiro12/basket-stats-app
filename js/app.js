@@ -138,8 +138,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const rotBody = document.getElementById("rot-body");
   if (rotBody) {
     rotBody.addEventListener("click", e => {
+      const apriBtn = e.target.closest("[data-apri-giocatori]");
+      if (apriBtn && typeof apriGiocatoriQuintetto === "function") { apriGiocatoriQuintetto(apriBtn.dataset.apriGiocatori); return; }
       const th = e.target.closest("th[data-sort]");
-      if (th && typeof impostaOrdineLineup === "function") impostaOrdineLineup(th.dataset.sort);
+      if (!th) return;
+      const inTabQuintetti = !!th.closest("table.rot-lineup-tab");
+      if (inTabQuintetti && typeof impostaOrdineLineup === "function") impostaOrdineLineup(th.dataset.sort);
+      else if (!inTabQuintetti && typeof impostaOrdineGiocatoriQuintetto === "function") impostaOrdineGiocatoriQuintetto(th.dataset.sort);
     });
     rotBody.addEventListener("input", e => {
       if (e.target.id === "rot-lineup-filtro" && typeof impostaFiltroTestoLineup === "function") {
@@ -152,8 +157,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.target.id === "rot-lineup-rumore" && typeof impostaNascondiRumoreLineup === "function") {
         impostaNascondiRumoreLineup(e.target.checked); return;
       }
-      if (e.target.id === "rot-lineup-difesa" && typeof impostaMostraDifesaLineup === "function")
-        impostaMostraDifesaLineup(e.target.checked);
+      if (e.target.id === "rot-lineup-difesa" && typeof impostaMostraDifesaLineup === "function") {
+        impostaMostraDifesaLineup(e.target.checked); return;
+      }
+      if (e.target.id === "rot-giocatori-quintetto-sel" && typeof impostaQuintettoSelGiocatori === "function")
+        impostaQuintettoSelGiocatori(e.target.value);
     });
   }
 
