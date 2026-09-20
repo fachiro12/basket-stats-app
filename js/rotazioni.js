@@ -10,7 +10,11 @@
 let filtriRotazioni = { competizione: "Campionato", campo: "tutte", esito: "tutte", stagione: "2026/27" };
 let rotTab = "chart";                              // "chart" | "lineup"
 let rotLineupSort = { col: "min", dir: -1 };
-let rotLineupFiltroTesto = "";
+let rotLineupFiltroTesto = "";                      // uno o più nomi separati da virgola (AND)
+let rotLineupNascondiRumore = true;                 // nasconde i quintetti con minuti trascurabili
+const ROT_LINEUP_SOGLIA_RUMORE_MIN = 1;             // soglia fissa dichiarata in UI
+let rotLineupMostraDifesa = false;                  // colonne PTS SUB/REC/OREB%/DREB%/REB SQ
+let rotLineupSoglie = { pace: null, pct2: null, pct3: null, ftr: null, tovpct: null };   // filtri "≥" in AND tra loro
 
 /* ---------- selezione gare (copia di garePerAnalisi, legge filtriRotazioni) ---------- */
 function garePerRotazioni() {
@@ -148,13 +152,32 @@ function impostaOrdineLineup(col) {
   else rotLineupSort = { col: col, dir: (col === "quintetto") ? 1 : -1 };
   renderRotazioni();
 }
+/* renderRotazioni rifà l'innerHTML del body (distrugge/ricrea gli input): senza
+   questo si perderebbe il focus/cursore a ogni carattere digitato in un campo
+   testo/numero che triggera un re-render a ogni tasto. */
+function rotRestoraFocus(id) {
+  const inp = document.getElementById(id);
+  if (inp) { inp.focus(); const v = inp.value; try { inp.setSelectionRange(v.length, v.length); } catch (e) {} }
+}
 function impostaFiltroTestoLineup(testo) {
   rotLineupFiltroTesto = String(testo || "");
   renderRotazioni();
-  // renderRotazioni rifà l'innerHTML del body (distrugge/ricrea l'input): senza
-  // questo si perderebbe il focus/cursore a ogni carattere digitato.
-  const inp = document.getElementById("rot-lineup-filtro");
-  if (inp) { inp.focus(); const v = inp.value; try { inp.setSelectionRange(v.length, v.length); } catch (e) {} }
+  rotRestoraFocus("rot-lineup-filtro");
+}
+function impostaNascondiRumoreLineup(on) {
+  rotLineupNascondiRumore = !!on;
+  renderRotazioni();
+}
+function impostaMostraDifesaLineup(on) {
+  rotLineupMostraDifesa = !!on;
+  renderRotazioni();
+}
+function impostaSogliaLineup(campo, valStr) {
+  if (!(campo in rotLineupSoglie)) return;
+  const v = String(valStr || "").trim();
+  rotLineupSoglie[campo] = v === "" ? null : Number(v.replace(",", "."));
+  renderRotazioni();
+  rotRestoraFocus("rot-lineup-min-" + campo);
 }
 
 /* ==========================================================================
@@ -238,7 +261,7 @@ function vistaRotazioniChart(r) {
    stint, lo si somma per quintetto e si passa a calcolaAdvanced() già
    esistente (stessa metodologia OFF/DEF/NET/PACE/TS% di tutta l'app).
    ========================================================================== */
-function statVuoteLocaleRot() { return { pt: 0, m2: 0, a2: 0, m3: 0, a3: 0, ftm: 0, fta: 0, ro: 0, rd: 0, pp: 0 }; }
+function statVuoteLocaleRot() { return { pt: 0, m2: 0, a2: 0, m3: 0, a3: 0, ftm: 0, fta: 0, ro: 0, rd: 0, rq: 0, pp: 0, pr: 0 }; }
 function accumulaEventoLocaleRot(team, ev) {
   const sq = ev.squadra === "OPP" ? "OPP" : "MIA";
   const t = ev.tipo_evento, d = String(ev.dettaglio || "");
@@ -259,12 +282,14 @@ function accumulaEventoLocaleRot(team, ev) {
     const O = team[sq === "MIA" ? "OPP" : "MIA"];
     O.ftm += made; O.fta += es.length; O.pt += made;
   } else if (t === "RECUPERO") {
+    T.pr++;
     team[sq === "MIA" ? "OPP" : "MIA"].pp++;   // specularità, come in calcolaBox
   } else if (t === "PALLA_PERSA") {
     T.pp++;
   } else if (t === "RIMBALZO") {
     if (d === "OFFENSIVO") T.ro++;
     else if (d === "DIFENSIVO") T.rd++;
+    else T.rq++;   // "SQUADRA"
   }
 }
 
@@ -323,13 +348,14 @@ function calcolaLineupBox() {
       ftr: fga ? A.fta / fga : 0,
       ts: adv.tsA,
       tov: A.pp, tovpct: adv.possA ? A.pp / adv.possA * 100 : 0,
-      pmStint: grp.pmStint, ptOpp: grp.team.OPP.pt   // per verifica incrociata (non mostrati in tabella)
+      ptOpp: grp.team.OPP.pt, rec: A.pr, orb: adv.orbA, drb: adv.drbA, rq: A.rq,
+      pmStint: grp.pmStint   // per verifica incrociata (non mostrato in tabella)
     };
   });
   return { righe: righe, nGare: gare.length };
 }
 
-const COLS_LINEUP = [
+const COLS_LINEUP_BASE = [
   ["quintetto", "Quintetto"], ["gp", "GP"], ["min", "MIN"], ["pt", "PTS"],
   ["ortg", "OFF RTG"], ["drtg", "DEF RTG"], ["net", "NET RTG"],
   ["poss", "POSS"], ["pace", "PACE"],
@@ -340,12 +366,31 @@ const COLS_LINEUP = [
   [null, "FTM/FTA"], ["ftpct", "FT%"], ["ftr", "FT Ratio"],
   ["ts", "TS%"], ["tov", "TOV"], ["tovpct", "TOV%"]
 ];
+const COLS_LINEUP_DIFESA = [
+  ["ptOpp", "PTS SUB"], ["rec", "REC"], ["orb", "OREB%"], ["drb", "DREB%"], ["rq", "REB SQ"]
+];
+/* soglie "≥" impostabili — chiave campo dati, etichetta, decimali */
+const SOGLIE_LINEUP = [
+  ["pace", "Pace ≥", 1], ["pct2", "2P% ≥", 1], ["pct3", "3P% ≥", 1], ["ftr", "FT Ratio ≥", 2], ["tovpct", "TOV% ≥", 1]
+];
 
 function vistaLineupBox(r) {
   if (!r.righe.length) return '<div class="st-hint">Nessuna gara conclusa con questi filtri.</div>';
-  const filtro = rotLineupFiltroTesto.trim().toLowerCase();
+  const cols = COLS_LINEUP_BASE.concat(rotLineupMostraDifesa ? COLS_LINEUP_DIFESA : []);
+
   let righe = r.righe.slice();
-  if (filtro) righe = righe.filter(x => x.chiave.toLowerCase().indexOf(filtro) > -1);
+  if (rotLineupNascondiRumore) righe = righe.filter(x => x.min > ROT_LINEUP_SOGLIA_RUMORE_MIN);
+
+  const termini = rotLineupFiltroTesto.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+  if (termini.length) righe = righe.filter(x => {
+    const chiaveL = x.chiave.toLowerCase();
+    return termini.every(t => chiaveL.indexOf(t) > -1);
+  });
+
+  SOGLIE_LINEUP.forEach(s => {
+    const campo = s[0], soglia = rotLineupSoglie[campo];
+    if (soglia != null && !Number.isNaN(soglia)) righe = righe.filter(x => (x[campo] != null ? x[campo] : -Infinity) >= soglia);
+  });
 
   const dir = rotLineupSort.dir, col = rotLineupSort.col;
   righe.sort((a, b) => {
@@ -356,13 +401,15 @@ function vistaLineupBox(r) {
     return (va < vb ? -1 : 1) * dir;
   });
 
-  const thead = '<tr>' + COLS_LINEUP.map(c =>
+  const thead = '<tr>' + cols.map(c =>
     (c[0]
       ? '<th data-sort="' + c[0] + '"' + (rotLineupSort.col === c[0] ? ' class="an-sorted"' : '') + '>' +
         c[1] + (rotLineupSort.col === c[0] ? (dir < 0 ? ' ▾' : ' ▴') : '') + '</th>'
       : '<th>' + c[1] + '</th>')).join('') + '</tr>';
 
   const perc = v => v == null ? '–' : dec(v, 1) + '%';
+  const celleDifesa = x => !rotLineupMostraDifesa ? '' :
+    '<td>' + x.ptOpp + '</td><td>' + x.rec + '</td><td>' + perc(x.orb) + '</td><td>' + perc(x.drb) + '</td><td>' + x.rq + '</td>';
   const corpo = righe.length ? righe.map(x =>
     '<tr>' +
       '<td class="st-g rot-quintetto-cella" title="' + esc(x.chiave) + '">' + esc(x.nomi.join(', ')) + '</td>' +
@@ -381,13 +428,26 @@ function vistaLineupBox(r) {
       '<td>' + x.ftm + '/' + x.fta + '</td><td>' + perc(x.ftpct) + '</td><td>' + dec(x.ftr, 2) + '</td>' +
       '<td>' + perc(x.ts) + '</td>' +
       '<td>' + x.tov + '</td><td>' + dec(x.tovpct, 1) + '%</td>' +
+      celleDifesa(x) +
     '</tr>'
-  ).join('') : '<tr><td colspan="' + COLS_LINEUP.length + '" class="st-hint">Nessun quintetto trovato con questo filtro.</td></tr>';
+  ).join('') : '<tr><td colspan="' + cols.length + '" class="st-hint">Nessun quintetto trovato con questi filtri.</td></tr>';
+
+  const sogliePanel = SOGLIE_LINEUP.map(s => {
+    const v = rotLineupSoglie[s[0]];
+    return '<label class="rot-soglia">' + s[1] +
+      '<input type="number" step="any" id="rot-lineup-min-' + s[0] + '" data-soglia="' + s[0] + '" value="' + (v == null ? '' : v) + '"></label>';
+  }).join('');
 
   return '<div class="st-hint">' + r.nGare + ' gare con questi filtri · ' + righe.length + '/' + r.righe.length +
     ' quintetti mostrati · POSS/RTG/PACE/TS% calcolati con la stessa formula del resto dell\'app.</div>' +
-    '<input type="text" id="rot-lineup-filtro" class="rot-lineup-input" placeholder="Cerca un giocatore nei quintetti…" value="' + esc(rotLineupFiltroTesto) + '">' +
-    '<div class="st-scroll"><table class="st-box an-tab"><thead>' + thead + '</thead><tbody>' + corpo + '</tbody></table></div>' +
+    '<div class="rot-lineup-filtri">' +
+      '<input type="text" id="rot-lineup-filtro" class="rot-lineup-input" placeholder="Cerca uno o più giocatori, es. Rossi, Bianchi…" value="' + esc(rotLineupFiltroTesto) + '">' +
+      '<label class="rot-toggle"><input type="checkbox" id="rot-lineup-rumore"' + (rotLineupNascondiRumore ? ' checked' : '') + '> Nascondi quintetti con ≤ ' + ROT_LINEUP_SOGLIA_RUMORE_MIN + ' min (rumore statistico)</label>' +
+      '<label class="rot-toggle"><input type="checkbox" id="rot-lineup-difesa"' + (rotLineupMostraDifesa ? ' checked' : '') + '> Mostra statistiche difensive</label>' +
+      '<div class="rot-soglie">' + sogliePanel + '</div>' +
+    '</div>' +
+    '<div class="st-scroll"><table class="st-box an-tab rot-lineup-tab"><thead>' + thead + '</thead><tbody>' + corpo + '</tbody></table></div>' +
     '<div class="st-hint">Tocca un\'intestazione per ordinare · quintetti raggruppati per nome (non per numero di maglia, stabile ai ' +
-    'cambi di numero durante la stagione) · GP = gare in cui quel quintetto è comparso almeno una volta.</div>';
+    'cambi di numero durante la stagione) · GP = gare in cui quel quintetto è comparso almeno una volta · nomi separati da virgola nel ' +
+    'campo di ricerca = tutti richiesti insieme nello stesso quintetto · i filtri "≥" si combinano tra loro (AND).</div>';
 }

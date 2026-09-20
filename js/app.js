@@ -142,8 +142,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (th && typeof impostaOrdineLineup === "function") impostaOrdineLineup(th.dataset.sort);
     });
     rotBody.addEventListener("input", e => {
-      if (e.target.id === "rot-lineup-filtro" && typeof impostaFiltroTestoLineup === "function")
-        impostaFiltroTestoLineup(e.target.value);
+      if (e.target.id === "rot-lineup-filtro" && typeof impostaFiltroTestoLineup === "function") {
+        impostaFiltroTestoLineup(e.target.value); return;
+      }
+      if (e.target.dataset.soglia && typeof impostaSogliaLineup === "function")
+        impostaSogliaLineup(e.target.dataset.soglia, e.target.value);
+    });
+    rotBody.addEventListener("change", e => {
+      if (e.target.id === "rot-lineup-rumore" && typeof impostaNascondiRumoreLineup === "function") {
+        impostaNascondiRumoreLineup(e.target.checked); return;
+      }
+      if (e.target.id === "rot-lineup-difesa" && typeof impostaMostraDifesaLineup === "function")
+        impostaMostraDifesaLineup(e.target.checked);
     });
   }
 
