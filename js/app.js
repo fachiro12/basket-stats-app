@@ -131,6 +131,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (grp && typeof impostaFiltroRotazioni === "function")
       impostaFiltroRotazioni(grp.dataset.fil, btn.dataset.val);
   });
+  document.querySelectorAll("#rot-tabs button").forEach(b =>
+    b.addEventListener("click", () => {
+      if (typeof cambiaTabRot === "function") cambiaTabRot(b.dataset.rtab);
+    }));
+  const rotBody = document.getElementById("rot-body");
+  if (rotBody) {
+    rotBody.addEventListener("click", e => {
+      const th = e.target.closest("th[data-sort]");
+      if (th && typeof impostaOrdineLineup === "function") impostaOrdineLineup(th.dataset.sort);
+    });
+    rotBody.addEventListener("input", e => {
+      if (e.target.id === "rot-lineup-filtro" && typeof impostaFiltroTestoLineup === "function")
+        impostaFiltroTestoLineup(e.target.value);
+    });
+  }
 
   /* -------- BREAKDOWN POSSESSI (sperimentale) -------- */
   const apriBrk = document.getElementById("apri-breakdown");

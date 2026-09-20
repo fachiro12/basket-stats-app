@@ -61,3 +61,21 @@
 .rot-lg-neg { background: var(--color-state-negative); }
 .rot-lg-zero { background: var(--color-text-muted); opacity: .15; }
 .rot-lg-pos { background: var(--color-state-positive); }
+
+/* Tab Quintetti — Lineup Advanced Box Score */
+.rot-lineup-input {
+  display: block;
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: 0 10px;
+  margin: 8px 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+}
+.rot-lineup-input::placeholder { color: var(--color-text-muted); font-weight: 600; }
+.rot-quintetto-cella { max-width: 220px; white-space: normal !important; line-height: 1.3; }
