@@ -655,9 +655,20 @@ function vistaSchedaGiocatore(g) {
     glossarioMetriche_(obiettivi) +
     tabellaRiferimenti_(obiettivi, gare) +
     tracking +
-    '<div class="pd-azioni">' +
-      '<button class="btn-conferma" id="pd-stampa-btn">🖨️ Stampa / Salva PDF</button>' +
-      '<button class="btn-annulla-modale" id="pd-copia-prompt">📋 Copia prompt AI</button>' +
+    /* Due azioni SEPARATE e indipendenti, in due blocchi distinti (non più una
+       riga sola): il salvataggio di un obiettivo avviene SOLO nel form ("+
+       Aggiungi obiettivo" → SALVA, automatico a ogni modifica) — la stampa/
+       PDF e il prompt AI sono esportazioni a parte, da rifare se cambia
+       qualcosa negli obiettivi. */
+    '<div class="pd-blocco pd-sezione-azione">' +
+      '<div class="adv-tit" style="margin-top:14px">Esporta scheda</div>' +
+      '<button class="btn-conferma pd-azione-btn" id="pd-stampa-btn">🖨️ Stampa scheda</button>' +
+      '<div class="st-hint">Apre la finestra di stampa del browser — scegli "Salva come PDF" come destinazione per ottenere il file. Include gli obiettivi così come sono SALVATI ora: se ne modifichi uno, la stampa precedente non si aggiorna da sola.</div>' +
+    '</div>' +
+    '<div class="pd-blocco pd-sezione-azione">' +
+      '<div class="adv-tit" style="margin-top:14px">Prompt per un AI esterno</div>' +
+      '<button class="btn-annulla-modale pd-azione-btn" id="pd-copia-prompt">📋 Copia prompt AI</button>' +
+      '<div class="st-hint">Testo con obiettivi e dati recenti, da incollare nel tuo assistente AI preferito per consigli motivazionali e pratici — indipendente dalla stampa.</div>' +
     '</div>' +
     '<div class="st-hint">Metriche base = valore reale gara per gara · AIS = media di gara (Leverage Index incluso) · ' +
     'Def. Rating/BPM/OBPM/DBPM/VORP = andamento CUMULATIVO sulle gare via via giocate (sono costrutti stagionali, non ha senso un valore a singola gara).</div>';

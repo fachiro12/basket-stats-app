@@ -75,11 +75,16 @@ table.pd-tab-obiettivi td.pd-nota {
 /* Riferimento metrica nel form (Basso/Medio/Elite/Media squadra) */
 .pd-metrica-rif { margin: -4px 0 10px; text-align: left; min-height: 14px; }
 
+.pd-salva-nota { margin: 8px 0 4px; }
+
 table.pd-tab-riferimenti th, table.pd-tab-riferimenti td { text-align: center; }
 table.pd-tab-riferimenti td:first-child { text-align: left; }
 
-.pd-azioni { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-.pd-azioni button { flex: 1 1 180px; }
+/* Due sezioni SEPARATE (Stampa vs Prompt AI) — non più una riga sola con 2
+   bottoni fianco a fianco, per non farle sembrare la stessa azione. */
+.pd-sezione-azione { margin-top: 4px; }
+.pd-sezione-azione + .pd-sezione-azione { margin-top: 18px; }
+.pd-azione-btn { display: block; width: 100%; margin: 6px 0 6px; }
 
 /* ---------- Form obiettivo: target come testo (bug cursore su type=number già
    noto in questo app — vedi rotazioni.css/rotazioni.js) ---------- */
