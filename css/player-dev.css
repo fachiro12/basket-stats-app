@@ -8,6 +8,15 @@
 .pd-riga-giocatore { cursor: pointer; touch-action: manipulation; }
 
 .pd-header { margin-bottom: 2px; }
+.pd-filtro-attivo {
+  text-align: left;
+  margin-top: 4px;
+  padding: 6px 10px;
+  background: var(--color-brand-soft);
+  color: var(--color-brand-ink);
+  border-radius: var(--radius-sm);
+}
+.pd-filtro-attivo strong { color: var(--color-brand-ink); }
 
 table.pd-tab-obiettivi td.pd-nota {
   max-width: 160px;

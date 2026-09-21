@@ -304,6 +304,20 @@ function vistaDefRtg() {
 /* ==========================================================================
    RENDER
    ========================================================================== */
+/* Analisi avanzata NON ha una sua barra filtri: riusa `filtriAnalisi` in sola
+   lettura, condiviso con Analisi stagione (garePerAnalisi()) — per questo il
+   filtro qui è "quello che era impostato l'ultima volta in Analisi stagione",
+   invisibile altrimenti. Una riga di riepilogo evita di confrontare numeri di
+   qui con quelli di un'altra vista (es. Player Development, che ha invece un
+   filtro INDIPENDENTE, `filtriPlayerDev`) senza sapere se stanno guardando le
+   stesse gare. */
+function etichettaFiltriAnalisi_() {
+  const f = (typeof filtriAnalisi !== "undefined" && filtriAnalisi) || {};
+  const comp = f.competizione === "Amichevole" ? "Amichevoli" : (f.competizione || "Campionato");
+  const campo = f.campo && f.campo !== "tutte" ? f.campo : "Tutte";
+  const esito = f.esito && f.esito !== "tutte" ? (f.esito === "vinte" ? "Vinte" : "Perse") : "Tutte";
+  return '<div class="st-hint avz-filtro-attivo">Filtro attivo (da Analisi stagione): <strong>' + esc(comp) + '</strong> · ' + esc(campo) + ' · ' + esc(esito) + '</div>';
+}
 function renderAnalisiAvanzata() {
   document.querySelectorAll("#avz-tabs button").forEach(b =>
     b.classList.toggle("attivo", b.dataset.avztab === avzTab));
@@ -311,9 +325,8 @@ function renderAnalisiAvanzata() {
   if (!body) return;
   if (!cacheEventiStagione) { body.innerHTML = '<div class="st-hint">Apri prima Analisi stagione per scaricare le gare.</div>'; return; }
   try {
-    if (avzTab === "bpm") body.innerHTML = vistaBpmVorp();
-    else if (avzTab === "defrtg") body.innerHTML = vistaDefRtg();
-    else body.innerHTML = vistaAIS();
+    const vista = avzTab === "bpm" ? vistaBpmVorp() : avzTab === "defrtg" ? vistaDefRtg() : vistaAIS();
+    body.innerHTML = etichettaFiltriAnalisi_() + vista;
   } catch (e) {
     body.innerHTML = '<div class="st-hint">Errore: ' + esc(e && e.message || e) + '</div>';
   }

@@ -13,6 +13,16 @@
 }
 .avz-apri-bottoni .btn-annulla-modale { flex: 1; min-width: 120px; }
 
+.avz-filtro-attivo {
+  text-align: left;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  background: var(--color-brand-soft);
+  color: var(--color-brand-ink);
+  border-radius: var(--radius-sm);
+}
+.avz-filtro-attivo strong { color: var(--color-brand-ink); }
+
 /* Livelli AIS — riusano i token di stato esistenti */
 .avz-t-alto { color: var(--color-state-positive); font-weight: 800; }
 .avz-t-buono { color: var(--color-text-primary); font-weight: 800; }

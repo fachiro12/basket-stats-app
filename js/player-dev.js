@@ -255,14 +255,21 @@ function garePerPlayerDev() {
 
 /* ==========================================================================
    Punto di partenza (baseline) di un obiettivo — indipendente dai filtri di
-   Campionato/Amichevoli scelti nell'elenco: o dalle sole amichevoli (tipico
-   "prima della stagione") o da una selezione esplicita di gare (checklist nel
-   form). Tutte le gare TERMINATE, non solo quelle di garePerPlayerDev().
+   Campionato/Amichevoli · Casa/Trasferta · Vinte/Perse scelti nell'elenco: o
+   dalle sole amichevoli (tipico "prima della stagione") o da una selezione
+   esplicita di gare (checklist nel form). Resta però sulla STESSA stagione
+   di `filtriPlayerDev` (mai mescolare stagioni diverse "di nascosto" — prima
+   di questo fix `gareTerminate_()` non filtrava affatto per stagione, mentre
+   `garePerPlayerDev()` sì: la stessa gara amichevole poteva contare per il
+   "Partenza" ma sparire dall'"Attuale" se taggata con una stagione diversa
+   da quella corrente, dando l'impressione di un bug nei numeri).
    ========================================================================== */
 function gareTerminate_() {
   const byMatch = (cacheEventiStagione && cacheEventiStagione.byMatch) || {};
+  const stagione = filtriPlayerDev.stagione;
   return elencoPartite()
     .filter(p => String(p.stato) === "Terminata")
+    .filter(p => stagione === "tutte" || (p.stagione || "2026/27") === stagione)
     .map(p => {
       const raw = byMatch[String(p.id_partita)] || null;
       const finale = raw ? punteggioDaEventi(eventiPuliti(raw)) : null;
@@ -447,6 +454,19 @@ function impostaFiltroPlayerDev(fil, val) {
   renderPlayerDevLista();
   if (pdGiocatoreSel) renderSchedaGiocatore();
 }
+/* Riepilogo del filtro attivo, ben visibile nella scheda (schermo+PDF): "Attuale"
+   e i valori di riferimento cambiano se qui è diverso da come lo si ricorda —
+   e sono un filtro INDIPENDENTE da quello di Analisi avanzata (filtriAnalisi),
+   quindi due numeri diversi per lo stesso giocatore/metrica non sono un errore,
+   sono semplicemente due gare-set diversi: per confrontarli vanno allineati
+   qui e lì allo stesso filtro. */
+function etichettaFiltriPlayerDev_() {
+  const f = filtriPlayerDev;
+  const comp = f.competizione === "Amichevole" ? "Amichevoli" : f.competizione;
+  const campo = f.campo !== "tutte" ? f.campo : "Tutte";
+  const esito = f.esito !== "tutte" ? (f.esito === "vinte" ? "Vinte" : "Perse") : "Tutte";
+  return '<div class="st-hint pd-filtro-attivo">Filtro attivo (indipendente da Analisi avanzata): <strong>' + esc(comp) + '</strong> · ' + esc(campo) + ' · ' + esc(esito) + '</div>';
+}
 
 /* ==========================================================================
    RENDER — elenco giocatori
@@ -497,11 +517,12 @@ function rigaObiettivoTabella_(o, num, gare, perStampa) {
   const raggiunto = attuale == null ? null : (o.direzione === "lte" ? attuale <= o.target : attuale >= o.target);
   const statoTxt = attuale == null ? "Dati insuff." : (raggiunto ? "✓ Raggiunto" : "In corso");
   const statoCls = attuale == null ? "" : (raggiunto ? "pd-badge-ok" : "pd-badge-corso");
+  const titoloInsuff = "Nessuna gara con minuti giocati nel filtro attivo (Campionato/Amichevoli · Casa/Trasferta · Vinte/Perse) — prova ad allargarlo qui sopra.";
   return '<tr>' +
     '<td>' + esc(etichettaOrizzonte(o.orizzonte)) + '</td>' +
     '<td>' + esc(info.et) + '</td>' +
-    '<td>' + (partenza == null ? '–' : dec(partenza, info.dec) + info.unita) + '</td>' +
-    '<td>' + (attuale == null ? '–' : dec(attuale, info.dec) + info.unita) + '</td>' +
+    '<td' + (partenza == null ? ' title="' + esc(titoloInsuff) + '"' : '') + '>' + (partenza == null ? '–' : dec(partenza, info.dec) + info.unita) + '</td>' +
+    '<td' + (attuale == null ? ' title="' + esc(titoloInsuff) + '"' : '') + '>' + (attuale == null ? '–' : dec(attuale, info.dec) + info.unita) + '</td>' +
     '<td>' + (o.direzione === "lte" ? "≤" : "≥") + ' ' + dec(o.target, info.dec) + info.unita + '</td>' +
     '<td class="' + statoCls + '">' + statoTxt + '</td>' +
     '<td class="pd-nota">' + esc(o.nota || "") + '</td>' +
@@ -578,9 +599,8 @@ function vistaSchedaGiocatore(g) {
   return '<div class="pd-header">' +
       '<div class="st-hint">' + esc(g.ruolo || "—") +
       (g.numero_maglia != null && g.numero_maglia !== "" ? ' · #' + esc(g.numero_maglia) : '') +
-      ' · ' + esc(g.team || TEAM_DEFAULT) + ' · stagione ' + esc(filtriPlayerDev.stagione) +
-      ' · ' + esc((filtriPlayerDev.competizione === "Amichevole" ? "Amichevoli" : filtriPlayerDev.competizione)) +
-      ' (filtro impostato nell\'elenco giocatori)</div>' +
+      ' · ' + esc(g.team || TEAM_DEFAULT) + ' · stagione ' + esc(filtriPlayerDev.stagione) + '</div>' +
+      etichettaFiltriPlayerDev_() +
     '</div>' +
     riepilogoPartenzaAttuale_(obiettivi, num, gare) +
     '<div class="adv-tit" style="margin-top:14px">Obiettivi (' + obiettivi.length + '/' + MAX_OBIETTIVI + ')</div>' +
@@ -792,7 +812,10 @@ function contenutoStampaScheda_(g) {
       '<h1>Scheda di sviluppo — ' + esc(((g.cognome || "") + " " + (g.nome || "")).trim()) + '</h1>' +
       '<p>' + esc(g.ruolo || "—") + (g.numero_maglia != null && g.numero_maglia !== "" ? ' · #' + esc(g.numero_maglia) : '') +
       ' · ' + esc(g.team || TEAM_DEFAULT) + ' · stagione ' + esc(filtriPlayerDev.stagione) + '</p>' +
-      '<p class="pd-stampa-data">Generato il ' + esc(new Date().toLocaleDateString("it-IT")) + '</p>' +
+      '<p class="pd-stampa-data">Generato il ' + esc(new Date().toLocaleDateString("it-IT")) + ' · Filtro gare: ' +
+        esc(filtriPlayerDev.competizione === "Amichevole" ? "Amichevoli" : filtriPlayerDev.competizione) + ' · ' +
+        esc(filtriPlayerDev.campo !== "tutte" ? filtriPlayerDev.campo : "Tutte") + ' · ' +
+        esc(filtriPlayerDev.esito !== "tutte" ? (filtriPlayerDev.esito === "vinte" ? "Vinte" : "Perse") : "Tutte") + '</p>' +
     '</div>' +
     '<h2>Dove siamo oggi</h2>' +
     (riepilogoPartenzaAttuale_(obiettivi, num, gare) || '<p>Nessun obiettivo impostato.</p>') +
