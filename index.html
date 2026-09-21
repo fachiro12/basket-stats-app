@@ -11,22 +11,23 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Basket Stats">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=60">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=60">
-<link rel="apple-touch-icon" href="icon-180.png?v=60">
-<link rel="stylesheet" href="css/tokens.css?v=60">
-<link rel="stylesheet" href="css/base.css?v=60">
-<link rel="stylesheet" href="css/shell.css?v=60">
-<link rel="stylesheet" href="css/partita.css?v=60">
-<link rel="stylesheet" href="css/altro.css?v=60">
-<link rel="stylesheet" href="css/calendario.css?v=60">
-<link rel="stylesheet" href="css/roster.css?v=60">
-<link rel="stylesheet" href="css/stats.css?v=60">
-<link rel="stylesheet" href="css/possessi.css?v=60">
-<link rel="stylesheet" href="css/analisi-avanzata.css?v=60">
-<link rel="stylesheet" href="css/rotazioni.css?v=60">
-<link rel="stylesheet" href="css/breakdown-possessi.css?v=60">
-<link rel="stylesheet" href="css/rating-net.css?v=60">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=61">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=61">
+<link rel="apple-touch-icon" href="icon-180.png?v=61">
+<link rel="stylesheet" href="css/tokens.css?v=61">
+<link rel="stylesheet" href="css/base.css?v=61">
+<link rel="stylesheet" href="css/shell.css?v=61">
+<link rel="stylesheet" href="css/partita.css?v=61">
+<link rel="stylesheet" href="css/altro.css?v=61">
+<link rel="stylesheet" href="css/calendario.css?v=61">
+<link rel="stylesheet" href="css/roster.css?v=61">
+<link rel="stylesheet" href="css/stats.css?v=61">
+<link rel="stylesheet" href="css/possessi.css?v=61">
+<link rel="stylesheet" href="css/analisi-avanzata.css?v=61">
+<link rel="stylesheet" href="css/rotazioni.css?v=61">
+<link rel="stylesheet" href="css/breakdown-possessi.css?v=61">
+<link rel="stylesheet" href="css/rating-net.css?v=61">
+<link rel="stylesheet" href="css/player-dev.css?v=61">
 </head>
 <body>
 
@@ -327,6 +328,29 @@
       <div class="contenuto-pagina" id="rn-body"></div>
     </div><!-- /view-rating-net -->
 
+    <!-- ============ VIEW: PLAYER DEVELOPMENT (sperimentale) ============ -->
+    <div class="view" id="view-player-dev">
+      <header class="cal-topbar">
+        <button class="cal-tb-btn" id="pd-indietro" aria-label="Torna ad Altro">
+          <svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg>
+        </button>
+        <span class="st-titolo">Player Development</span>
+      </header>
+      <div id="pd-filtri"></div>
+      <div class="contenuto-pagina" id="pd-body"></div>
+    </div><!-- /view-player-dev -->
+
+    <!-- ============ VIEW: SCHEDA GIOCATORE (Player Development) ============ -->
+    <div class="view" id="view-scheda-giocatore">
+      <header class="cal-topbar">
+        <button class="cal-tb-btn" id="scheda-indietro" aria-label="Torna a Player Development">
+          <svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg>
+        </button>
+        <span class="st-titolo" id="scheda-titolo">Scheda giocatore</span>
+      </header>
+      <div class="contenuto-pagina" id="scheda-body"></div>
+    </div><!-- /view-scheda-giocatore -->
+
     <!-- ============ VIEW: ALTRO ============ -->
     <div class="view" id="view-squadra">
       <div class="header-pagina">
@@ -390,6 +414,14 @@
             <span class="col-testo">
               <span class="titolo-altro">Rating Net <span class="beta-badge">beta</span></span>
               <span class="sotto-altro">Off/Def/Net Rating e Pace, con trend gara per gara</span>
+            </span>
+            <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          </div>
+          <div class="riga-altro" id="apri-player-dev">
+            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-flag"></use></svg>
+            <span class="col-testo">
+              <span class="titolo-altro">Player Development <span class="beta-badge">beta</span></span>
+              <span class="sotto-altro">Obiettivi individuali, tracking e scheda PDF per giocatore</span>
             </span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </div>
@@ -634,6 +666,41 @@
   </div>
 </div>
 
+<!-- Obiettivo (Player Development) -->
+<div class="overlay" id="overlay-obiettivo">
+  <div class="modale">
+    <h2 id="ob-titolo">Nuovo obiettivo</h2>
+    <input type="hidden" id="ob-id">
+    <input type="hidden" id="ob-giocatore-id">
+    <label class="ap-campo"><span>Metrica</span>
+      <select id="ob-metrica"></select></label>
+    <label class="ap-campo"><span>Direzione</span>
+      <select id="ob-direzione">
+        <option value="gte">≥ (raggiungere almeno)</option>
+        <option value="lte">≤ (non superare)</option>
+      </select>
+    </label>
+    <label class="ap-campo"><span>Valore target</span>
+      <input type="text" inputmode="decimal" id="ob-target" autocomplete="off" placeholder="es. 12.5"></label>
+    <label class="ap-campo"><span>Orizzonte</span>
+      <select id="ob-orizzonte">
+        <option value="1m">1 mese</option>
+        <option value="3m">3 mesi</option>
+        <option value="6m">6 mesi</option>
+      </select>
+    </label>
+    <label class="ap-campo"><span>Nota (libera)</span>
+      <textarea id="ob-nota" rows="3" placeholder="es. lavorare sulla lettura del pick and roll"></textarea></label>
+    <button class="btn-conferma" id="ob-salva">SALVA</button>
+    <button class="btn-annulla-modale" id="ob-elimina" hidden>Elimina obiettivo</button>
+    <button class="btn-annulla-modale" id="ob-chiudi">Annulla</button>
+  </div>
+</div>
+
+<!-- Contenuto dedicato alla stampa scheda (Player Development) — invisibile a
+     schermo, popolato da stampaScheda() e mostrato solo sotto @media print -->
+<div id="pd-stampa"></div>
+
 <!-- Pre-partita: convocati -->
 <div class="overlay" id="overlay-prepartita">
   <div class="modale">
@@ -705,24 +772,25 @@
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=60"></script>
-<script src="js/tema.js?v=60"></script>
-<script src="js/api.js?v=60"></script>
-<script src="js/timer.js?v=60"></script>
-<script src="js/azioni.js?v=60"></script>
-<script src="js/fallo-subito.js?v=60"></script>
-<script src="js/calendario.js?v=60"></script>
-<script src="js/giocatori.js?v=60"></script>
-<script src="js/stats.js?v=60"></script>
-<script src="js/analisi.js?v=60"></script>
-<script src="js/analisi-avanzata.js?v=60"></script>
-<script src="js/rotazioni.js?v=60"></script>
-<script src="js/breakdown-possessi.js?v=60"></script>
-<script src="js/rating-net.js?v=60"></script>
-<script src="js/possessi.js?v=60"></script>
-<script src="js/ui.js?v=60"></script>
-<script src="js/pin.js?v=60"></script>
-<script src="js/app.js?v=60"></script>
+<script src="js/state.js?v=61"></script>
+<script src="js/tema.js?v=61"></script>
+<script src="js/api.js?v=61"></script>
+<script src="js/timer.js?v=61"></script>
+<script src="js/azioni.js?v=61"></script>
+<script src="js/fallo-subito.js?v=61"></script>
+<script src="js/calendario.js?v=61"></script>
+<script src="js/giocatori.js?v=61"></script>
+<script src="js/stats.js?v=61"></script>
+<script src="js/analisi.js?v=61"></script>
+<script src="js/analisi-avanzata.js?v=61"></script>
+<script src="js/rotazioni.js?v=61"></script>
+<script src="js/breakdown-possessi.js?v=61"></script>
+<script src="js/rating-net.js?v=61"></script>
+<script src="js/player-dev.js?v=61"></script>
+<script src="js/possessi.js?v=61"></script>
+<script src="js/ui.js?v=61"></script>
+<script src="js/pin.js?v=61"></script>
+<script src="js/app.js?v=61"></script>
 
 </body>
 </html>

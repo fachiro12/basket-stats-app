@@ -1,0 +1,89 @@
+/* ==========================================================================
+   PLAYER DEVELOPMENT — Altro → Analisi, sperimentale
+   Elenco giocatori (riuso .riga-altro/.lista-altro di altro.css), scheda
+   giocatore, form obiettivo (riuso .overlay/.modale/.ap-campo esistenti),
+   stampa PDF via window.print() (nessuna libreria).
+   ========================================================================== */
+
+.pd-riga-giocatore { cursor: pointer; touch-action: manipulation; }
+
+.pd-header { margin-bottom: 2px; }
+
+table.pd-tab-obiettivi td.pd-nota {
+  max-width: 160px;
+  white-space: normal;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.pd-badge-ok { color: var(--color-state-positive); font-weight: 800; }
+.pd-badge-corso { color: var(--color-text-secondary); font-weight: 700; }
+
+.pd-modifica {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  border-radius: var(--radius-sm); border: 1px solid var(--color-border-strong);
+  background: var(--color-surface); color: var(--color-text-secondary);
+  touch-action: manipulation;
+}
+.pd-modifica .ico { width: 15px; height: 15px; }
+
+.pd-aggiungi { margin: 8px 0 4px; }
+.pd-aggiungi[disabled] { opacity: .5; pointer-events: none; }
+
+.pd-target { stroke: var(--color-brand-ink); stroke-width: 2; stroke-dasharray: 5 4; }
+
+.pd-azioni { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.pd-azioni button { flex: 1 1 180px; }
+
+/* ---------- Form obiettivo: target come testo (bug cursore su type=number già
+   noto in questo app — vedi rotazioni.css/rotazioni.js) ---------- */
+#ob-target { font-variant-numeric: tabular-nums; }
+
+/* .ap-campo (calendario.css) copre solo input/select: la nota obiettivo è una
+   textarea, stessa resa visiva. */
+.ap-campo textarea {
+  min-height: 72px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  background: var(--color-surface-raised);
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+}
+
+/* ==========================================================================
+   Stampa scheda — contenuto dedicato #pd-stampa, invisibile a schermo,
+   mostrato SOLO in stampa mentre il resto dell'app sparisce.
+   ========================================================================== */
+#pd-stampa { display: none; }
+
+@media print {
+  body * { visibility: hidden; }
+  #pd-stampa, #pd-stampa * { visibility: visible; }
+  #pd-stampa {
+    display: block;
+    position: absolute; left: 0; top: 0; width: 100%;
+    padding: 16px;
+    color: #000;
+    background: #fff;
+  }
+  .pd-stampa-intestazione h1 { font-size: 20px; margin: 0 0 4px; }
+  .pd-stampa-intestazione p { font-size: 12px; margin: 2px 0; color: #333; }
+  .pd-stampa-data { font-style: italic; }
+  #pd-stampa h2 { font-size: 14px; margin: 18px 0 6px; border-bottom: 1px solid #999; padding-bottom: 2px; }
+  .pd-stampa-tab { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .pd-stampa-tab th, .pd-stampa-tab td { border: 1px solid #999; padding: 4px 6px; text-align: left; }
+  .pd-stampa-tab th { background: #eee; }
+  #pd-stampa .adv-tit { font-size: 11px; font-weight: 800; text-transform: uppercase; margin: 14px 0 4px; color: #333; }
+  #pd-stampa .st-hint { font-size: 10px; color: #444; }
+  #pd-stampa svg.st-chart { width: 100%; height: auto; }
+  #pd-stampa svg text { fill: #000 !important; }
+  #pd-stampa svg .st-grid { stroke: #ccc !important; }
+  #pd-stampa svg .an-barw { fill: #2a6b2a !important; }
+  #pd-stampa svg .an-barl { fill: #a33 !important; }
+  #pd-stampa svg .pd-target { stroke: #000 !important; }
+  .pd-stampa-firma { margin-top: 28px; font-size: 12px; }
+}

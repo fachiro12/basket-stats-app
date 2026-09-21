@@ -193,6 +193,43 @@ document.addEventListener("DOMContentLoaded", () => {
       impostaFiltroRatingNet(grp.dataset.fil, btn.dataset.val);
   });
 
+  /* -------- PLAYER DEVELOPMENT (sperimentale) -------- */
+  const apriPD = document.getElementById("apri-player-dev");
+  if (apriPD && typeof apriPlayerDev === "function") apriPD.addEventListener("click", apriPlayerDev);
+  const pdIndietro = document.getElementById("pd-indietro");
+  if (pdIndietro) pdIndietro.addEventListener("click", () => navigaA("squadra"));
+  const pdFiltri = document.getElementById("pd-filtri");
+  if (pdFiltri) pdFiltri.addEventListener("click", e => {
+    const btn = e.target.closest(".an-chip");
+    if (!btn) return;
+    const grp = btn.closest(".an-chip-grp");
+    if (grp && typeof impostaFiltroPlayerDev === "function")
+      impostaFiltroPlayerDev(grp.dataset.fil, btn.dataset.val);
+  });
+  const pdBody = document.getElementById("pd-body");
+  if (pdBody) pdBody.addEventListener("click", e => {
+    const riga = e.target.closest("[data-apri-scheda]");
+    if (riga && typeof apriSchedaGiocatore === "function") apriSchedaGiocatore(riga.dataset.apriScheda);
+  });
+  const schedaIndietro = document.getElementById("scheda-indietro");
+  if (schedaIndietro) schedaIndietro.addEventListener("click", () => {
+    if (typeof apriPlayerDev === "function") apriPlayerDev();
+  });
+  const schedaBody = document.getElementById("scheda-body");
+  if (schedaBody) schedaBody.addEventListener("click", e => {
+    if (e.target.closest("#pd-aggiungi-obiettivo")) { if (typeof apriFormObiettivo === "function") apriFormObiettivo(); return; }
+    const mod = e.target.closest("[data-obiettivo]");
+    if (mod && typeof apriFormObiettivo === "function") { apriFormObiettivo(mod.dataset.obiettivo); return; }
+    if (e.target.closest("#pd-stampa-btn")) { if (typeof stampaScheda === "function") stampaScheda(); return; }
+    if (e.target.closest("#pd-copia-prompt")) { if (typeof copiaPromptAI === "function") copiaPromptAI(); return; }
+  });
+  const obSalva = document.getElementById("ob-salva");
+  if (obSalva && typeof confermaFormObiettivo === "function") obSalva.addEventListener("click", confermaFormObiettivo);
+  const obElimina = document.getElementById("ob-elimina");
+  if (obElimina && typeof eliminaObiettivoCorrente === "function") obElimina.addEventListener("click", eliminaObiettivoCorrente);
+  const obChiudi = document.getElementById("ob-chiudi");
+  if (obChiudi && typeof chiudiFormObiettivo === "function") obChiudi.addEventListener("click", chiudiFormObiettivo);
+
   /* -------- DEBRIEF POSSESSI (sperimentale) -------- */
   const apriDeb = document.getElementById("apri-debrief");
   if (apriDeb && typeof apriDebrief === "function") apriDeb.addEventListener("click", apriDebrief);

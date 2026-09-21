@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=60` · SW `bsp-v60` · backend V4.12.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=61` · SW `bsp-v61` · backend V4.14.
 
 ---
 
@@ -75,12 +75,13 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 | `rotazioni.js` | **Rotazioni** (sperimentale, `#view-rotazioni`, riga "Rotazioni" in Altro → sezione "Analisi", sotto "Analisi stagione") — 2 tab interne (`rotTab`, `#rot-tabs`). "Rotation chart": righe = giocatori (per nome anagrafica, non numero — stabile ai cambi di maglia), colonne = minuti di gara, colore = presenza in campo; striscia "margine/min" (saldo punti nel minuto, non un vero Net Rtg). **"Quintetti"** (`calcolaLineupBox`/`vistaLineupBox`) — Lineup Advanced Box Score: un quintetto per riga (per nome, stabile ai cambi di numero) con GP/MIN/PTS/OFF·DEF·NET RTG/POSS/PACE/tiri/TS%/TOV%; accumula il box **evento per evento per finestra temporale** (`accumulaEventoLocaleRot`, mini-motore isolato — `calcolaBox` non serve qui: il punteggio di squadra lì non è mai sommato incrementalmente, solo impostato al finale gara) sullo stint giusto (puntatore su `elapsedAt`), poi passa il box per quintetto a `calcolaAdvanced` già esistente. Tabella ordinabile (`rotLineupSort`), colonna Quintetto bloccata (`sticky`) in scroll orizzontale. Filtro testuale sui nomi con **AND multi-nome** (virgola = tutti richiesti insieme, `rotLineupFiltroTesto`, `#rot-lineup-filtro`); toggle "nascondi rumore" (`rotLineupNascondiRumore`, soglia **relativa e dinamica**: 5% della media minuti dei 3 quintetti più usati — `ROT_LINEUP_PCT_RUMORE` — così scala da sola con l'avanzare della stagione invece di restare fissa a un numero di minuti scelto oggi); toggle "statistiche difensive" (`rotLineupMostraDifesa` → colonne PTS SUB/+-/REC/OREB%/DREB%/REB TOT%, da `A.pr`/`grp.pmStint`/`adv.orbA`/`adv.drbA`/rimbalzi totali disponibili già tracciati); 5 filtri soglia in AND tra loro su Pace/2P%/3P%/FT Ratio (`≥`) e TOV% (`≤` — meno palle perse è meglio) (`rotLineupSoglie`, input `type="text" inputmode="decimal"` — **non** `type="number"`, che su desktop rompe `setSelectionRange` e fa scrivere le cifre al contrario). Colonne Quintetto (112px)+GP+MIN bloccate insieme (`sticky`, offset impilati) durante lo scroll orizzontale. Filtri Campionato/Amichevoli · Casa/Trasferta · Vinte/Perse: **copia indipendente** di quelli di Analisi stagione (`filtriRotazioni`, non condiviso con `filtriAnalisi`), usati da tutte e tre le tab. **"Giocatori"** (`vistaGiocatoriQuintetto`) — dentro un quintetto scelto (selettore, o "+" su una riga di "Quintetti"), il contributo dei 5 singoli: PTS/USG%/TS%/tiri/ORB/DRB/TOV/REC, stessi minuti del quintetto per tutti e 5 (condivisi per definizione). `accumulaEventoLocaleRot` accumula anche per giocatore (oltre che per squadra) quando l'evento è MIA con `giocatore_num` noto; **filtrato sui soli 5 membri di quello specifico stint** (`q.indexOf(num)`) — senza questo filtro un CAMBIO/FINE registrato allo stesso secondo esatto della chiusura (il caso limite già corretto sul puntatore) porterebbe con sé il numero di chi sta *entrando*, attribuendolo per errore al quintetto in uscita. USG% con la stessa formula di Analisi stagione (in un quintetto equilibrato ogni membro ~20%, per costruzione). Sola lettura su `boxGaraSingola`/stint già calcolati, `eventiPuliti`, `nomeAnalisi`, `calcolaAdvanced`, `cacheEventiStagione`. |
 | `breakdown-possessi.js` | **Team Possession Breakdown** (sperimentale, `#view-breakdown`, riga "Team Possession Breakdown" in Altro → sezione "Analisi") — segmenta il play-by-play in possessioni vere (motore a stati `segmentaPossessi`: canestro segnato chiude, and-1 accorpato alla stessa possessione, rimbalzo offensivo prolunga, rimbalzo difensivo/di squadra chiude, palla persa **e recupero fusi in un'unica voce** "Dopo palla persa", fine periodo → "Altro"), poi le aggrega per innesco × lato (OFF=nostre, DEF=subite) con Poss/Freq%/Rtg/TS%/TOV%/FT Ratio. Niente ORB%/DRB% per-possesso né rank di lega (dichiarato in-app). Filtri: **copia indipendente** di quelli di Analisi stagione (`filtriBreakdown`). Sola lettura su `eventiPuliti`/`elencoPartite`/`cacheEventiStagione`/`punteggioDaEventi`. |
 | `rating-net.js` | **Rating Net** (sperimentale, `#view-rating-net`, riga in Altro → sezione "Analisi", sotto "Team Possession Breakdown") — 4 gauge stagionali (OFF/DEF/NET Rating, Pace) via `calcolaAdvanced`/`aggregaStagione` già esistenti, con un segno di riferimento "avversari" su ciascuno (niente campionato DR1 completo, dichiarato in-app: OFF↔DEF si usano a specchio, NET usa lo zero, PACE usa il possession-rate dei soli avversari). Sotto, Net Rating gara per gara con media mobile 5 gare (SVG, stesso stile di `graficoMargini` in `analisi.js`). Filtri: copia indipendente (`filtriRatingNet`). |
+| `player-dev.js` | **Player Development** (sperimentale, `#view-player-dev` + `#view-scheda-giocatore`, riga in Altro → sezione "Analisi", sotto "Rating Net") — scheda di sviluppo per giocatore: fino a `MAX_OBIETTIVI`=5 obiettivi, ciascuno metrica (`CATALOGO_METRICHE`, 11 base + 6 avanzate) + valore target + direzione `≥`/`≤` + orizzonte 1/3/6 mesi + nota libera. Persistenza come `giocatori.js` (`bsp_obiettivi` + POST `SALVA_OBIETTIVO`/JSONP `getObiettivi`, backend V4.14), cancellazione = flag `eliminato` (mai un vero delete). Metriche **base**: valore reale gara-per-gara (`serieBaseGaraPerGara`, stesse formule di `vistaAnalisiGiocatori`). **AIS**: copia locale della formula di `calcolaAIS()` (riusa `calcolaLVI()`), per-gara sul filtro indipendente di questa sezione. **Def Rating/BPM/OBPM/DBPM/VORP**: costrutti stagionali, non hanno un valore a singola gara — il loro "andamento" è **cumulativo** (`serieCumulativaAvanzata`: `calcolaDefRtg`/`calcolaBpmVorp` — sola lettura, non toccate — richiamate su `aggregaStagione(gare.slice(0,i+1))` per ogni taglio crescente di gare). Grafico SVG per obiettivo con linea target tratteggiata (stesso impianto di `graficoTrendNet`, `rating-net.js`). **Stampa/PDF**: nessuna libreria — `window.print()` su un contenitore dedicato (`#pd-stampa`, invisibile a schermo, mostrato solo sotto `@media print` mentre il resto dell'app sparisce). **Prompt AI** (fuori dal PDF): `generaPromptAI`/`copiaPromptAI`, testo con obiettivi+dati+nota copiato via `navigator.clipboard` (fallback `execCommand`). Filtri: copia indipendente (`filtriPlayerDev`). |
 | `ui.js` | `renderPartita` (HUD, roster, selezione), `mostraToast`, `aggiornaBadgeOffline`, modale CAMBI (`apriCambi`/`confermaCambi` + select tempo con vincolo), `apriRecap`, `navigaA` (router viste + hook render) |
 | `pin.js` | login gate (`inizializzaPinGate`, `tentaLogin`, fallback offline, `logout`, `aggiornaProfiloAttivo`) |
 | `app.js` | `DOMContentLoaded`: registra tutti i listener + avvio (`navigaA`, `renderCalendario`, `scaricaPartite`, `scaricaGiocatori`, `inizializzaPinGate`, `processaCoda`); registra il service worker |
 
 ### CSS (`css/`)
-`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell, nav) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`, **Analisi stagione** `#analisi-filtri`/`.an-*`) · `possessi.css` (**Debrief possessi** — selettori gara/quarto, griglie tap giocatore/esito/gioco, foto di riferimento; riusa `.adv-card`/`.st-box`/`.btn-conferma` esistenti) · `analisi-avanzata.css` (**Analisi avanzata** — bottoni di apertura, badge livelli AIS; riusa `.adv-card`/`.st-box`/`.an-tab` esistenti) · `rotazioni.css` (**Rotazioni** — griglia presenza/margine per minuto, solo `opacity` sui token esistenti, niente colori hardcoded) · `breakdown-possessi.css` (**Team Possession Breakdown** — tabella a doppia intestazione OFF/DEF, riusa `.st-box`) · `rating-net.css` (**Rating Net** — gauge SVG ad arco, trend Net Rating; riusa `.st-chart`/`.adv-tit`)
+`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell, nav) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`, **Analisi stagione** `#analisi-filtri`/`.an-*`) · `possessi.css` (**Debrief possessi** — selettori gara/quarto, griglie tap giocatore/esito/gioco, foto di riferimento; riusa `.adv-card`/`.st-box`/`.btn-conferma` esistenti) · `analisi-avanzata.css` (**Analisi avanzata** — bottoni di apertura, badge livelli AIS; riusa `.adv-card`/`.st-box`/`.an-tab` esistenti) · `rotazioni.css` (**Rotazioni** — griglia presenza/margine per minuto, solo `opacity` sui token esistenti, niente colori hardcoded) · `breakdown-possessi.css` (**Team Possession Breakdown** — tabella a doppia intestazione OFF/DEF, riusa `.st-box`) · `rating-net.css` (**Rating Net** — gauge SVG ad arco, trend Net Rating; riusa `.st-chart`/`.adv-tit`) · `player-dev.css` (**Player Development** — badge raggiunto/in corso, linea target `.pd-target`, `@media print` dedicato per la scheda; riusa `.riga-altro`/`.overlay`/`.modale`/`.ap-campo`/`.st-chart`)
 
 ### Responsive (v41) — 3 modalità
 
@@ -110,6 +111,7 @@ Le **tab interne** (`.stats-tabs` ecc.) restano sempre. `.sm-hide` (colonne este
 - **`view-rotazioni`** — **Rotazioni** (sperimentale, da Altro → sezione "Analisi" → riga "Rotazioni"): back (→ Altro) + barra filtri (copia di quella di Analisi stagione) + 2 tab: "Rotation chart" (griglia presenza-per-minuto/margine-per-minuto) e "Quintetti" (Lineup Advanced Box Score, ordinabile, con filtro testuale sui nomi). Vedi `js/rotazioni.js`.
 - **`view-breakdown`** — **Team Possession Breakdown** (sperimentale, da Altro → sezione "Analisi" → riga omonima): back (→ Altro) + barra filtri (copia) + tabella OFF/DEF per innesco di possesso. Vedi `js/breakdown-possessi.js`.
 - **`view-rating-net`** — **Rating Net** (sperimentale, da Altro → sezione "Analisi" → riga omonima): back (→ Altro) + barra filtri (copia) + 4 gauge (Off/Def/Net Rating, Pace) + trend Net Rating gara per gara. Vedi `js/rating-net.js`.
+- **`view-player-dev`** / **`view-scheda-giocatore`** — **Player Development** (sperimentale, da Altro → sezione "Analisi" → riga omonima): elenco giocatori (back → Altro) → scheda per giocatore (back → elenco) con tabella obiettivi (max 5, editabile via modale `#overlay-obiettivo`), grafico trend per obiettivo con linea target, "🖨️ Stampa/Salva PDF" e "📋 Copia prompt AI". Vedi `js/player-dev.js`.
 - **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, **Analisi** (Analisi stagione), Roster (anagrafica), **Aspetto** (switch Arena), Configurazione, **Manutenzione**: `#btn-aggiorna-app` (svuota tutte le `caches` + unregister del SW + reload — contro la cache PWA stantìa su mobile, per tutti); poi solo Admin (password + "SVUOTA"): `apriAzzeraGara` → `SVUOTA_EVENTI_GARA`; `apriResetDati` → `SVUOTA_EVENTI`. La riga "Profilo attivo" mostra `#app-versione` = `app vN` dai `?v=` degli asset caricati, + `cache vM ⚠` se il SW è su una versione diversa (diagnostica).
 - **`view-calendario`** — topbar (hamburger placeholder / select stagione / +) + lista 26 gare con stato e bottone contestuale.
 
@@ -152,7 +154,7 @@ fallo_speciale, esito_tl ("SI,NO"), valido (true/false), id_evento_target
 ⚠️ `esito_tl` di un `FALLO_FATTO` = i TL **degli avversari**; `punti_segnati` di `FALLO_FATTO` = punti concessi agli avversari.
 
 ### localStorage — tutte le chiavi
-`bsp_stato_partita` · `bsp_coda_invio` · `bsp_pin_ok` · `bsp_current_user` ({id,username,ruolo}) · `bsp_segnapunti_di` (id_partita che questo device sta segnando) · `bsp_partite_cache` · `bsp_partite_pending` · `bsp_giocatori`
+`bsp_stato_partita` · `bsp_coda_invio` · `bsp_pin_ok` · `bsp_current_user` ({id,username,ruolo}) · `bsp_segnapunti_di` (id_partita che questo device sta segnando) · `bsp_partite_cache` · `bsp_partite_pending` · `bsp_giocatori` · `bsp_obiettivi` (Player Development)
 
 ### Google Sheet — fogli
 - **Eventi** — `COLONNE_EVENTI` (sopra)
@@ -160,6 +162,7 @@ fallo_speciale, esito_tl ("SI,NO"), valido (true/false), id_evento_target
 - **Giocatori** — `id_giocatore, nome, cognome, ruolo, numero_maglia, team, nickname`
 - **Utenti** — `id_utente, username, ruolo, password_hash, attivo, salt` (admin di default `admin`/`1234`; `password_hash = SHA256(salt|password)`)
 - **Possessi** (V4.12, Debrief possessi) — `COLONNE_POSSESSI` (sopra, §9); una riga = un possesso o un singolo tiro libero; `salvaPossessiQuarto_` sostituisce sempre tutte le righe di `(id_partita, quarto)`, stesso stile idempotente di `svuotaEventiGara_`
+- **Obiettivi** (V4.14, Player Development) — `id, id_giocatore, metrica, target, direzione, orizzonte, creato_il, nota, eliminato`; una riga = un obiettivo, upsert per `id` (`salvaObiettivo_`, stesso stile di `salvaGiocatore_`); cancellazione = `eliminato:true` (mai un vero delete riga, a differenza di Giocatori — qui serve poter "disfare" senza perdere lo storico)
 
 ---
 
@@ -269,7 +272,7 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 
 ---
 
-## 9. Backend — codice completo attuale (V4.13)
+## 9. Backend — codice completo attuale (V4.14)
 
 > Da incollare nell'editor Apps Script. Poi lanciare `setupSheet()` una volta (aggiunge la colonna `salt` a `Utenti` e ricalcola l'hash dell'admin se il foglio è nuovo) e **ripubblicare il deployment**. `setupSheet()` è idempotente.
 > Deploy Web App: eseguito come "me", accesso "chiunque".
@@ -284,20 +287,23 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 > Nota: il token non è un segreto forte (transita nella risposta JSONP del login ed è in localStorage). Serve a bloccare le scritture anonime verso l'URL `/exec` e a poter ruotare la chiave se abusata. La difesa vera resterebbe una auth server-side firmata.
 >
 > **Lettura automatica foglio possessi (V4.13):** usa l'OCR di Google Drive, che richiede il servizio avanzato **Drive API** abilitato nel progetto — Apps Script → editor → **Servizi** (icona ➕ nel pannello sinistro) → cerca "Drive API" → **Aggiungi**. Una tantum, come il `WRITE_TOKEN`. Senza questo passaggio l'azione `LEGGI_FOGLIO_POSSESSI` carica comunque la foto ma risponde `tabella_rilevata:false` invece di leggerla davvero (fallisce in modo silenzioso e innocuo, non blocca nulla).
+>
+> **Player Development (V4.14):** nuovo foglio `Obiettivi`, azioni `SALVA_OBIETTIVO` (POST)/`getObiettivi` (JSONP) — stesso stile upsert-per-id di `salvaGiocatore_`, ma la cancellazione è un flag `eliminato:true` scritto sulla riga (mai un vero `deleteRow`, per poter "disfare" un'eliminazione senza perdere lo storico). Nessuna migrazione da fare su fogli esistenti: `setupSheet()` crea `Obiettivi` da zero al primo lancio dopo l'aggiornamento.
 
 ```javascript
 /**
- * BASKET STATS PRO — Backend Google Apps Script (V4.13)
- * Eventi · Partite · Giocatori · Utenti · Possessi — cloud-sync, JSONP, multiutente,
+ * BASKET STATS PRO — Backend Google Apps Script (V4.14)
+ * Eventi · Partite · Giocatori · Utenti · Possessi · Obiettivi — cloud-sync, JSONP, multiutente,
  * token scrittura (V4.7) + password con salt e login via POST (V4.8) + SVUOTA_EVENTI (V4.9)
  * + SVUOTA_EVENTI_GARA (V4.10) + getEventiStagione (V4.11) + Debrief possessi (V4.12)
- * + lettura automatica foglio possessi via OCR Drive (V4.13)
+ * + lettura automatica foglio possessi via OCR Drive (V4.13) + Player Development: Obiettivi (V4.14)
  */
 const SHEET_EVENTI = "Eventi";
 const SHEET_PARTITE = "Partite";
 const SHEET_GIOCATORI = "Giocatori";
 const SHEET_UTENTI = "Utenti";
 const SHEET_POSSESSI = "Possessi";
+const SHEET_OBIETTIVI = "Obiettivi";
 
 const COLONNE_EVENTI = [
   "id_partita","id_evento","timestamp","quarto","tempo_partita",
@@ -314,6 +320,11 @@ const COLONNE_UTENTI = ["id_utente","username","ruolo","password_hash","attivo",
 const COLONNE_POSSESSI = [
   "id_partita","id_possesso","quarto","riga_n","gioco","giocatore_num","esito",
   "area","opp2","zona","tiro_qualita","stato_riga","fonte","timestamp","foto_url"
+];
+/* Player Development (V4.14) — una riga = un obiettivo di un giocatore.
+   Cancellazione = eliminato:true (mai un vero deleteRow, vedi js/player-dev.js). */
+const COLONNE_OBIETTIVI = [
+  "id","id_giocatore","metrica","target","direzione","orizzonte","creato_il","nota","eliminato"
 ];
 
 function getWriteToken_() {
@@ -365,6 +376,7 @@ function setupSheet() {
   const u = inizializzaFoglio_(ss, SHEET_UTENTI, COLONNE_UTENTI);
   assicuraColonna_(u, "salt");                 // migrazione V4.8 su Utenti già popolato
   inizializzaFoglio_(ss, SHEET_POSSESSI, COLONNE_POSSESSI);   // V4.12
+  inizializzaFoglio_(ss, SHEET_OBIETTIVI, COLONNE_OBIETTIVI); // V4.14
   if (u.getLastRow() <= 1) {
     const s = nuovoSalt_();
     u.appendRow(["usr_admin","admin","Admin",hashPassword_(s,"1234"),"SI",s]);
@@ -399,6 +411,7 @@ function doPost(e) {
     if (data.azione === "SALVA_POSSESSI_QUARTO")  return salvaPossessiQuarto_(data);
     if (data.azione === "CARICA_FOTO_POSSESSI")   return caricaFotoPossessi_(data);
     if (data.azione === "LEGGI_FOGLIO_POSSESSI")  return leggiFoglioPossessi_(data);
+    if (data.azione === "SALVA_OBIETTIVO")        return salvaObiettivo_(data);
     if (data.tipo_evento === "ANNULLA")           return handleAnnulla_(data);
     appendEvento_(data, true);
     return jsonResponse_({ ok: true, azione: "evento_salvato" });
@@ -429,10 +442,13 @@ function doGet(e) {
     if (idp) ps = ps.filter(x => String(x.id_partita) === idp);
     return rispostaDati_(params, "possessi", ps);
   }
+  if (params.action === "getObiettivi") {   // V4.14: Player Development
+    return rispostaDati_(params, "obiettivi", leggiFoglio_(ss, SHEET_OBIETTIVI, false));
+  }
   if (params.action === "verificaLogin") {   // compat: vecchi client via JSONP GET
     return rispostaJsonp_(params, verificaLogin_(params.username, params.password));
   }
-  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.13", stato: "attivo" });
+  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.14", stato: "attivo" });
 }
 
 function leggiFoglio_(ss, nome, formatDate) {
@@ -679,6 +695,19 @@ function salvaGiocatore_(data) {
   if (riga > 0) sheet.getRange(riga, 1, 1, COLONNE_GIOCATORI.length).setValues([val]);
   else sheet.appendRow(val);
   return jsonResponse_({ ok: true, azione: riga > 0 ? "giocatore_aggiornato" : "giocatore_creato" });
+}
+/* Player Development (V4.14) — upsert per "id", stesso stile di salvaGiocatore_
+   ma senza mai un vero deleteRow: l'eliminazione è solo il flag "eliminato". */
+function salvaObiettivo_(data) {
+  const sheet = inizializzaFoglio_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_OBIETTIVI, COLONNE_OBIETTIVI);
+  const v = sheet.getDataRange().getValues(), idI = COLONNE_OBIETTIVI.indexOf("id");
+  let riga = -1;
+  for (let r = 1; r < v.length; r++) if (String(v[r][idI]) === String(data.id)) { riga = r + 1; break; }
+  const rec = Object.assign({}, data, { eliminato: !!(data.elimina || data.eliminato) });
+  const val = COLONNE_OBIETTIVI.map(c => (rec[c] !== undefined && rec[c] !== null) ? rec[c] : "");
+  if (riga > 0) sheet.getRange(riga, 1, 1, COLONNE_OBIETTIVI.length).setValues([val]);
+  else sheet.appendRow(val);
+  return jsonResponse_({ ok: true, azione: riga > 0 ? "obiettivo_aggiornato" : "obiettivo_creato" });
 }
 function jsonResponse_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
 ```
