@@ -49,7 +49,9 @@ const CATALOGO_METRICHE = [
   { cod: "tspct", et: "TS%", dec: 1, unita: "%", tipo: "base",
     def: "Efficienza di tiro complessiva: mette insieme in un solo numero 2 punti, 3 punti e tiri liberi, dando il giusto peso ai 3 punti (che valgono di più). È la misura più onesta di quanto rende ogni volta che si tira, più affidabile del solo FG%." },
   { cod: "usg", et: "USG%", dec: 1, unita: "%", tipo: "base",
-    def: "Quota dei tiri/liberi/palle perse della squadra che passano da un giocatore mentre è in campo — cioè quanto la squadra si affida a un giocatore per chiudere le azioni. In un quintetto equilibrato si divide a metà tra 5, quindi il valore medio è circa il 20%: sopra il 28% è già un riferimento offensivo primario, sotto il 14% un ruolo di supporto. USG% alto insieme a TS% basso spesso vuol dire tiri forzati." },
+    def: "Quota dei tiri/liberi/palle perse della squadra che passano da un giocatore mentre è in campo — cioè quanto la squadra si affida a un giocatore per chiudere le azioni. In un quintetto equilibrato si divide a metà tra 5, quindi il valore medio è circa il 20%: sopra il 28% è già un riferimento offensivo primario, sotto il 14% un ruolo di supporto. USG% alto insieme a TS% basso spesso vuol dire tiri forzati (vedi \"Indice di Forzatura\" per un numero che lo misura direttamente)." },
+  { cod: "forz", et: "Indice di Forzatura", dec: 1, unita: "", tipo: "base",
+    def: "Il numero dietro la frase \"usa tanti possessi ma non li converte\": prende quanto un giocatore USA la squadra (USG%) e lo moltiplica per quanto la sua efficienza di tiro (TS%) è SOTTO quella della squadra. Un valore vicino a 0 vuol dire che rende come il resto della squadra, a qualunque volume di gioco — non c'è forzatura. Un valore alto e positivo vuol dire che tira/attacca molto ma con un rendimento basso: sta forzando. Un valore negativo è il caso migliore: usa molti possessi ED è più efficiente della media squadra." },
   { cod: "astpct", et: "AST%", dec: 1, unita: "%", tipo: "base",
     def: "Quota delle proprie azioni chiuse con un assist invece che con un tiro o una palla persa. Misura quanto si gioca per far segnare un compagno, rispetto a quanto si conclude l'azione in prima persona." },
   { cod: "pmpg", et: "+/- per gara", dec: 1, unita: "", tipo: "base",
@@ -91,6 +93,7 @@ const RIFERIMENTI_LIVELLO = {
   ftr: { basso: 0.15, medio: 0.30, elite: 0.45, fonte: "convenzione generale, non specifica del livello DR1" },
   tspct: { basso: 48, medio: 54, elite: 60, fonte: "convenzione generale, non specifica del livello DR1" },
   usg: { basso: 14, medio: 20, elite: 28, fonte: "convenzione generale, non specifica del livello DR1" },
+  forz: { basso: 5, medio: 0, elite: -3, fonte: "indice costruito in questa app (USG% × scarto di TS% dalla squadra), non da hackastat — qui \"Basso\" = tanta forzatura (numero alto), \"Elite\" = usa molto ED è efficiente (numero negativo)" },
   astpct: { basso: 8, medio: 15, elite: 25, fonte: "convenzione generale, non specifica del livello DR1" },
   ais: { basso: 0, medio: 6, elite: 20, fonte: "scala AIS già in uso in Analisi avanzata" },
   bpm: { basso: -2, medio: 0, elite: 5, fonte: "hackastat.eu" },
@@ -299,12 +302,15 @@ function valoreBaseline(o, num) {
 function statLinePlays_(s) { return (s.a2 + s.a3) + 0.44 * s.fta + s.pp; }
 function teamPlaysDa_(team) { return (team.a2 + team.a3) + 0.44 * team.fta + team.pp; }
 
-/* ctx = { G, teamMin, teamPlays } — G=1 e teamMin/teamPlays della singola gara
-   per una serie gara-per-gara, oppure i totali stagionali per il valore di
-   stagione. Stesse formule già usate in vistaAnalisiGiocatori (analisi.js). */
+/* ctx = { G, teamMin, teamPlays, tsTeam } — G=1 e teamMin/teamPlays/tsTeam
+   della singola gara per una serie gara-per-gara, oppure i totali stagionali
+   per il valore di stagione. Stesse formule già usate in vistaAnalisiGiocatori
+   (analisi.js), tsTeam = adv.tsA già calcolato da calcolaAdvanced. */
 function valoreBaseDaLinea_(metrica, s, ctx) {
   const G = ctx.G || 1;
   const fga = s.a2 + s.a3, fgm = s.m2 + s.m3;
+  const usg = (s.min && ctx.teamPlays) ? 100 * statLinePlays_(s) * (ctx.teamMin / 5) / (s.min * ctx.teamPlays) : null;
+  const ts = (fga || s.fta) ? s.pt / (2 * (fga + 0.44 * s.fta)) * 100 : null;
   switch (metrica) {
     case "ppg": return s.pt / G;
     case "rpg": return (s.ro + s.rd) / G;
@@ -314,10 +320,23 @@ function valoreBaseDaLinea_(metrica, s, ctx) {
     case "p3pct": return s.a3 ? s.m3 / s.a3 * 100 : null;
     case "ftpct": return s.fta ? s.ftm / s.fta * 100 : null;
     case "ftr": return fga ? s.fta / fga : null;
-    case "tspct": return (fga || s.fta) ? s.pt / (2 * (fga + 0.44 * s.fta)) * 100 : null;
+    case "tspct": return ts;
     case "pmpg": return s.pm / G;
-    case "usg": return (s.min && ctx.teamPlays) ? 100 * statLinePlays_(s) * (ctx.teamMin / 5) / (s.min * ctx.teamPlays) : null;
+    case "usg": return usg;
     case "astpct": { const den = fga + 0.44 * s.fta + s.as + s.pp; return den ? s.as * 100 / den : null; }
+    /* Indice di Forzatura = USG% × (1 − TS%/TS%squadra): riusa esattamente
+       usg/ts appena calcolati sopra + lo stesso "rapporto di efficienza"
+       (TS%giocatore/TS%squadra) già usato in serieAISGaraPerGara — quando il
+       rapporto è 1 (rende come la squadra) l'indice è 0 a QUALSIASI volume;
+       sotto 1 (meno efficiente) l'indice cresce con l'USG%: alto uso +
+       efficienza sotto la media = segnale di tiri forzati. Sopra 1 diventa
+       negativo: alto uso ED efficienza sopra la media, il contrario di
+       forzare. */
+    case "forz": {
+      if (usg == null || ts == null || !ctx.tsTeam) return null;
+      const rapEff = ts / ctx.tsTeam;
+      return usg * (1 - rapEff);
+    }
     default: return null;
   }
 }
@@ -334,7 +353,9 @@ function serieBaseGaraPerGara(metrica, num, gare) {
     const s = r.box.pg[num];
     if (!s || !(s.min > 0)) return null;
     const teamPlays = teamPlaysDa_(r.box.team.MIA);
-    const v = valoreBaseDaLinea_(metrica, s, { G: 1, teamMin: r.minuti, teamPlays: teamPlays });
+    let tsTeam = null;
+    if (metrica === "forz") { const adv = calcolaAdvanced(r.box, r.minuti || 0.1); tsTeam = adv.tsA; }
+    const v = valoreBaseDaLinea_(metrica, s, { G: 1, teamMin: r.minuti, teamPlays: teamPlays, tsTeam: tsTeam });
     if (v == null) return null;
     return { etichetta: etichettaGara_(g), valore: v };
   }).filter(Boolean);
@@ -404,7 +425,7 @@ function valoreMetricaStagione(metrica, num, gare) {
     const G = agg.presenze[num] || 0;
     if (!s || !G) return null;
     const teamPlays = teamPlaysDa_(agg.team.MIA);
-    return valoreBaseDaLinea_(metrica, s, { G: G, teamMin: agg.minutiTot, teamPlays: teamPlays });
+    return valoreBaseDaLinea_(metrica, s, { G: G, teamMin: agg.minutiTot, teamPlays: teamPlays, tsTeam: agg.adv && agg.adv.tsA });
   }
   if (metrica === "ais") {
     const serie = serieAISGaraPerGara(num, gare);
