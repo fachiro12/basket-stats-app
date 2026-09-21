@@ -212,12 +212,23 @@ function scaricaObiettivi(cb) {
   script.onerror = () => { if (!concluso && cb) cb(false); pulisci(); };
   document.body.appendChild(script);
 }
+/* FIX: se il backend incollato è una V4.14 precedente all'aggiunta di
+   baseline_tipo/baseline_partite (o comunque un foglio Obiettivi senza quelle
+   2 colonne), la risposta cloud non le porta affatto — `c.baseline_tipo`
+   arriva `undefined`, non "". Prima qui veniva trattato come "svuota il
+   campo", e ogni apertura di Player Development (= ogni scaricaObiettivi())
+   CANCELLAVA il punto di partenza appena impostato in locale. Ora: un campo
+   *assente* dalla risposta cloud (`undefined`) preserva il valore locale
+   esistente; solo un campo *presente ma esplicitamente vuoto/non valido*
+   (backend aggiornato che sincronizza "nessun punto di partenza") lo svuota
+   davvero. */
 function mergeObiettiviCloud(cloud) {
   const perId = {};
   caricaObiettivi().forEach(o => { if (o.id) perId[o.id] = o; });
   cloud.forEach(c => {
     const id = String(c.id || "").trim();
     if (!id) return;
+    const esistente = perId[id] || {};
     perId[id] = {
       id: id,
       id_giocatore: String(c.id_giocatore || ""),
@@ -227,8 +238,12 @@ function mergeObiettiviCloud(cloud) {
       orizzonte: ["1m", "3m", "6m"].indexOf(c.orizzonte) > -1 ? c.orizzonte : "1m",
       creato_il: c.creato_il || "",
       nota: String(c.nota || ""),
-      baseline_tipo: ["amichevoli", "selezione"].indexOf(c.baseline_tipo) > -1 ? c.baseline_tipo : "",
-      baseline_partite: String(c.baseline_partite || "").split(",").map(x => x.trim()).filter(Boolean),
+      baseline_tipo: c.baseline_tipo !== undefined
+        ? (["amichevoli", "selezione"].indexOf(c.baseline_tipo) > -1 ? c.baseline_tipo : "")
+        : (esistente.baseline_tipo || ""),
+      baseline_partite: c.baseline_partite !== undefined
+        ? String(c.baseline_partite || "").split(",").map(x => x.trim()).filter(Boolean)
+        : (esistente.baseline_partite || []),
       eliminato: !!c.eliminato
     };
   });
