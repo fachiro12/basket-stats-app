@@ -135,8 +135,11 @@ a,
 
   /* Colonna contenuto centrata — larga per le tabelle, stretta "da lettura" per il resto */
   #view-stats > *,
-  #view-adv > *,
-  #view-analisi > * { max-width: 1120px; margin-inline: auto; width: 100%; }
+  #view-adv > * { max-width: 1120px; margin-inline: auto; width: 100%; }
+  /* Analisi stagione (tabella Giocatori, 20+ colonne): niente tetto, sfrutta
+     tutto lo schermo disponibile come Rotazioni/Rating Net/Player Development
+     (nessuna di queste tre è mai stata nell'elenco sopra). */
+  #view-analisi > * { width: 100%; }
   #view-calendario > * { max-width: 1040px; margin-inline: auto; width: 100%; }
   #view-squadra > *,
   #view-partita > * { max-width: 760px; margin-inline: auto; width: 100%; }
