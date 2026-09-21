@@ -124,6 +124,18 @@ table.pd-tab-riferimenti td:first-child { text-align: left; }
   .pd-stampa-tab th, .pd-stampa-tab td { border: 1px solid #999; padding: 4px 6px; text-align: left; }
   .pd-stampa-tab th { background: #eee; }
   #pd-stampa .adv-tit { font-size: 11px; font-weight: 800; text-transform: uppercase; margin: 14px 0 4px; color: #333; }
+
+  /* Impaginazione: un titolo non deve MAI restare da solo su una pagina con il
+     suo contenuto (grafico/tabella) spinto su quella dopo. Ogni "blocco"
+     (titolo+grafico+nota, oppure titolo+tabella+nota) è un'unica unità che
+     non si spezza — e se non ci sta nello spazio rimasto, passa TUTTA insieme
+     alla pagina successiva invece di spezzarsi a metà. Le righe delle tabelle
+     più lunghe (Obiettivi) restano comunque intere una per una. */
+  #pd-stampa h2,
+  #pd-stampa .adv-tit { break-after: avoid-page; page-break-after: avoid; }
+  .pd-blocco-grafico,
+  .pd-blocco { break-inside: avoid-page; page-break-inside: avoid; margin-bottom: 16px; }
+  #pd-stampa table tr { break-inside: avoid-page; page-break-inside: avoid; }
   #pd-stampa .st-hint { font-size: 10px; color: #444; }
   #pd-stampa svg.st-chart { width: 100%; height: auto; }
   #pd-stampa svg text { fill: #000 !important; }

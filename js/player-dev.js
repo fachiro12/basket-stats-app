@@ -126,7 +126,12 @@ function riferimentiMetrica(metrica, gare) {
     let agg; try { agg = aggregaStagione(gare); } catch (e) { return null; }
     const t = agg.adv && agg.adv.drtg;
     if (t == null || !isFinite(t)) return null;
-    return { basso: t + 6, medio: t, elite: t - 6, mediaSquadra: null, fonte: "relativo alla Def. Rating della vostra squadra in questi filtri" };
+    // Qui non c'è un "media squadra" DIVERSO dal "Medio": la Def. Rating
+    // individuale è definita apposta come una correzione rispetto a quella di
+    // squadra (Dean Oliver, hackastat.eu — vedi calcolaDefRtg), quindi la
+    // squadra stessa È il riferimento medio. Mostrarlo esplicitamente (invece
+    // di un trattino) evita che sembri un dato mancante.
+    return { basso: t + 6, medio: t, elite: t - 6, mediaSquadra: t, fonte: "relativo alla Def. Rating della vostra squadra in questi filtri — qui \"Medio\" e \"Media squadra\" coincidono, è l'unico riferimento onesto per questa metrica" };
   }
   const base = RIFERIMENTI_LIVELLO[metrica];
   if (!base) return null;
@@ -564,7 +569,7 @@ function glossarioMetriche_(obiettivi) {
     if (info.def) voci.push('<div class="pd-glossario-voce"><strong>' + esc(info.et) + '</strong> — ' + esc(info.def) + '</div>');
   });
   if (!voci.length) return '';
-  return '<div class="adv-tit" style="margin-top:14px">Cosa significano</div><div class="pd-glossario">' + voci.join('') + '</div>';
+  return '<div class="pd-blocco"><div class="adv-tit" style="margin-top:14px">Cosa significano</div><div class="pd-glossario">' + voci.join('') + '</div></div>';
 }
 
 /* "Dove siamo oggi" — apre la scheda (e il PDF): partenza → attuale → target
@@ -584,8 +589,8 @@ function riepilogoPartenzaAttuale_(obiettivi, num, gare) {
       ' → target ' + (o.direzione === "lte" ? "≤" : "≥") + ' ' + dec(o.target, info.dec) + info.unita +
       '</div>';
   }).join('');
-  return '<div class="adv-tit" style="margin-top:14px">Dove siamo oggi</div><div class="pd-riepilogo">' + righe + '</div>' +
-    '<div class="st-hint">"Partenza" = solo se impostata su ogni obiettivo (punto di partenza opzionale nel form) — senza, resta "?".</div>';
+  return '<div class="pd-blocco"><div class="adv-tit" style="margin-top:14px">Dove siamo oggi</div><div class="pd-riepilogo">' + righe + '</div>' +
+    '<div class="st-hint">"Partenza" = solo se impostata su ogni obiettivo (punto di partenza opzionale nel form) — senza, resta "?".</div></div>';
 }
 
 /* Valori di riferimento di alto livello (Basso/Medio/Elite + media squadra
@@ -605,9 +610,9 @@ function tabellaRiferimenti_(obiettivi, gare) {
     righe.push('<tr><td class="st-g">' + esc(info.et) + '</td><td>' + fmt(rif.basso) + '</td><td>' + fmt(rif.medio) + '</td><td>' + fmt(rif.elite) + '</td><td>' + fmt(rif.mediaSquadra) + '</td></tr>');
   });
   if (!righe.length) return '';
-  return '<div class="adv-tit" style="margin-top:14px">Valori di riferimento (alto livello)</div>' +
+  return '<div class="pd-blocco"><div class="adv-tit" style="margin-top:14px">Valori di riferimento (alto livello)</div>' +
     '<div class="st-scroll"><table class="st-box pd-tab-riferimenti"><thead><tr><th>Metrica</th><th>Basso</th><th>Medio</th><th>Elite</th><th>Media squadra</th></tr></thead><tbody>' + righe.join('') + '</tbody></table></div>' +
-    '<div class="st-hint">Riferimenti indicativi (' + Object.keys(fonti).map(esc).join(' · ') + '), NON specifici del campionato DR1 — servono a capire "dove si posiziona" un valore rispetto alla realtà cestistica più ampia, non un confronto diretto. "Media squadra" assente dove il concetto non si applica bene a livello di gruppo (USG%/AST%/AIS/BPM-family/VORP).</div>';
+    '<div class="st-hint">Riferimenti indicativi (' + Object.keys(fonti).map(esc).join(' · ') + '), NON specifici del campionato DR1 — servono a capire "dove si posiziona" un valore rispetto alla realtà cestistica più ampia, non un confronto diretto. "Media squadra" assente dove il concetto non si applica bene a livello di gruppo (USG%/AST%/AIS/BPM-family/VORP) — Def. Rating fa eccezione: lì "Medio" e "Media squadra" coincidono per definizione (vedi sopra).</div></div>';
 }
 
 function vistaSchedaGiocatore(g) {
@@ -659,7 +664,7 @@ function graficoTrendMetrica(o, num, gare) {
   const sottotitolo = info.tipo === "base" ? "gara per gara" : (o.metrica === "ais" ? "gara per gara" : "andamento cumulativo");
   const titolo = info.et + ' — ' + sottotitolo;
   if (!serie.length) {
-    return '<div class="adv-tit" style="margin-top:14px">' + esc(titolo) + '</div><div class="st-hint">Dati insufficienti con questi filtri.</div>';
+    return '<div class="pd-blocco-grafico"><div class="adv-tit" style="margin-top:14px">' + esc(titolo) + '</div><div class="st-hint">Dati insufficienti con questi filtri.</div></div>';
   }
   const target = Number(o.target);
   const partenza = (num || num === 0) ? valoreBaseline(o, num) : null;
@@ -695,7 +700,8 @@ function graficoTrendMetrica(o, num, gare) {
   const yTarget = ys(target).toFixed(1);
   const yPartenza = partenza != null ? ys(partenza).toFixed(1) : null;
 
-  return '<div class="adv-tit" style="margin-top:14px">' + esc(titolo) + '</div>' +
+  return '<div class="pd-blocco-grafico">' +
+    '<div class="adv-tit" style="margin-top:14px">' + esc(titolo) + '</div>' +
     '<div class="st-scroll"><svg class="st-chart pd-trend" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
       griglia + barre +
       (yPartenza != null ? '<line x1="' + padL + '" y1="' + yPartenza + '" x2="' + (W - padR) + '" y2="' + yPartenza + '" class="pd-baseline"/>' : '') +
@@ -704,7 +710,8 @@ function graficoTrendMetrica(o, num, gare) {
     '<div class="st-hint">' + (partenza != null ? 'Partenza: ' + dec(partenza, info.dec) + info.unita + ' · ' : '') +
     'Media: ' + dec(media, info.dec) + info.unita + ' · target: ' + (o.direzione === "lte" ? "≤" : "≥") + ' ' +
     dec(target, info.dec) + info.unita + ' · linea tratteggiata scura = target' + (yPartenza != null ? ', punteggiata chiara = partenza' : '') +
-    ' · verde/rosso = sopra/sotto soglia in quella gara.</div>';
+    ' · verde/rosso = sopra/sotto soglia in quella gara.</div>' +
+  '</div>';
 }
 
 /* ==========================================================================
