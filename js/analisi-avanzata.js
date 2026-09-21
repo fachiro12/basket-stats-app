@@ -248,6 +248,8 @@ function calcolaDefRtg(agg) {
   const oppPts = B.pt, oppPoss = adv.possB || 0.1;
   const teDefRtg = adv.drtg || 0;
   const oppScPoss = oppFGM + (1 - Math.pow(1 - oppFTpct, 2)) * 0.4 * oppFTA;
+  const teamMin = agg.minutiTot || 1;
+  const teamPlays = (A.a2 + A.a3) + 0.44 * A.fta + A.pp;
 
   const numeri = Object.keys(agg.pg).map(Number);
   const righe = numeri.map(n => {
@@ -260,7 +262,14 @@ function calcolaDefRtg(agg) {
     const stop = stop1 + stop2fg + stop2to + stop2ft;
     const stopPct = MP ? s(stop, oppPoss * (MP / teMP)) : 0;
     const defRtg = teDefRtg + 0.2 * (100 * s(oppPts, oppScPoss) * (1 - stopPct) - teDefRtg);
-    return { num: n, nome: nomeAnalisi(n), g: agg.presenze[n] || 0, min: MP, defRtg: defRtg, stopPct: stopPct * 100 };
+    // Rimbalzi %/recuperi: stesse formule già usate per BPM/VORP (percentualiGiocatoreAvz,
+    // sola lettura, non duplicate) — qui al posto dello Stop% (poco leggibile) per
+    // mostrare la parte "concreta" (a referto) del contributo difensivo.
+    const p = percentualiGiocatoreAvz(g, A, B, teamMin, teamPlays, adv);
+    return {
+      num: n, nome: nomeAnalisi(n), g: agg.presenze[n] || 0, min: MP, defRtg: defRtg,
+      orb: p.orPct, drb: p.drPct, trb: p.trPct, rec: g.pr || 0
+    };
   }).filter(x => x.min > 0).sort((a, b) => a.defRtg - b.defRtg);   // più basso = migliore
 
   return { righe: righe, teDefRtg: teDefRtg };
@@ -278,12 +287,16 @@ function vistaDefRtg() {
     '<tr><td class="st-n">#' + esc(x.num) + '</td><td class="st-g">' + esc(x.nome || "") + '</td><td>' + x.g + '</td>' +
     '<td>' + mmss(x.min) + '</td>' +
     '<td>' + dec(x.defRtg, 1) + '</td>' +
-    '<td>' + dec(x.stopPct, 1) + '%</td></tr>'
+    '<td>' + dec(x.orb, 1) + '%</td>' +
+    '<td>' + dec(x.drb, 1) + '%</td>' +
+    '<td>' + dec(x.trb, 1) + '%</td>' +
+    '<td>' + x.rec + '</td></tr>'
   ).join('');
   return '<div class="st-hint">Def. Rating di squadra: ' + dec(r.teDefRtg, 1) + ' · punti concessi ogni 100 possessi col giocatore in campo (meno = meglio) · ordinato dal migliore.</div>' +
-    '<div class="st-scroll"><table class="st-box"><thead><tr><th>#</th><th>Giocatore</th><th>PG</th><th>Min</th><th>DefRtg</th><th>Stop%</th></tr></thead>' +
+    '<div class="st-scroll"><table class="st-box"><thead><tr><th>#</th><th>Giocatore</th><th>PG</th><th>Min</th><th>DefRtg</th><th>OREB%</th><th>DREB%</th><th>TREB%</th><th>REC</th></tr></thead>' +
     '<tbody>' + righe + '</tbody></table></div>' +
-    '<div class="st-hint">Stoppate non tracciate (termine sempre 0, quindi i tiri "contestati e sbagliati per merito di una stoppata" ' +
+    '<div class="st-hint">OREB%/DREB%/TREB% = quota dei rimbalzi disponibili (offensivi/difensivi/totali) presi mentre era in campo · REC = recuperi totali in stagione. ' +
+    'Stoppate non tracciate (termine sempre 0, quindi i tiri "contestati e sbagliati per merito di una stoppata" ' +
     'restano attribuiti solo ai rimbalzi difensivi). Formula di Dean Oliver ("Basket on Paper") via hackastat.eu — stima, non un dato certo: ' +
     'assume 5 difensori della stessa bravura e ripartisce i contributi non nel tabellino in base ai minuti giocati.</div>';
 }
