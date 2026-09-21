@@ -229,6 +229,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (obElimina && typeof eliminaObiettivoCorrente === "function") obElimina.addEventListener("click", eliminaObiettivoCorrente);
   const obChiudi = document.getElementById("ob-chiudi");
   if (obChiudi && typeof chiudiFormObiettivo === "function") obChiudi.addEventListener("click", chiudiFormObiettivo);
+  const obMetrica = document.getElementById("ob-metrica");
+  if (obMetrica && typeof aggiornaDefMetricaForm === "function") obMetrica.addEventListener("change", aggiornaDefMetricaForm);
+  const obBaselineTipo = document.getElementById("ob-baseline-tipo");
+  if (obBaselineTipo && typeof aggiornaVisibilitaBaselineForm === "function") obBaselineTipo.addEventListener("change", aggiornaVisibilitaBaselineForm);
 
   /* -------- DEBRIEF POSSESSI (sperimentale) -------- */
   const apriDeb = document.getElementById("apri-debrief");

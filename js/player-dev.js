@@ -30,25 +30,44 @@ const MAX_OBIETTIVI = 5;
 const ORIZZONTI = [["1m", "1 mese"], ["3m", "3 mesi"], ["6m", "6 mesi"]];
 
 const CATALOGO_METRICHE = [
-  { cod: "ppg", et: "Punti/gara (PPG)", dec: 1, unita: "", tipo: "base" },
-  { cod: "rpg", et: "Rimbalzi/gara (RPG)", dec: 1, unita: "", tipo: "base" },
-  { cod: "apg", et: "Assist/gara (APG)", dec: 1, unita: "", tipo: "base" },
-  { cod: "tpg", et: "Palle perse/gara", dec: 1, unita: "", tipo: "base" },
-  { cod: "fgpct", et: "FG%", dec: 1, unita: "%", tipo: "base" },
-  { cod: "p3pct", et: "3P%", dec: 1, unita: "%", tipo: "base" },
-  { cod: "ftpct", et: "FT%", dec: 1, unita: "%", tipo: "base" },
-  { cod: "tspct", et: "TS%", dec: 1, unita: "%", tipo: "base" },
-  { cod: "usg", et: "USG%", dec: 1, unita: "%", tipo: "base" },
-  { cod: "astpct", et: "AST%", dec: 1, unita: "%", tipo: "base" },
-  { cod: "pmpg", et: "+/- per gara", dec: 1, unita: "", tipo: "base" },
-  { cod: "ais", et: "AIS", dec: 1, unita: "", tipo: "avanzata" },
-  { cod: "defrtg", et: "Def. Rating", dec: 1, unita: "", tipo: "avanzata" },
-  { cod: "bpm", et: "BPM", dec: 1, unita: "", tipo: "avanzata" },
-  { cod: "obpm", et: "OBPM", dec: 1, unita: "", tipo: "avanzata" },
-  { cod: "dbpm", et: "DBPM", dec: 1, unita: "", tipo: "avanzata" },
-  { cod: "vorp", et: "VORP", dec: 2, unita: "", tipo: "avanzata" }
+  { cod: "ppg", et: "Punti/gara (PPG)", dec: 1, unita: "", tipo: "base",
+    def: "Punti segnati in media a partita." },
+  { cod: "rpg", et: "Rimbalzi/gara (RPG)", dec: 1, unita: "", tipo: "base",
+    def: "Rimbalzi (offensivi + difensivi) presi in media a partita." },
+  { cod: "apg", et: "Assist/gara (APG)", dec: 1, unita: "", tipo: "base",
+    def: "Assist forniti in media a partita." },
+  { cod: "tpg", et: "Palle perse/gara", dec: 1, unita: "", tipo: "base",
+    def: "Palle perse in media a partita — meno è meglio." },
+  { cod: "fgpct", et: "FG%", dec: 1, unita: "%", tipo: "base",
+    def: "Percentuale di realizzazione su tutti i tiri dal campo (2 e 3 punti)." },
+  { cod: "p3pct", et: "3P%", dec: 1, unita: "%", tipo: "base",
+    def: "Percentuale di realizzazione sui tiri da 3 punti." },
+  { cod: "ftpct", et: "FT%", dec: 1, unita: "%", tipo: "base",
+    def: "Percentuale di realizzazione ai tiri liberi." },
+  { cod: "ftr", et: "FT Rate", dec: 2, unita: "", tipo: "base",
+    def: "Tiri liberi tentati ogni tiro dal campo tentato — quanto porta la palla vicino a canestro o subisce falli." },
+  { cod: "tspct", et: "TS%", dec: 1, unita: "%", tipo: "base",
+    def: "Efficienza di tiro complessiva (True Shooting%): tiene conto insieme di 2 punti, 3 punti e liberi." },
+  { cod: "usg", et: "USG%", dec: 1, unita: "%", tipo: "base",
+    def: "Quota dei possessi della squadra \"usati\" da lui mentre era in campo (tiri, liberi, palle perse)." },
+  { cod: "astpct", et: "AST%", dec: 1, unita: "%", tipo: "base",
+    def: "Quota delle proprie azioni concluse con un assist invece che con un tiro o una palla persa." },
+  { cod: "pmpg", et: "+/- per gara", dec: 1, unita: "", tipo: "base",
+    def: "Differenza punti squadra-avversari nei minuti in cui è stato in campo, in media a partita." },
+  { cod: "ais", et: "AIS", dec: 1, unita: "", tipo: "avanzata",
+    def: "Indicatore sintetico di impatto in gara (produzione + differenziale), pesato per quanto la partita fosse in bilico." },
+  { cod: "defrtg", et: "Def. Rating", dec: 1, unita: "", tipo: "avanzata",
+    def: "Punti concessi dalla squadra ogni 100 possessi difensivi con lui in campo — stima individuale, meno è meglio." },
+  { cod: "bpm", et: "BPM", dec: 1, unita: "", tipo: "avanzata",
+    def: "Impatto stimato sul punteggio ogni 100 possessi, rispetto a un giocatore medio." },
+  { cod: "obpm", et: "OBPM", dec: 1, unita: "", tipo: "avanzata",
+    def: "Come il BPM, ma isolando solo il contributo offensivo." },
+  { cod: "dbpm", et: "DBPM", dec: 1, unita: "", tipo: "avanzata",
+    def: "Come il BPM, ma isolando solo il contributo difensivo." },
+  { cod: "vorp", et: "VORP", dec: 2, unita: "", tipo: "avanzata",
+    def: "Valore stimato rispetto a un giocatore di livello \"rimpiazzo\", pesato sui minuti giocati." }
 ];
-function infoMetrica(cod) { return CATALOGO_METRICHE.find(m => m.cod === cod) || { cod: cod, et: cod, dec: 1, unita: "", tipo: "base" }; }
+function infoMetrica(cod) { return CATALOGO_METRICHE.find(m => m.cod === cod) || { cod: cod, et: cod, dec: 1, unita: "", tipo: "base", def: "" }; }
 function etichettaOrizzonte(cod) { const o = ORIZZONTI.find(x => x[0] === cod); return o ? o[1] : cod; }
 
 /* ==========================================================================
@@ -99,7 +118,9 @@ function sincronizzaObiettivo(rec, elimina) {
     direzione: rec.direzione || "gte",
     orizzonte: rec.orizzonte || "1m",
     creato_il: rec.creato_il || "",
-    nota: rec.nota || ""
+    nota: rec.nota || "",
+    baseline_tipo: rec.baseline_tipo || "",
+    baseline_partite: Array.isArray(rec.baseline_partite) ? rec.baseline_partite.join(",") : (rec.baseline_partite || "")
   });
 }
 
@@ -136,6 +157,8 @@ function mergeObiettiviCloud(cloud) {
       orizzonte: ["1m", "3m", "6m"].indexOf(c.orizzonte) > -1 ? c.orizzonte : "1m",
       creato_il: c.creato_il || "",
       nota: String(c.nota || ""),
+      baseline_tipo: ["amichevoli", "selezione"].indexOf(c.baseline_tipo) > -1 ? c.baseline_tipo : "",
+      baseline_partite: String(c.baseline_partite || "").split(",").map(x => x.trim()).filter(Boolean),
       eliminato: !!c.eliminato
     };
   });
@@ -169,6 +192,39 @@ function garePerPlayerDev() {
 }
 
 /* ==========================================================================
+   Punto di partenza (baseline) di un obiettivo — indipendente dai filtri di
+   Campionato/Amichevoli scelti nell'elenco: o dalle sole amichevoli (tipico
+   "prima della stagione") o da una selezione esplicita di gare (checklist nel
+   form). Tutte le gare TERMINATE, non solo quelle di garePerPlayerDev().
+   ========================================================================== */
+function gareTerminate_() {
+  const byMatch = (cacheEventiStagione && cacheEventiStagione.byMatch) || {};
+  return elencoPartite()
+    .filter(p => String(p.stato) === "Terminata")
+    .map(p => {
+      const raw = byMatch[String(p.id_partita)] || null;
+      const finale = raw ? punteggioDaEventi(eventiPuliti(raw)) : null;
+      return { partita: p, eventi: raw, finale: finale, vinta: finale ? finale.MIA > finale.OPP : null, mancante: !raw };
+    })
+    .sort((a, b) => String(a.partita.data_ora || "").localeCompare(String(b.partita.data_ora || "")));
+}
+function gareBaselineObiettivo(o) {
+  if (o.baseline_tipo === "amichevoli") {
+    return gareTerminate_().filter(g => (g.partita.tipo || "Campionato") === "Amichevole");
+  }
+  if (o.baseline_tipo === "selezione" && Array.isArray(o.baseline_partite) && o.baseline_partite.length) {
+    const set = {}; o.baseline_partite.forEach(id => { set[String(id)] = 1; });
+    return gareTerminate_().filter(g => set[String(g.partita.id_partita)]);
+  }
+  return [];
+}
+function valoreBaseline(o, num) {
+  const gare = gareBaselineObiettivo(o);
+  if (!gare.length || !(num || num === 0)) return null;
+  return valoreMetricaStagione(o.metrica, num, gare);
+}
+
+/* ==========================================================================
    Estrazione valori metrica — base (per-linea) + avanzate (season/cumulativo)
    ========================================================================== */
 function statLinePlays_(s) { return (s.a2 + s.a3) + 0.44 * s.fta + s.pp; }
@@ -188,6 +244,7 @@ function valoreBaseDaLinea_(metrica, s, ctx) {
     case "fgpct": return fga ? fgm / fga * 100 : null;
     case "p3pct": return s.a3 ? s.m3 / s.a3 * 100 : null;
     case "ftpct": return s.fta ? s.ftm / s.fta * 100 : null;
+    case "ftr": return fga ? s.fta / fga : null;
     case "tspct": return (fga || s.fta) ? s.pt / (2 * (fga + 0.44 * s.fta)) * 100 : null;
     case "pmpg": return s.pm / G;
     case "usg": return (s.min && ctx.teamPlays) ? 100 * statLinePlays_(s) * (ctx.teamMin / 5) / (s.min * ctx.teamPlays) : null;
@@ -374,18 +431,36 @@ function renderSchedaGiocatore() {
 function rigaObiettivoTabella_(o, num, gare, perStampa) {
   const info = infoMetrica(o.metrica);
   const attuale = (num || num === 0) ? valoreMetricaStagione(o.metrica, num, gare) : null;
+  const partenza = (num || num === 0) ? valoreBaseline(o, num) : null;
   const raggiunto = attuale == null ? null : (o.direzione === "lte" ? attuale <= o.target : attuale >= o.target);
   const statoTxt = attuale == null ? "Dati insuff." : (raggiunto ? "✓ Raggiunto" : "In corso");
   const statoCls = attuale == null ? "" : (raggiunto ? "pd-badge-ok" : "pd-badge-corso");
   return '<tr>' +
     '<td>' + esc(etichettaOrizzonte(o.orizzonte)) + '</td>' +
     '<td>' + esc(info.et) + '</td>' +
+    '<td>' + (partenza == null ? '–' : dec(partenza, info.dec) + info.unita) + '</td>' +
     '<td>' + (attuale == null ? '–' : dec(attuale, info.dec) + info.unita) + '</td>' +
     '<td>' + (o.direzione === "lte" ? "≤" : "≥") + ' ' + dec(o.target, info.dec) + info.unita + '</td>' +
     '<td class="' + statoCls + '">' + statoTxt + '</td>' +
     '<td class="pd-nota">' + esc(o.nota || "") + '</td>' +
     (perStampa ? '' : '<td><button class="pd-modifica" data-obiettivo="' + esc(o.id) + '" aria-label="Modifica obiettivo"><svg class="ico" aria-hidden="true"><use href="#i-edit"></use></svg></button></td>') +
     '</tr>';
+}
+
+/* Glossario compatto: solo le metriche usate dagli obiettivi di QUESTO giocatore
+   (schermo e stampa) — spiegazione in poche parole, sia per chi compila la scheda
+   sia per chi la riceve. */
+function glossarioMetriche_(obiettivi) {
+  if (!obiettivi.length) return '';
+  const viste = {}; const voci = [];
+  obiettivi.forEach(o => {
+    if (viste[o.metrica]) return;
+    viste[o.metrica] = 1;
+    const info = infoMetrica(o.metrica);
+    if (info.def) voci.push('<div class="pd-glossario-voce"><strong>' + esc(info.et) + '</strong> — ' + esc(info.def) + '</div>');
+  });
+  if (!voci.length) return '';
+  return '<div class="adv-tit" style="margin-top:14px">Cosa significano</div><div class="pd-glossario">' + voci.join('') + '</div>';
 }
 
 function vistaSchedaGiocatore(g) {
@@ -404,9 +479,10 @@ function vistaSchedaGiocatore(g) {
     '</div>' +
     '<div class="adv-tit" style="margin-top:14px">Obiettivi (' + obiettivi.length + '/' + MAX_OBIETTIVI + ')</div>' +
     (obiettivi.length
-      ? '<div class="st-scroll"><table class="st-box pd-tab-obiettivi"><thead><tr><th>Orizzonte</th><th>Metrica</th><th>Attuale</th><th>Target</th><th>Stato</th><th>Nota</th><th></th></tr></thead><tbody>' + righeObTab + '</tbody></table></div>'
+      ? '<div class="st-scroll"><table class="st-box pd-tab-obiettivi"><thead><tr><th>Orizzonte</th><th>Metrica</th><th>Partenza</th><th>Attuale</th><th>Target</th><th>Stato</th><th>Nota</th><th></th></tr></thead><tbody>' + righeObTab + '</tbody></table></div>'
       : '<div class="st-hint">Nessun obiettivo ancora — aggiungine uno.</div>') +
     '<button class="btn-annulla-modale pd-aggiungi" id="pd-aggiungi-obiettivo"' + (obiettivi.length >= MAX_OBIETTIVI ? ' disabled' : '') + '>+ Aggiungi obiettivo</button>' +
+    glossarioMetriche_(obiettivi) +
     tracking +
     '<div class="pd-azioni">' +
       '<button class="btn-conferma" id="pd-stampa-btn">🖨️ Stampa / Salva PDF</button>' +
@@ -438,9 +514,11 @@ function graficoTrendMetrica(o, num, gare) {
     return '<div class="adv-tit" style="margin-top:14px">' + esc(titolo) + '</div><div class="st-hint">Dati insufficienti con questi filtri.</div>';
   }
   const target = Number(o.target);
+  const partenza = (num || num === 0) ? valoreBaseline(o, num) : null;
   const vals = serie.map(x => x.valore);
   const media = vals.reduce((a, b) => a + b, 0) / vals.length;
-  let lo = Math.min.apply(null, vals.concat([target])), hi = Math.max.apply(null, vals.concat([target]));
+  const riferimenti = [target].concat(partenza != null ? [partenza] : []);
+  let lo = Math.min.apply(null, vals.concat(riferimenti)), hi = Math.max.apply(null, vals.concat(riferimenti));
   if (lo === hi) { lo -= 1; hi += 1; }
   const pad = (hi - lo) * 0.12 || 1;
   lo -= pad; hi += pad;
@@ -467,14 +545,18 @@ function graficoTrendMetrica(o, num, gare) {
       '<text x="' + (bx + w / 2).toFixed(1) + '" y="' + (H - 14) + '" class="st-qt" text-anchor="middle">' + esc(x.etichetta) + '</text>';
   }).join('');
   const yTarget = ys(target).toFixed(1);
+  const yPartenza = partenza != null ? ys(partenza).toFixed(1) : null;
 
   return '<div class="adv-tit" style="margin-top:14px">' + esc(titolo) + '</div>' +
     '<div class="st-scroll"><svg class="st-chart pd-trend" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none">' +
       griglia + barre +
+      (yPartenza != null ? '<line x1="' + padL + '" y1="' + yPartenza + '" x2="' + (W - padR) + '" y2="' + yPartenza + '" class="pd-baseline"/>' : '') +
       '<line x1="' + padL + '" y1="' + yTarget + '" x2="' + (W - padR) + '" y2="' + yTarget + '" class="pd-target"/>' +
     '</svg></div>' +
-    '<div class="st-hint">Media: ' + dec(media, info.dec) + info.unita + ' · target: ' + (o.direzione === "lte" ? "≤" : "≥") + ' ' +
-    dec(target, info.dec) + info.unita + ' · linea tratteggiata = target · verde/rosso = sopra/sotto soglia in quella gara.</div>';
+    '<div class="st-hint">' + (partenza != null ? 'Partenza: ' + dec(partenza, info.dec) + info.unita + ' · ' : '') +
+    'Media: ' + dec(media, info.dec) + info.unita + ' · target: ' + (o.direzione === "lte" ? "≤" : "≥") + ' ' +
+    dec(target, info.dec) + info.unita + ' · linea tratteggiata scura = target' + (yPartenza != null ? ', punteggiata chiara = partenza' : '') +
+    ' · verde/rosso = sopra/sotto soglia in quella gara.</div>';
 }
 
 /* ==========================================================================
@@ -496,15 +578,48 @@ function apriFormObiettivo(id) {
     sel.dataset.popolato = "1";
   }
   sel.value = o ? o.metrica : ((sel.options[0] && sel.options[0].value) || "");
+  aggiornaDefMetricaForm();
   document.getElementById("ob-target").value = o && o.target != null ? o.target : "";
   document.getElementById("ob-direzione").value = o ? (o.direzione || "gte") : "gte";
   document.getElementById("ob-orizzonte").value = o ? (o.orizzonte || "1m") : "1m";
   document.getElementById("ob-nota").value = o ? (o.nota || "") : "";
+  document.getElementById("ob-baseline-tipo").value = o ? (o.baseline_tipo || "") : "";
+  renderBaselineSelezioneForm(o ? o.baseline_partite : []);
+  aggiornaVisibilitaBaselineForm();
   document.getElementById("ob-elimina").hidden = !o;
   document.getElementById("overlay-obiettivo").classList.add("visibile");
 }
 function chiudiFormObiettivo() {
   document.getElementById("overlay-obiettivo").classList.remove("visibile");
+}
+/* Definizione in poche parole della metrica scelta — visibile sia a chi
+   compila la scheda sia (nel PDF) a chi la riceve (vedi glossarioMetriche_). */
+function aggiornaDefMetricaForm() {
+  const sel = document.getElementById("ob-metrica");
+  const def = document.getElementById("ob-metrica-def");
+  if (!sel || !def) return;
+  def.textContent = infoMetrica(sel.value).def || "";
+}
+function renderBaselineSelezioneForm(selezionati) {
+  const cont = document.getElementById("ob-baseline-selezione");
+  if (!cont) return;
+  const set = {}; (selezionati || []).forEach(id => { set[String(id)] = 1; });
+  const gare = gareTerminate_();
+  cont.innerHTML = gare.length
+    ? gare.map(g => {
+        const id = String(g.partita.id_partita);
+        const nome = (typeof nomePartitaDaCalendario === "function" ? nomePartitaDaCalendario(g.partita) : null) ||
+          ((g.partita.luogo === "Casa" ? "" : "@") + (g.partita.avversario || ""));
+        return '<label class="pd-baseline-riga"><input type="checkbox" class="ob-baseline-check" value="' + esc(id) + '"' +
+          (set[id] ? ' checked' : '') + '> ' + esc(nome) +
+          (g.partita.data_ora ? ' · ' + esc(String(g.partita.data_ora).slice(0, 10)) : '') +
+          ((g.partita.tipo || "Campionato") === "Amichevole" ? ' (amich.)' : '') + '</label>';
+      }).join('')
+    : '<div class="st-hint">Nessuna gara terminata disponibile.</div>';
+}
+function aggiornaVisibilitaBaselineForm() {
+  const tipo = document.getElementById("ob-baseline-tipo").value;
+  document.getElementById("ob-baseline-selezione").hidden = tipo !== "selezione";
 }
 function confermaFormObiettivo() {
   const idGiocatore = document.getElementById("ob-giocatore-id").value;
@@ -515,6 +630,10 @@ function confermaFormObiettivo() {
   const targetRaw = document.getElementById("ob-target").value.replace(",", ".").trim();
   const target = parseFloat(targetRaw);
   if (!targetRaw || !isFinite(target)) { mostraToast("Inserisci un valore target valido"); return; }
+  const baselineTipo = document.getElementById("ob-baseline-tipo").value;
+  const baselinePartite = baselineTipo === "selezione"
+    ? Array.from(document.querySelectorAll("#ob-baseline-selezione .ob-baseline-check:checked")).map(el => el.value)
+    : [];
   upsertObiettivo({
     id: idAttuale || "",
     id_giocatore: idGiocatore,
@@ -522,7 +641,9 @@ function confermaFormObiettivo() {
     target: target,
     direzione: document.getElementById("ob-direzione").value === "lte" ? "lte" : "gte",
     orizzonte: document.getElementById("ob-orizzonte").value,
-    nota: document.getElementById("ob-nota").value.trim()
+    nota: document.getElementById("ob-nota").value.trim(),
+    baseline_tipo: baselineTipo,
+    baseline_partite: baselinePartite
   });
   chiudiFormObiettivo();
   renderSchedaGiocatore();
@@ -555,8 +676,9 @@ function contenutoStampaScheda_(g) {
     '</div>' +
     '<h2>Obiettivi</h2>' +
     (obiettivi.length
-      ? '<table class="pd-stampa-tab"><thead><tr><th>Orizzonte</th><th>Metrica</th><th>Attuale</th><th>Target</th><th>Stato</th><th>Nota</th></tr></thead><tbody>' + righe + '</tbody></table>'
+      ? '<table class="pd-stampa-tab"><thead><tr><th>Orizzonte</th><th>Metrica</th><th>Partenza</th><th>Attuale</th><th>Target</th><th>Stato</th><th>Nota</th></tr></thead><tbody>' + righe + '</tbody></table>'
       : '<p>Nessun obiettivo impostato.</p>') +
+    glossarioMetriche_(obiettivi) +
     '<h2>Andamento stagionale</h2>' +
     (grafici || '<p>Nessun dato.</p>') +
     '<p class="pd-stampa-firma">Coach: ____________________ &nbsp;&nbsp;&nbsp; Giocatore: ____________________</p>';
@@ -580,10 +702,12 @@ function generaPromptAI(g) {
   const righe = obiettivi.map(o => {
     const info = infoMetrica(o.metrica);
     const attuale = (num || num === 0) ? valoreMetricaStagione(o.metrica, num, gare) : null;
+    const partenza = (num || num === 0) ? valoreBaseline(o, num) : null;
     const serie = (num || num === 0) ? serieObiettivo(o, num, gare) : [];
     const ultime = serie.slice(-3).map(x => dec(x.valore, info.dec)).join(", ");
-    return '- Obiettivo a ' + etichettaOrizzonte(o.orizzonte) + ': ' + info.et + ' ' +
+    return '- Obiettivo a ' + etichettaOrizzonte(o.orizzonte) + ': ' + info.et + ' (' + info.def + ') ' +
       (o.direzione === "lte" ? "≤" : "≥") + ' ' + dec(o.target, info.dec) + info.unita +
+      (partenza != null ? '. Punto di partenza: ' + dec(partenza, info.dec) + info.unita : '') +
       '. Valore attuale (media stagione): ' + (attuale == null ? 'dati insufficienti' : dec(attuale, info.dec) + info.unita) +
       (ultime ? '. Ultime gare: ' + ultime + '.' : '.') +
       (o.nota ? ' Nota del coach: "' + o.nota + '".' : '');

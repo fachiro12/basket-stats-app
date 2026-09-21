@@ -409,11 +409,16 @@ function vistaAnalisiGiocatori(agg) {
     const astR = (fga + 0.44 * gPl.fta + gPl.as + gPl.pp) ? gPl.as * 100 / (fga + 0.44 * gPl.fta + gPl.as + gPl.pp) : 0;
     const tovR = (fga + 0.44 * gPl.fta + gPl.as + gPl.pp) ? gPl.pp * 100 / (fga + 0.44 * gPl.fta + gPl.as + gPl.pp) : 0;
     const net40 = gPl.min ? Math.round(gPl.pm / gPl.min * 40) : 0;
+    const pct2 = gPl.a2 ? s(gPl.m2, gPl.a2) * 100 : null;
+    const pct3 = gPl.a3 ? s(gPl.m3, gPl.a3) * 100 : null;
+    const ftpct = gPl.fta ? s(gPl.ftm, gPl.fta) * 100 : null;
+    const ftr = fga ? s(gPl.fta, fga) : null;
     const val = {
       num: nn, nome: nomeAnalisi(nn), g: G,
       min: gPl.min, pt: gPl.pt, rt: gPl.ro + gPl.rd, as: gPl.as, pp: gPl.pp, pr: gPl.pr,
       ff: gPl.ff, fs: gPl.fs, pm: gPl.pm,
       efg: efg, ts: ts, usg: usg, astr: astR, tovr: tovR, net40: net40,
+      pct2: pct2, pct3: pct3, ftpct: ftpct, ftr: ftr,
       _q: q, _fgm2: [gPl.m2, gPl.a2], _fgm3: [gPl.m3, gPl.a3], _ft: [gPl.ftm, gPl.fta]
     };
     return val;
@@ -430,7 +435,7 @@ function vistaAnalisiGiocatori(agg) {
   // [chiave-ordinamento | null, etichetta]
   const cols = [
     ["num", "#"], ["nome", "Giocatore"], ["g", "PG"], ["min", "MIN"], ["pt", "PT"],
-    [null, "2P"], [null, "3P"], [null, "TL"],
+    [null, "2P"], ["pct2", "2P%"], [null, "3P"], ["pct3", "3P%"], [null, "TL"], ["ftpct", "FT%"], ["ftr", "FT Rate"],
     ["efg", "eFG%"], ["ts", "TS%"], ["rt", "RT"], ["as", "AS"], ["pp", "PP"], ["pr", "REC"],
     ["ff", "FF"], ["fs", "FS"], ["usg", "USG%"], ["astr", "AST%"], ["tovr", "TOV%"],
     ["pm", "+/-"], ["net40", "Net/40"]
@@ -452,8 +457,12 @@ function vistaAnalisiGiocatori(agg) {
       '<td>' + (md ? mmss(r.min / (r.g || 1)) : mmss(r.min)) + '</td>' +
       '<td class="st-pt">' + q(r.pt) + '</td>' +
       '<td>' + q(r._fgm2[0]) + '/' + q(r._fgm2[1]) + '</td>' +
+      '<td>' + perc(r.pct2) + '</td>' +
       '<td>' + q(r._fgm3[0]) + '/' + q(r._fgm3[1]) + '</td>' +
+      '<td>' + perc(r.pct3) + '</td>' +
       '<td>' + q(r._ft[0]) + '/' + q(r._ft[1]) + '</td>' +
+      '<td>' + perc(r.ftpct) + '</td>' +
+      '<td>' + (r.ftr == null ? '–' : dec(r.ftr, 2)) + '</td>' +
       '<td>' + perc(r.efg) + '</td>' +
       '<td>' + perc(r.ts) + '</td>' +
       '<td>' + q(r.rt) + '</td>' +
@@ -475,7 +484,7 @@ function vistaAnalisiGiocatori(agg) {
       '<button data-anfmt="medie" class="' + (analisiFmt === 'medie' ? 'attivo' : '') + '">Medie</button>' +
     '</div>' +
     '<div class="st-scroll"><table class="st-box an-tab"><thead>' + thead + '</thead><tbody>' + body + '</tbody></table></div>' +
-    '<div class="st-hint">Tocca un\'intestazione per ordinare · PG = presenze · USG/AST%/TOV% approssimati a livello gara · nomi e numeri dall\'anagrafica attuale.</div>' +
+    '<div class="st-hint">Tocca un\'intestazione per ordinare · PG = presenze · USG/AST%/TOV% approssimati a livello gara · FT Rate = liberi tentati ogni tiro dal campo tentato · nomi e numeri dall\'anagrafica attuale.</div>' +
     bottoniAnalisiAvanzata();
 }
 
