@@ -105,11 +105,11 @@ a,
     align-self: stretch;
     flex-direction: column;
     justify-content: flex-start;
-    width: 200px;
-    min-width: 200px;
-    max-width: 200px;
+    width: 148px;
+    min-width: 148px;
+    max-width: 148px;
     min-height: 0;
-    padding: 12px 8px;
+    padding: 12px 6px;
     gap: 4px;
     border: 0;
     border-right: 1px solid var(--color-border);
@@ -121,15 +121,15 @@ a,
     flex: 0 0 auto;
     flex-direction: row;
     justify-content: flex-start;
-    gap: 12px;
-    padding: 10px 14px;
-    font-size: 14px;
+    gap: 10px;
+    padding: 9px 10px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: 0;
     border-radius: var(--radius-sm);
   }
-  .tab-btn .icona { font-size: 20px; }
-  .tab-btn .icona .ico { width: 20px; height: 20px; }
+  .tab-btn .icona { font-size: 18px; }
+  .tab-btn .icona .ico { width: 18px; height: 18px; }
 
   .view { padding-bottom: var(--space-5); }
 

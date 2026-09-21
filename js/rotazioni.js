@@ -391,7 +391,14 @@ function calcolaLineupBox() {
       return {
         num: num, nome: ((typeof nomeAnalisi === "function" ? nomeAnalisi(num) : "") || ("#" + num)),
         pt: Pg.pt,
-        usg: (minuti && teamPlays) ? 100 * plays * (minuti / 5) / (minuti * teamPlays) : 0,
+        // Quota dei possessi del QUINTETTO consumati da questo giocatore mentre
+        // erano in campo insieme: la formula whole-game (100·plays·(TmMin/5)/
+        // (MP·TmPlays)) qui degenera male, perché in un quintetto MP è SEMPRE
+        // uguale a TmMin per tutti e 5 — il fattore (TmMin/5)/MP diventa una
+        // costante 1/5 fissa che schiaccia ogni giocatore a un tetto teorico
+        // del 20%, sottostimando l'uso reale di circa 5 volte. Qui la quota
+        // corretta è semplicemente plays_i/teamPlays: i 5 sommano al 100%.
+        usg: teamPlays ? 100 * plays / teamPlays : 0,
         ts: (pFga || Pg.fta) ? Pg.pt / (2 * (pFga + 0.44 * Pg.fta)) * 100 : null,
         fgm: pFgm, fga: pFga, fgpct: pFga ? pFgm / pFga * 100 : null,
         orb: Pg.ro, drb: Pg.rd, tov: Pg.pp, rec: Pg.pr
@@ -603,6 +610,6 @@ function vistaGiocatoriQuintetto(r) {
     selettore +
     '<div class="st-scroll"><table class="st-box an-tab">' + thead + '<tbody>' + corpo + '</tbody></table></div>' +
     '<div class="st-hint">MIN non in tabella: dentro un quintetto i 5 giocatori condividono per definizione gli stessi minuti (' + mmss(riga.min) + '). ' +
-    'USG% e TS% con la stessa formula di Analisi stagione — in un quintetto equilibrato ogni giocatore sta intorno al 20% di USG (5 che si dividono i possessi). ' +
+    'USG% qui è la quota dei possessi del QUINTETTO usati da ciascuno mentre erano in campo insieme — i 5 sommano al 100% (in un quintetto perfettamente equilibrato, ~20% a testa); TS% con la stessa formula di Analisi stagione. ' +
     'In verde il PTS/USG% più alto, in rosso il TS% più basso del gruppo — solo un aiuto visivo, non un giudizio.</div>';
 }
