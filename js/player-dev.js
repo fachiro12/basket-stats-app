@@ -314,7 +314,10 @@ function teamPlaysDa_(team) { return (team.a2 + team.a3) + 0.44 * team.fta + tea
 function valoreBaseDaLinea_(metrica, s, ctx) {
   const G = ctx.G || 1;
   const fga = s.a2 + s.a3, fgm = s.m2 + s.m3;
-  const usg = (s.min && ctx.teamPlays) ? 100 * statLinePlays_(s) * (ctx.teamMin / 5) / (s.min * ctx.teamPlays) : null;
+  // FIX: ctx.teamMin (r.minuti o agg.minutiTot) è già la durata-partita cumulata,
+  // cioè già "Tm MP / 5" della formula standard — dividere ANCORA per 5 schiacciava
+  // USG% (e quindi anche l'Indice di Forzatura, che lo usa) a 1/5 del valore vero.
+  const usg = (s.min && ctx.teamPlays) ? 100 * statLinePlays_(s) * ctx.teamMin / (s.min * ctx.teamPlays) : null;
   const ts = (fga || s.fta) ? s.pt / (2 * (fga + 0.44 * s.fta)) * 100 : null;
   switch (metrica) {
     case "ppg": return s.pt / G;

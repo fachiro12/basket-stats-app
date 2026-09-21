@@ -405,7 +405,13 @@ function vistaAnalisiGiocatori(agg) {
     const efg = fga ? s(fgm + 0.5 * gPl.m3, fga) * 100 : null;
     const ts = (fga || gPl.fta) ? s(gPl.pt, 2 * (fga + 0.44 * gPl.fta)) * 100 : null;
     const plays = fga + 0.44 * gPl.fta + gPl.pp;
-    const usg = (gPl.min && teamPlays) ? 100 * plays * (teamMin / 5) / (gPl.min * teamPlays) : 0;
+    // FIX: `teamMin` (agg.minutiTot) è già la durata-partita cumulata (minutiDaEventi:
+    // "quarti visti × 10"), cioè già l'equivalente di "Tm MP / 5" della formula standard
+    // (Tm MP = minuti-squadra reali, 5 giocatori in campo sempre insieme = 5× la durata
+    // gara). Dividere ANCORA per 5 qui introduceva un fattore 5 di troppo, schiacciando
+    // ogni USG% a 1/5 del valore corretto (verificato a mano: giocatore perfettamente
+    // bilanciato, 40min/40min, dava 4% invece del 20% atteso).
+    const usg = (gPl.min && teamPlays) ? 100 * plays * teamMin / (gPl.min * teamPlays) : 0;
     const astR = (fga + 0.44 * gPl.fta + gPl.as + gPl.pp) ? gPl.as * 100 / (fga + 0.44 * gPl.fta + gPl.as + gPl.pp) : 0;
     const tovR = (fga + 0.44 * gPl.fta + gPl.as + gPl.pp) ? gPl.pp * 100 / (fga + 0.44 * gPl.fta + gPl.as + gPl.pp) : 0;
     const net40 = gPl.min ? Math.round(gPl.pm / gPl.min * 40) : 0;
@@ -413,12 +419,18 @@ function vistaAnalisiGiocatori(agg) {
     const pct3 = gPl.a3 ? s(gPl.m3, gPl.a3) * 100 : null;
     const ftpct = gPl.fta ? s(gPl.ftm, gPl.fta) * 100 : null;
     const ftr = fga ? s(gPl.fta, fga) : null;
+    // Indice di Forzatura = USG% × (1 − TS%giocatore/TS%squadra), stessa formula di
+    // Player Development (js/player-dev.js, CATALOGO_METRICHE "forz") — 0 = rende come
+    // la squadra a qualsiasi volume, positivo e alto = tira/attacca molto con
+    // efficienza sotto la media (forza), negativo = usa molto ED è più efficiente.
+    const tsSquadra = agg.adv && agg.adv.tsA;
+    const forz = (ts != null && tsSquadra) ? usg * (1 - ts / tsSquadra) : null;
     const val = {
       num: nn, nome: nomeAnalisi(nn), g: G,
       min: gPl.min, pt: gPl.pt, rt: gPl.ro + gPl.rd, as: gPl.as, pp: gPl.pp, pr: gPl.pr,
       ff: gPl.ff, fs: gPl.fs, pm: gPl.pm,
       efg: efg, ts: ts, usg: usg, astr: astR, tovr: tovR, net40: net40,
-      pct2: pct2, pct3: pct3, ftpct: ftpct, ftr: ftr,
+      pct2: pct2, pct3: pct3, ftpct: ftpct, ftr: ftr, forz: forz,
       _q: q, _fgm2: [gPl.m2, gPl.a2], _fgm3: [gPl.m3, gPl.a3], _ft: [gPl.ftm, gPl.fta]
     };
     return val;
@@ -437,7 +449,7 @@ function vistaAnalisiGiocatori(agg) {
     ["num", "#"], ["nome", "Giocatore"], ["g", "PG"], ["min", "MIN"], ["pt", "PT"],
     [null, "2P"], ["pct2", "2P%"], [null, "3P"], ["pct3", "3P%"], [null, "TL"], ["ftpct", "FT%"], ["ftr", "FT Rate"],
     ["efg", "eFG%"], ["ts", "TS%"], ["rt", "RT"], ["as", "AS"], ["pp", "PP"], ["pr", "REC"],
-    ["ff", "FF"], ["fs", "FS"], ["usg", "USG%"], ["astr", "AST%"], ["tovr", "TOV%"],
+    ["ff", "FF"], ["fs", "FS"], ["usg", "USG%"], ["forz", "Forz."], ["astr", "AST%"], ["tovr", "TOV%"],
     ["pm", "+/-"], ["net40", "Net/40"]
   ];
   const thead = '<tr>' + cols.map(c =>
@@ -472,6 +484,7 @@ function vistaAnalisiGiocatori(agg) {
       '<td>' + q(r.ff) + '</td>' +
       '<td>' + q(r.fs) + '</td>' +
       '<td>' + dec(r.usg, 1) + '%</td>' +
+      '<td class="' + (r.forz == null ? '' : (r.forz > 1 ? 'neg' : (r.forz < -1 ? 'pos' : ''))) + '">' + (r.forz == null ? '–' : dec(r.forz, 1)) + '</td>' +
       '<td>' + dec(r.astr, 1) + '%</td>' +
       '<td>' + dec(r.tovr, 1) + '%</td>' +
       '<td class="' + (r.pm >= 0 ? 'pos' : 'neg') + '">' + (r.pm > 0 ? '+' : '') + dec(r.pm, 0) + '</td>' +
@@ -484,7 +497,7 @@ function vistaAnalisiGiocatori(agg) {
       '<button data-anfmt="medie" class="' + (analisiFmt === 'medie' ? 'attivo' : '') + '">Medie</button>' +
     '</div>' +
     '<div class="st-scroll"><table class="st-box an-tab"><thead>' + thead + '</thead><tbody>' + body + '</tbody></table></div>' +
-    '<div class="st-hint">Tocca un\'intestazione per ordinare · PG = presenze · USG/AST%/TOV% approssimati a livello gara · FT Rate = liberi tentati ogni tiro dal campo tentato · nomi e numeri dall\'anagrafica attuale.</div>' +
+    '<div class="st-hint">Tocca un\'intestazione per ordinare · PG = presenze · USG/AST%/TOV% approssimati a livello gara · FT Rate = liberi tentati ogni tiro dal campo tentato · Forz. = Indice di Forzatura (USG% × quanto il TS% è sotto la media squadra — 0 = rende come la squadra a qualsiasi volume, alto = tira/attacca molto ma forza, negativo = usa molto ED è efficiente) · nomi e numeri dall\'anagrafica attuale.</div>' +
     bottoniAnalisiAvanzata();
 }
 

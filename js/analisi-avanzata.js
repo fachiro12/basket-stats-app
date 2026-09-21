@@ -141,7 +141,11 @@ function percentualiGiocatoreAvz(g, A, B, teamMin, teamPlays, adv) {
     trPct: MP ? s((g.ro + g.rd) * teamMin, MP * (A.ro + A.rd + B.ro + B.rd)) * 100 : 0,
     stPct: MP ? s(g.pr * teamMin, MP * adv.possB) * 100 : 0,
     blkPct: 0,
-    usg: (MP && teamPlays) ? 100 * (fga + 0.44 * g.fta + g.pp) * (teamMin / 5) / (MP * teamPlays) : 0,
+    // FIX: `teamMin` qui è già "Tm MP / 5" (vedi orPct/drPct/trPct/stPct sopra, che
+    // infatti NON dividono di nuovo per 5) — l'ulteriore /5 qui sotto era un refuso,
+    // schiacciava l'USG% a 1/5 del valore corretto (e con lui, a cascata, i termini
+    // t7/t8 del BPM/OBPM che dipendono da usg).
+    usg: (MP && teamPlays) ? 100 * (fga + 0.44 * g.fta + g.pp) * teamMin / (MP * teamPlays) : 0,
     astR: (fga + 0.44 * g.fta + g.as + g.pp) ? s(g.as * 100, fga + 0.44 * g.fta + g.as + g.pp) : 0,
     tovR: (fga + 0.44 * g.fta + g.as + g.pp) ? s(g.pp * 100, fga + 0.44 * g.fta + g.as + g.pp) : 0,
     ts: (fga || g.fta) ? s(g.pt, 2 * (fga + 0.44 * g.fta)) * 100 : 0,
