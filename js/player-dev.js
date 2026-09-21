@@ -31,42 +31,104 @@ const ORIZZONTI = [["1m", "1 mese"], ["3m", "3 mesi"], ["6m", "6 mesi"]];
 
 const CATALOGO_METRICHE = [
   { cod: "ppg", et: "Punti/gara (PPG)", dec: 1, unita: "", tipo: "base",
-    def: "Punti segnati in media a partita." },
+    def: "Punti segnati in media a partita — il modo più diretto di misurare la produzione offensiva, ma da solo non dice quanti tiri sono serviti per farli (per quello serve guardare anche TS%/FG%)." },
   { cod: "rpg", et: "Rimbalzi/gara (RPG)", dec: 1, unita: "", tipo: "base",
-    def: "Rimbalzi (offensivi + difensivi) presi in media a partita." },
+    def: "Rimbalzi offensivi + difensivi presi in media a partita — quanto un giocatore controlla il possesso della palla vicino a canestro, sia quando attacca sia quando difende." },
   { cod: "apg", et: "Assist/gara (APG)", dec: 1, unita: "", tipo: "base",
-    def: "Assist forniti in media a partita." },
+    def: "Assist forniti in media a partita — quanto un giocatore crea canestri per i compagni invece di concluderli lui stesso." },
   { cod: "tpg", et: "Palle perse/gara", dec: 1, unita: "", tipo: "base",
-    def: "Palle perse in media a partita — meno è meglio." },
+    def: "Palle perse in media a partita (persa, intercettata, passo travolgente...) — meno è meglio, soprattutto se il giocatore ha un volume di gioco (USG%) alto." },
   { cod: "fgpct", et: "FG%", dec: 1, unita: "%", tipo: "base",
-    def: "Percentuale di realizzazione su tutti i tiri dal campo (2 e 3 punti)." },
+    def: "Percentuale di realizzazione su TUTTI i tiri dal campo, 2 e 3 punti insieme — quanto è efficiente quando tira, senza distinguere da dove lo fa." },
   { cod: "p3pct", et: "3P%", dec: 1, unita: "%", tipo: "base",
-    def: "Percentuale di realizzazione sui tiri da 3 punti." },
+    def: "Percentuale di realizzazione sui soli tiri da 3 punti — l'indicatore più diretto di quanto sia reale la minaccia dalla lunga distanza." },
   { cod: "ftpct", et: "FT%", dec: 1, unita: "%", tipo: "base",
-    def: "Percentuale di realizzazione ai tiri liberi." },
+    def: "Percentuale di realizzazione ai tiri liberi — un tiro sempre uguale, senza difesa: la misura più pulita della meccanica di tiro di un giocatore." },
   { cod: "ftr", et: "FT Rate", dec: 2, unita: "", tipo: "base",
-    def: "Tiri liberi tentati ogni tiro dal campo tentato — quanto porta la palla vicino a canestro o subisce falli." },
+    def: "Tiri liberi tentati ogni tiro dal campo tentato (FTA/FGA) — quanto spesso porta la palla vicino a canestro o subisce falli, invece di tirare da fuori senza contatto." },
   { cod: "tspct", et: "TS%", dec: 1, unita: "%", tipo: "base",
-    def: "Efficienza di tiro complessiva (True Shooting%): tiene conto insieme di 2 punti, 3 punti e liberi." },
+    def: "Efficienza di tiro complessiva (True Shooting%): mette insieme 2 punti, 3 punti e tiri liberi in un solo numero, pesando correttamente il valore dei 3 punti — la misura più onesta di \"quanto rende ogni volta che tira\"." },
   { cod: "usg", et: "USG%", dec: 1, unita: "%", tipo: "base",
-    def: "Quota dei possessi della squadra \"usati\" da lui mentre era in campo (tiri, liberi, palle perse)." },
+    def: "Quota dei possessi della squadra \"usati\" da lui mentre era in campo (tiri, liberi, palle perse) — quanto la squadra si affida a lui per chiudere le azioni. USG% alto con TS% basso spesso vuol dire tiri forzati." },
   { cod: "astpct", et: "AST%", dec: 1, unita: "%", tipo: "base",
-    def: "Quota delle proprie azioni concluse con un assist invece che con un tiro o una palla persa." },
+    def: "Quota delle proprie azioni concluse con un assist invece che con un tiro o una palla persa — misura quanto gioca \"per far segnare gli altri\" rispetto a quanto conclude in prima persona." },
   { cod: "pmpg", et: "+/- per gara", dec: 1, unita: "", tipo: "base",
-    def: "Differenza punti squadra-avversari nei minuti in cui è stato in campo, in media a partita." },
+    def: "Differenza punti squadra-avversari nei minuti in cui è stato in campo, in media a partita — termometro semplice ma rumoroso: dipende molto anche da chi gioca insieme a lui." },
   { cod: "ais", et: "AIS", dec: 1, unita: "", tipo: "avanzata",
-    def: "Indicatore sintetico di impatto in gara (produzione + differenziale), pesato per quanto la partita fosse in bilico." },
+    def: "Indicatore sintetico di impatto in gara: produzione (punti, tiri, rimbalzi, assist, palle perse) corretta per l'efficienza di tiro e per il +/-, pesata per quanto la partita fosse in bilico (un blowout conta meno di una gara punto a punto)." },
   { cod: "defrtg", et: "Def. Rating", dec: 1, unita: "", tipo: "avanzata",
-    def: "Punti concessi dalla squadra ogni 100 possessi difensivi con lui in campo — stima individuale, meno è meglio." },
+    def: "Punti concessi dalla squadra ogni 100 possessi difensivi mentre lui era in campo — stima individuale (ripartisce i contributi difensivi \"invisibili\" in base ai minuti, non un dato certo): meno è meglio." },
   { cod: "bpm", et: "BPM", dec: 1, unita: "", tipo: "avanzata",
-    def: "Impatto stimato sul punteggio ogni 100 possessi, rispetto a un giocatore medio." },
+    def: "Impatto stimato sul punteggio ogni 100 possessi, sommando contributo offensivo e difensivo, rispetto a un giocatore medio (0) — la sintesi più diffusa di \"quanto vale\" un giocatore in un solo numero." },
   { cod: "obpm", et: "OBPM", dec: 1, unita: "", tipo: "avanzata",
-    def: "Come il BPM, ma isolando solo il contributo offensivo." },
+    def: "Come il BPM, ma isolando solo il contributo offensivo (tiro, creazione di gioco, cura della palla)." },
   { cod: "dbpm", et: "DBPM", dec: 1, unita: "", tipo: "avanzata",
-    def: "Come il BPM, ma isolando solo il contributo difensivo." },
+    def: "Come il BPM, ma isolando solo il contributo difensivo (rimbalzi difensivi, recuperi, presenza)." },
   { cod: "vorp", et: "VORP", dec: 2, unita: "", tipo: "avanzata",
-    def: "Valore stimato rispetto a un giocatore di livello \"rimpiazzo\", pesato sui minuti giocati." }
+    def: "Valore stimato rispetto a un giocatore di livello \"rimpiazzo\" (il minimo da roster), pesato sui minuti E sulle gare giocate — utile per confrontare chi ha inciso di più nell'arco di tutta la stagione, non solo per minuto in campo." }
 ];
+
+/* ==========================================================================
+   Valori di riferimento "di alto livello" — Basso/Medio/Elite, per aiutare a
+   fissare un target sensato e per "posizionare" il giocatore nella scheda.
+   Fonti dichiarate: BPM/VORP da hackastat.eu (Learn a Stat: Box Plus Minus
+   and VORP — ancore reali: -2 = Replacement Player, ~0 = giocatore medio,
+   +5 = "molto buono"); AIS riusa la scala già in uso in Analisi avanzata
+   (TIER_AIS, analisi-avanzata.js); le percentuali di tiro/USG%/AST% sono
+   convenzioni generali di analisi cestistica (non da hackastat, che le
+   definisce senza dare soglie numeriche) — NON specifiche del livello DR1,
+   dichiarato esplicitamente in ogni vista che le mostra. Def. Rating non ha
+   una scala assoluta onesta (troppo legata a ritmo/livello lega): i suoi
+   3 livelli sono calcolati DINAMICAMENTE rispetto alla Def. Rating della
+   VOSTRA squadra in questi filtri (vedi riferimentiMetrica). Niente
+   elite/medio/basso per PPG/RPG/APG/TOV/+-: dipendono troppo da ruolo e
+   minuti giocati per avere una scala universale onesta.
+   ========================================================================== */
+const RIFERIMENTI_LIVELLO = {
+  fgpct: { basso: 40, medio: 45, elite: 52, fonte: "convenzione generale, non specifica del livello DR1" },
+  p3pct: { basso: 28, medio: 33, elite: 38, fonte: "convenzione generale, non specifica del livello DR1" },
+  ftpct: { basso: 60, medio: 72, elite: 85, fonte: "convenzione generale, non specifica del livello DR1" },
+  ftr: { basso: 0.15, medio: 0.30, elite: 0.45, fonte: "convenzione generale, non specifica del livello DR1" },
+  tspct: { basso: 48, medio: 54, elite: 60, fonte: "convenzione generale, non specifica del livello DR1" },
+  usg: { basso: 14, medio: 20, elite: 28, fonte: "convenzione generale, non specifica del livello DR1" },
+  astpct: { basso: 8, medio: 15, elite: 25, fonte: "convenzione generale, non specifica del livello DR1" },
+  ais: { basso: 0, medio: 6, elite: 20, fonte: "scala AIS già in uso in Analisi avanzata" },
+  bpm: { basso: -2, medio: 0, elite: 5, fonte: "hackastat.eu" },
+  obpm: { basso: -2, medio: 0, elite: 5, fonte: "hackastat.eu (stessa scala del BPM)" },
+  dbpm: { basso: -2, medio: 0, elite: 5, fonte: "hackastat.eu (stessa scala del BPM)" },
+  vorp: { basso: 0, medio: 1.5, elite: 4, fonte: "stima derivata dalla scala BPM di hackastat.eu" }
+};
+/* Media squadra — solo dove il concetto si applica bene a livello di gruppo
+   (percentuali di tiro): USG%/AST%/AIS/BPM-family/VORP non hanno un "media
+   squadra" intuitivo (per costruzione o per definizione), quindi restano
+   senza quel 4° riferimento. */
+function mediaSquadra_(metrica, gare) {
+  let agg; try { agg = aggregaStagione(gare); } catch (e) { return null; }
+  const A = agg.team.MIA;
+  const fga = A.a2 + A.a3, fgm = A.m2 + A.m3;
+  switch (metrica) {
+    case "fgpct": return fga ? fgm / fga * 100 : null;
+    case "p3pct": return A.a3 ? A.m3 / A.a3 * 100 : null;
+    case "ftpct": return A.fta ? A.ftm / A.fta * 100 : null;
+    case "ftr": return fga ? A.fta / fga : null;
+    case "tspct": return agg.adv && isFinite(agg.adv.tsA) ? agg.adv.tsA : null;
+    default: return null;
+  }
+}
+/* Def. Rating: nessuna soglia assoluta onesta — i 3 livelli sono relativi
+   alla Def. Rating della VOSTRA squadra in questi filtri (±6, ordine di
+   grandezza tipico tra un difensore di alto impatto e uno in difficoltà). */
+function riferimentiMetrica(metrica, gare) {
+  if (metrica === "defrtg") {
+    let agg; try { agg = aggregaStagione(gare); } catch (e) { return null; }
+    const t = agg.adv && agg.adv.drtg;
+    if (t == null || !isFinite(t)) return null;
+    return { basso: t + 6, medio: t, elite: t - 6, mediaSquadra: null, fonte: "relativo alla Def. Rating della vostra squadra in questi filtri" };
+  }
+  const base = RIFERIMENTI_LIVELLO[metrica];
+  if (!base) return null;
+  return Object.assign({}, base, { mediaSquadra: mediaSquadra_(metrica, gare) });
+}
 function infoMetrica(cod) { return CATALOGO_METRICHE.find(m => m.cod === cod) || { cod: cod, et: cod, dec: 1, unita: "", tipo: "base", def: "" }; }
 function etichettaOrizzonte(cod) { const o = ORIZZONTI.find(x => x[0] === cod); return o ? o[1] : cod; }
 
@@ -463,6 +525,49 @@ function glossarioMetriche_(obiettivi) {
   return '<div class="adv-tit" style="margin-top:14px">Cosa significano</div><div class="pd-glossario">' + voci.join('') + '</div>';
 }
 
+/* "Dove siamo oggi" — apre la scheda (e il PDF): partenza → attuale → target
+   per ciascun obiettivo, la lettura più diretta di "da dove siamo partiti e
+   dove siamo adesso" prima di ogni altro dettaglio. */
+function riepilogoPartenzaAttuale_(obiettivi, num, gare) {
+  if (!obiettivi.length) return '';
+  const righe = obiettivi.map(o => {
+    const info = infoMetrica(o.metrica);
+    const partenza = (num || num === 0) ? valoreBaseline(o, num) : null;
+    const attuale = (num || num === 0) ? valoreMetricaStagione(o.metrica, num, gare) : null;
+    const fmt = v => v == null ? '?' : dec(v, info.dec) + info.unita;
+    const fonteBase = !o.baseline_tipo ? '' : (o.baseline_tipo === "amichevoli" ? " (amichevoli)" : " (gare selezionate)");
+    return '<div class="pd-riepilogo-voce">' +
+      '<strong>' + esc(info.et) + '</strong>: partiti da <span class="pd-riepilogo-num">' + fmt(partenza) + '</span>' + esc(fonteBase) +
+      ' → oggi <span class="pd-riepilogo-num pd-riepilogo-oggi">' + fmt(attuale) + '</span>' +
+      ' → target ' + (o.direzione === "lte" ? "≤" : "≥") + ' ' + dec(o.target, info.dec) + info.unita +
+      '</div>';
+  }).join('');
+  return '<div class="adv-tit" style="margin-top:14px">Dove siamo oggi</div><div class="pd-riepilogo">' + righe + '</div>' +
+    '<div class="st-hint">"Partenza" = solo se impostata su ogni obiettivo (punto di partenza opzionale nel form) — senza, resta "?".</div>';
+}
+
+/* Valori di riferimento di alto livello (Basso/Medio/Elite + media squadra
+   dove si applica) per le sole metriche usate dagli obiettivi di QUESTO
+   giocatore — per "posizionarsi" rispetto a una realtà cestistica più ampia. */
+function tabellaRiferimenti_(obiettivi, gare) {
+  if (!obiettivi.length) return '';
+  const viste = {}; const righe = []; const fonti = {};
+  obiettivi.forEach(o => {
+    if (viste[o.metrica]) return;
+    viste[o.metrica] = 1;
+    const rif = riferimentiMetrica(o.metrica, gare);
+    if (!rif) return;
+    const info = infoMetrica(o.metrica);
+    const fmt = v => v == null ? '–' : dec(v, info.dec) + info.unita;
+    fonti[rif.fonte] = 1;
+    righe.push('<tr><td class="st-g">' + esc(info.et) + '</td><td>' + fmt(rif.basso) + '</td><td>' + fmt(rif.medio) + '</td><td>' + fmt(rif.elite) + '</td><td>' + fmt(rif.mediaSquadra) + '</td></tr>');
+  });
+  if (!righe.length) return '';
+  return '<div class="adv-tit" style="margin-top:14px">Valori di riferimento (alto livello)</div>' +
+    '<div class="st-scroll"><table class="st-box pd-tab-riferimenti"><thead><tr><th>Metrica</th><th>Basso</th><th>Medio</th><th>Elite</th><th>Media squadra</th></tr></thead><tbody>' + righe.join('') + '</tbody></table></div>' +
+    '<div class="st-hint">Riferimenti indicativi (' + Object.keys(fonti).map(esc).join(' · ') + '), NON specifici del campionato DR1 — servono a capire "dove si posiziona" un valore rispetto alla realtà cestistica più ampia, non un confronto diretto. "Media squadra" assente dove il concetto non si applica bene a livello di gruppo (USG%/AST%/AIS/BPM-family/VORP).</div>';
+}
+
 function vistaSchedaGiocatore(g) {
   const gare = garePerPlayerDev();
   const num = Number(g.numero_maglia);
@@ -477,12 +582,14 @@ function vistaSchedaGiocatore(g) {
       ' · ' + esc((filtriPlayerDev.competizione === "Amichevole" ? "Amichevoli" : filtriPlayerDev.competizione)) +
       ' (filtro impostato nell\'elenco giocatori)</div>' +
     '</div>' +
+    riepilogoPartenzaAttuale_(obiettivi, num, gare) +
     '<div class="adv-tit" style="margin-top:14px">Obiettivi (' + obiettivi.length + '/' + MAX_OBIETTIVI + ')</div>' +
     (obiettivi.length
       ? '<div class="st-scroll"><table class="st-box pd-tab-obiettivi"><thead><tr><th>Orizzonte</th><th>Metrica</th><th>Partenza</th><th>Attuale</th><th>Target</th><th>Stato</th><th>Nota</th><th></th></tr></thead><tbody>' + righeObTab + '</tbody></table></div>'
       : '<div class="st-hint">Nessun obiettivo ancora — aggiungine uno.</div>') +
     '<button class="btn-annulla-modale pd-aggiungi" id="pd-aggiungi-obiettivo"' + (obiettivi.length >= MAX_OBIETTIVI ? ' disabled' : '') + '>+ Aggiungi obiettivo</button>' +
     glossarioMetriche_(obiettivi) +
+    tabellaRiferimenti_(obiettivi, gare) +
     tracking +
     '<div class="pd-azioni">' +
       '<button class="btn-conferma" id="pd-stampa-btn">🖨️ Stampa / Salva PDF</button>' +
@@ -597,8 +704,21 @@ function chiudiFormObiettivo() {
 function aggiornaDefMetricaForm() {
   const sel = document.getElementById("ob-metrica");
   const def = document.getElementById("ob-metrica-def");
+  const rifEl = document.getElementById("ob-metrica-rif");
   if (!sel || !def) return;
-  def.textContent = infoMetrica(sel.value).def || "";
+  const info = infoMetrica(sel.value);
+  def.textContent = info.def || "";
+  if (!rifEl) return;
+  const rif = riferimentiMetrica(sel.value, (typeof garePerPlayerDev === "function") ? garePerPlayerDev() : []);
+  if (!rif) { rifEl.innerHTML = ''; return; }
+  const fmt = v => v == null ? null : dec(v, info.dec) + info.unita;
+  const pezzi = [
+    ['Basso', fmt(rif.basso)], ['Medio', fmt(rif.medio)], ['Elite', fmt(rif.elite)],
+    ['Media squadra', fmt(rif.mediaSquadra)]
+  ].filter(p => p[1] != null);
+  rifEl.innerHTML = pezzi.length
+    ? '<strong>Riferimento:</strong> ' + pezzi.map(p => esc(p[0]) + ' ' + esc(p[1])).join(' · ')
+    : '';
 }
 function renderBaselineSelezioneForm(selezionati) {
   const cont = document.getElementById("ob-baseline-selezione");
@@ -674,11 +794,14 @@ function contenutoStampaScheda_(g) {
       ' · ' + esc(g.team || TEAM_DEFAULT) + ' · stagione ' + esc(filtriPlayerDev.stagione) + '</p>' +
       '<p class="pd-stampa-data">Generato il ' + esc(new Date().toLocaleDateString("it-IT")) + '</p>' +
     '</div>' +
+    '<h2>Dove siamo oggi</h2>' +
+    (riepilogoPartenzaAttuale_(obiettivi, num, gare) || '<p>Nessun obiettivo impostato.</p>') +
     '<h2>Obiettivi</h2>' +
     (obiettivi.length
       ? '<table class="pd-stampa-tab"><thead><tr><th>Orizzonte</th><th>Metrica</th><th>Partenza</th><th>Attuale</th><th>Target</th><th>Stato</th><th>Nota</th></tr></thead><tbody>' + righe + '</tbody></table>'
       : '<p>Nessun obiettivo impostato.</p>') +
     glossarioMetriche_(obiettivi) +
+    tabellaRiferimenti_(obiettivi, gare) +
     '<h2>Andamento stagionale</h2>' +
     (grafici || '<p>Nessun dato.</p>') +
     '<p class="pd-stampa-firma">Coach: ____________________ &nbsp;&nbsp;&nbsp; Giocatore: ____________________</p>';

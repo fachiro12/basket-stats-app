@@ -56,6 +56,19 @@ table.pd-tab-obiettivi td.pd-nota {
 .pd-glossario-voce { font-size: 12px; color: var(--color-text-secondary); line-height: 1.4; }
 .pd-glossario-voce strong { color: var(--color-text-primary); }
 
+/* "Dove siamo oggi" — partenza → attuale → target, in cima alla scheda/PDF */
+.pd-riepilogo { display: flex; flex-direction: column; gap: 6px; }
+.pd-riepilogo-voce { font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
+.pd-riepilogo-voce strong { color: var(--color-text-primary); }
+.pd-riepilogo-num { font-weight: 800; color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.pd-riepilogo-oggi { color: var(--color-brand-ink); }
+
+/* Riferimento metrica nel form (Basso/Medio/Elite/Media squadra) */
+.pd-metrica-rif { margin: -4px 0 10px; text-align: left; min-height: 14px; }
+
+table.pd-tab-riferimenti th, table.pd-tab-riferimenti td { text-align: center; }
+table.pd-tab-riferimenti td:first-child { text-align: left; }
+
 .pd-azioni { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .pd-azioni button { flex: 1 1 180px; }
 
@@ -111,5 +124,10 @@ table.pd-tab-obiettivi td.pd-nota {
   #pd-stampa svg .pd-target { stroke: #000 !important; }
   #pd-stampa svg .pd-baseline { stroke: #777 !important; }
   #pd-stampa .pd-glossario-voce { font-size: 10px; color: #333; }
+  #pd-stampa .pd-riepilogo-voce { font-size: 11px; color: #222; }
+  #pd-stampa .pd-riepilogo-num, #pd-stampa .pd-riepilogo-oggi { color: #000 !important; }
+  #pd-stampa table.pd-tab-riferimenti { width: 100%; border-collapse: collapse; font-size: 10px; }
+  #pd-stampa table.pd-tab-riferimenti th, #pd-stampa table.pd-tab-riferimenti td { border: 1px solid #999; padding: 3px 6px; }
+  #pd-stampa table.pd-tab-riferimenti th { background: #eee; }
   .pd-stampa-firma { margin-top: 28px; font-size: 12px; }
 }
