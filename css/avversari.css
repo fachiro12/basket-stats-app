@@ -1,0 +1,31 @@
+/* ==========================================================================
+   AVVERSARI — Altro → sezione indipendente, sperimentale
+   Elenco squadre + scheda squadra (riuso .riga-altro/.lista-altro/.overlay/
+   .modale/.ap-campo/.btn-conferma già esistenti) — poche righe nuove solo
+   per i blocchi nota (sola lettura nella scheda) e le textarea del form.
+   ========================================================================== */
+
+.avv-riga-squadra,
+.avv-riga-giocatore { cursor: pointer; touch-action: manipulation; }
+
+.avv-aggiungi { margin: 10px 0 4px; }
+
+.avv-nota-blocco { margin-bottom: 10px; }
+.avv-nota-titolo {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--color-text-secondary);
+  margin-bottom: 2px;
+}
+.avv-nota-testo {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  white-space: normal;
+}
+
+/* Le 5 textarea del form (stesso .ap-campo di calendario.css; la textarea in
+   sé è già stilizzata globalmente da css/player-dev.css — riuso, non ridefinita). */
+.ap-campo textarea.avv-textarea { min-height: 56px; }

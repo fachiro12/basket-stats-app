@@ -11,23 +11,24 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Basket Stats">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=76">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=76">
-<link rel="apple-touch-icon" href="icon-180.png?v=76">
-<link rel="stylesheet" href="css/tokens.css?v=76">
-<link rel="stylesheet" href="css/base.css?v=76">
-<link rel="stylesheet" href="css/shell.css?v=76">
-<link rel="stylesheet" href="css/partita.css?v=76">
-<link rel="stylesheet" href="css/altro.css?v=76">
-<link rel="stylesheet" href="css/calendario.css?v=76">
-<link rel="stylesheet" href="css/roster.css?v=76">
-<link rel="stylesheet" href="css/stats.css?v=76">
-<link rel="stylesheet" href="css/possessi.css?v=76">
-<link rel="stylesheet" href="css/analisi-avanzata.css?v=76">
-<link rel="stylesheet" href="css/rotazioni.css?v=76">
-<link rel="stylesheet" href="css/breakdown-possessi.css?v=76">
-<link rel="stylesheet" href="css/rating-net.css?v=76">
-<link rel="stylesheet" href="css/player-dev.css?v=76">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=77">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=77">
+<link rel="apple-touch-icon" href="icon-180.png?v=77">
+<link rel="stylesheet" href="css/tokens.css?v=77">
+<link rel="stylesheet" href="css/base.css?v=77">
+<link rel="stylesheet" href="css/shell.css?v=77">
+<link rel="stylesheet" href="css/partita.css?v=77">
+<link rel="stylesheet" href="css/altro.css?v=77">
+<link rel="stylesheet" href="css/calendario.css?v=77">
+<link rel="stylesheet" href="css/roster.css?v=77">
+<link rel="stylesheet" href="css/stats.css?v=77">
+<link rel="stylesheet" href="css/possessi.css?v=77">
+<link rel="stylesheet" href="css/analisi-avanzata.css?v=77">
+<link rel="stylesheet" href="css/rotazioni.css?v=77">
+<link rel="stylesheet" href="css/breakdown-possessi.css?v=77">
+<link rel="stylesheet" href="css/rating-net.css?v=77">
+<link rel="stylesheet" href="css/player-dev.css?v=77">
+<link rel="stylesheet" href="css/avversari.css?v=77">
 </head>
 <body>
 
@@ -351,6 +352,28 @@
       <div class="contenuto-pagina" id="scheda-body"></div>
     </div><!-- /view-scheda-giocatore -->
 
+    <!-- ============ VIEW: AVVERSARI (sperimentale) ============ -->
+    <div class="view" id="view-avversari">
+      <header class="cal-topbar">
+        <button class="cal-tb-btn" id="avv-indietro" aria-label="Torna ad Altro">
+          <svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg>
+        </button>
+        <span class="st-titolo">Avversari</span>
+      </header>
+      <div class="contenuto-pagina" id="avv-body"></div>
+    </div><!-- /view-avversari -->
+
+    <!-- ============ VIEW: SCHEDA SQUADRA AVVERSARIA (sperimentale) ============ -->
+    <div class="view" id="view-squadra-avversaria">
+      <header class="cal-topbar">
+        <button class="cal-tb-btn" id="avvsq-indietro" aria-label="Torna ad Avversari">
+          <svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg>
+        </button>
+        <span class="st-titolo" id="avvsq-titolo">Squadra avversaria</span>
+      </header>
+      <div class="contenuto-pagina" id="avvsq-body"></div>
+    </div><!-- /view-squadra-avversaria -->
+
     <!-- ============ VIEW: ALTRO ============ -->
     <div class="view" id="view-squadra">
       <div class="header-pagina">
@@ -434,6 +457,18 @@
             <span class="col-testo">
               <span class="titolo-altro">Debrief possessi <span class="beta-badge">beta</span></span>
               <span class="sotto-altro">Tracker parallelo per il coaching — possesso per possesso, con foto del foglio</span>
+            </span>
+            <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          </div>
+        </div>
+
+        <div class="titolo-sezione-altro">Avversari</div>
+        <div class="lista-altro">
+          <div class="riga-altro" id="apri-avversari">
+            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-alert"></use></svg>
+            <span class="col-testo">
+              <span class="titolo-altro">Avversari <span class="beta-badge">beta</span></span>
+              <span class="sotto-altro">Scouting squadre e giocatori — caratteristiche, come li affrontiamo, note dall'andata</span>
             </span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </div>
@@ -780,28 +815,83 @@
   </div>
 </div>
 
+<!-- Squadra avversaria (Avversari) -->
+<div class="overlay" id="overlay-avv-squadra">
+  <div class="modale">
+    <h2 id="avv-sq-titolo">Nuova squadra avversaria</h2>
+    <input type="hidden" id="avv-sq-id">
+    <label class="ap-campo"><span>Nome squadra</span>
+      <input type="text" id="avv-sq-nome" autocomplete="off" list="avv-nomi-suggeriti" placeholder="es. Sportlandia Tradate"></label>
+    <datalist id="avv-nomi-suggeriti"></datalist>
+    <label class="ap-campo"><span>Caratteristiche attacco</span>
+      <textarea id="avv-sq-car-att" class="avv-textarea" rows="3" placeholder="come giocano in attacco"></textarea></label>
+    <label class="ap-campo"><span>Come li affrontiamo (la nostra difesa)</span>
+      <textarea id="avv-sq-app-att" class="avv-textarea" rows="3" placeholder="come impostiamo la difesa sul loro attacco"></textarea></label>
+    <label class="ap-campo"><span>Caratteristiche difesa</span>
+      <textarea id="avv-sq-car-dif" class="avv-textarea" rows="3" placeholder="come giocano in difesa"></textarea></label>
+    <label class="ap-campo"><span>Come li affrontiamo (il nostro attacco)</span>
+      <textarea id="avv-sq-app-dif" class="avv-textarea" rows="3" placeholder="come impostiamo l'attacco sulla loro difesa"></textarea></label>
+    <label class="ap-campo"><span>Note dall'andata</span>
+      <textarea id="avv-sq-andata" class="avv-textarea" rows="3" placeholder="cosa abbiamo visto nel primo incontro"></textarea></label>
+    <button class="btn-conferma" id="avv-sq-salva">SALVA SQUADRA</button>
+    <button class="btn-annulla-modale" id="avv-sq-elimina" hidden>Elimina squadra</button>
+    <button class="btn-annulla-modale" id="avv-sq-chiudi">Annulla</button>
+  </div>
+</div>
+
+<!-- Giocatore avversario (Avversari) -->
+<div class="overlay" id="overlay-avv-giocatore">
+  <div class="modale">
+    <h2 id="avv-gc-titolo">Nuovo giocatore avversario</h2>
+    <input type="hidden" id="avv-gc-id">
+    <input type="hidden" id="avv-gc-id-squadra">
+    <label class="ap-campo"><span>Nome</span>
+      <input type="text" id="avv-gc-nome" autocomplete="off"></label>
+    <label class="ap-campo"><span>Cognome</span>
+      <input type="text" id="avv-gc-cognome" autocomplete="off"></label>
+    <label class="ap-campo"><span>Numero maglia</span>
+      <input type="tel" inputmode="numeric" maxlength="2" id="avv-gc-numero"></label>
+    <label class="ap-campo"><span>Ruolo</span>
+      <input type="text" id="avv-gc-ruolo" autocomplete="off" placeholder="es. playmaker, ala forte, lungo..."></label>
+    <label class="ap-campo"><span>Caratteristiche attacco</span>
+      <textarea id="avv-gc-car-att" class="avv-textarea" rows="2"></textarea></label>
+    <label class="ap-campo"><span>Come lo affrontiamo (la nostra difesa)</span>
+      <textarea id="avv-gc-app-att" class="avv-textarea" rows="2"></textarea></label>
+    <label class="ap-campo"><span>Caratteristiche difesa</span>
+      <textarea id="avv-gc-car-dif" class="avv-textarea" rows="2"></textarea></label>
+    <label class="ap-campo"><span>Come lo affrontiamo (il nostro attacco)</span>
+      <textarea id="avv-gc-app-dif" class="avv-textarea" rows="2"></textarea></label>
+    <label class="ap-campo"><span>Note dall'andata</span>
+      <textarea id="avv-gc-andata" class="avv-textarea" rows="2"></textarea></label>
+    <button class="btn-conferma" id="avv-gc-salva">SALVA GIOCATORE</button>
+    <button class="btn-annulla-modale" id="avv-gc-elimina" hidden>Elimina giocatore</button>
+    <button class="btn-annulla-modale" id="avv-gc-chiudi">Annulla</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=76"></script>
-<script src="js/tema.js?v=76"></script>
-<script src="js/api.js?v=76"></script>
-<script src="js/timer.js?v=76"></script>
-<script src="js/azioni.js?v=76"></script>
-<script src="js/fallo-subito.js?v=76"></script>
-<script src="js/calendario.js?v=76"></script>
-<script src="js/giocatori.js?v=76"></script>
-<script src="js/stats.js?v=76"></script>
-<script src="js/analisi.js?v=76"></script>
-<script src="js/analisi-avanzata.js?v=76"></script>
-<script src="js/rotazioni.js?v=76"></script>
-<script src="js/breakdown-possessi.js?v=76"></script>
-<script src="js/rating-net.js?v=76"></script>
-<script src="js/player-dev.js?v=76"></script>
-<script src="js/possessi.js?v=76"></script>
-<script src="js/ui.js?v=76"></script>
-<script src="js/pin.js?v=76"></script>
-<script src="js/app.js?v=76"></script>
+<script src="js/state.js?v=77"></script>
+<script src="js/tema.js?v=77"></script>
+<script src="js/api.js?v=77"></script>
+<script src="js/timer.js?v=77"></script>
+<script src="js/azioni.js?v=77"></script>
+<script src="js/fallo-subito.js?v=77"></script>
+<script src="js/calendario.js?v=77"></script>
+<script src="js/giocatori.js?v=77"></script>
+<script src="js/stats.js?v=77"></script>
+<script src="js/analisi.js?v=77"></script>
+<script src="js/analisi-avanzata.js?v=77"></script>
+<script src="js/rotazioni.js?v=77"></script>
+<script src="js/breakdown-possessi.js?v=77"></script>
+<script src="js/rating-net.js?v=77"></script>
+<script src="js/player-dev.js?v=77"></script>
+<script src="js/avversari.js?v=77"></script>
+<script src="js/possessi.js?v=77"></script>
+<script src="js/ui.js?v=77"></script>
+<script src="js/pin.js?v=77"></script>
+<script src="js/app.js?v=77"></script>
 
 </body>
 </html>

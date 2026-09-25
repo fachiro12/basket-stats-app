@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=76` · SW `bsp-v76` · backend V4.14.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=77` · SW `bsp-v77` · backend V4.14.
 
 ---
 
@@ -76,12 +76,13 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 | `breakdown-possessi.js` | **Team Possession Breakdown** (sperimentale, `#view-breakdown`, riga "Team Possession Breakdown" in Altro → sezione "Analisi") — segmenta il play-by-play in possessioni vere (motore a stati `segmentaPossessi`: canestro segnato chiude, and-1 accorpato alla stessa possessione, rimbalzo offensivo prolunga, rimbalzo difensivo/di squadra chiude, palla persa **e recupero fusi in un'unica voce** "Dopo palla persa", fine periodo → "Altro"), poi le aggrega per innesco × lato (OFF=nostre, DEF=subite) con Poss/Freq%/Rtg/TS%/TOV%/FT Ratio. Niente ORB%/DRB% per-possesso né rank di lega (dichiarato in-app). Filtri: **copia indipendente** di quelli di Analisi stagione (`filtriBreakdown`). Sola lettura su `eventiPuliti`/`elencoPartite`/`cacheEventiStagione`/`punteggioDaEventi`. |
 | `rating-net.js` | **Rating Net** (sperimentale, `#view-rating-net`, riga in Altro → sezione "Analisi", sotto "Team Possession Breakdown") — 4 gauge stagionali (OFF/DEF/NET Rating, Pace) via `calcolaAdvanced`/`aggregaStagione` già esistenti, con un segno di riferimento "avversari" su ciascuno (niente campionato DR1 completo, dichiarato in-app: OFF↔DEF si usano a specchio, NET usa lo zero, PACE usa il possession-rate dei soli avversari). Sotto, Net Rating gara per gara con media mobile 5 gare (SVG, stesso stile di `graficoMargini` in `analisi.js`). Filtri: copia indipendente (`filtriRatingNet`). |
 | `player-dev.js` | **Player Development** (sperimentale, `#view-player-dev` + `#view-scheda-giocatore`, riga in Altro → sezione "Analisi", sotto "Rating Net") — scheda di sviluppo per giocatore: fino a `MAX_OBIETTIVI`=5 obiettivi, ciascuno metrica (`CATALOGO_METRICHE`, 12 base + 6 avanzate, **ciascuna con `def`** = definizione in una frase, mostrata live nel form sotto il select — `aggiornaDefMetricaForm` — e come glossario sotto la tabella obiettivi sia a schermo sia nel PDF — `glossarioMetriche_`, solo le metriche usate) + valore target + direzione `≥`/`≤` + orizzonte 1/3/6 mesi + nota libera + **punto di partenza opzionale** (`baseline_tipo`: `"amichevoli"` = tutte le gare Amichevole terminate, o `"selezione"` = checklist di gare specifiche scelta nel form — `gareBaselineObiettivo`/`valoreBaseline`, **indipendenti dal filtro Campionato/Amichevoli** dell'elenco, sempre su `gareTerminate_()`; mostrato come colonna "Partenza" in tabella e riga tratteggiata chiara nel grafico). Persistenza come `giocatori.js` (`bsp_obiettivi` + POST `SALVA_OBIETTIVO`/JSONP `getObiettivi`, backend V4.14), cancellazione = flag `eliminato` (mai un vero delete). Metriche **base** (incl. **FT Rate** = FTA/FGA): valore reale gara-per-gara (`serieBaseGaraPerGara`, stesse formule di `vistaAnalisiGiocatori`). **AIS**: copia locale della formula di `calcolaAIS()` (riusa `calcolaLVI()`), per-gara sul filtro indipendente di questa sezione. **Def Rating/BPM/OBPM/DBPM/VORP**: costrutti stagionali, non hanno un valore a singola gara — il loro "andamento" è **cumulativo** (`serieCumulativaAvanzata`: `calcolaDefRtg`/`calcolaBpmVorp` — sola lettura, non toccate — richiamate su `aggregaStagione(gare.slice(0,i+1))` per ogni taglio crescente di gare). Grafico SVG per obiettivo con linea target tratteggiata (stesso impianto di `graficoTrendNet`, `rating-net.js`). **Stampa/PDF**: nessuna libreria — `window.print()` su un contenitore dedicato (`#pd-stampa`, invisibile a schermo, mostrato solo sotto `@media print` mentre il resto dell'app sparisce). **Prompt AI** (fuori dal PDF): `generaPromptAI`/`copiaPromptAI`, testo con obiettivi+dati+partenza+nota copiato via `navigator.clipboard` (fallback `execCommand`). Filtri: copia indipendente (`filtriPlayerDev`). **Round 2 (v64)**: definizioni delle metriche riscritte più ricche (2 frasi, cosa misura + come leggerla); **valori di riferimento** Basso/Medio/Elite (+ Media squadra dove si applica) per aiutare a fissare un target sensato — `RIFERIMENTI_LIVELLO`/`riferimentiMetrica`/`mediaSquadra_`, mostrati live nel form (`ob-metrica-rif`) e in una tabella dedicata (`tabellaRiferimenti_`, schermo+PDF); fonti dichiarate: BPM/OBPM/DBPM/VORP da hackastat.eu ("Learn a Stat: Box Plus Minus and VORP" — ancore reali −2/0/+5), AIS riusa `TIER_AIS` di `analisi-avanzata.js`, le percentuali di tiro/USG%/AST% sono convenzioni generali NON specifiche del livello DR1 (dichiarato in-app), Def. Rating non ha soglie assolute oneste → i 3 livelli sono calcolati **dinamicamente** ±6 rispetto alla Def. Rating della propria squadra; nessuna scala per PPG/RPG/APG/TOV/+- (troppo legati a ruolo/minuti). Nuova sezione **"Dove siamo oggi"** (`riepilogoPartenzaAttuale_`) in cima a scheda e PDF: partenza → attuale → target per ogni obiettivo, prima di ogni altro dettaglio. **Round 3 (v67)**: descrizioni riscritte in linguaggio accessibile a un giocatore, non solo al coach (tolti riferimenti pronominali senza antecedente tipo "usati da lui"; le metriche avanzate spiegano il concetto E includono i numeri-soglia nel testo). **Trasparenza filtri**: `etichettaFiltriPlayerDev_()` mostra ora Competizione+Casa/Trasferta+Vinte/Perse (non solo Competizione) in cima a scheda e PDF, con nota esplicita che è un filtro **indipendente** da `filtriAnalisi` (Analisi avanzata, che non ha una sua barra filtri — nuova `etichettaFiltriAnalisi_()` in `analisi-avanzata.js` la rende visibile lì per la prima volta) — stesso giocatore/metrica può mostrare numeri diversi tra le due sezioni semplicemente perché i filtri divergono, non per un bug nella formula (che è condivisa, `calcolaDefRtg`/`calcolaBpmVorp`, sola lettura). **Fix**: `gareTerminate_()` (usata per il "Partenza") non filtrava per `stagione`, a differenza di `garePerPlayerDev()` (usata per l'"Attuale") — una gara di un'altra stagione poteva contribuire al Partenza ma sparire dall'Attuale, dando l'impressione di un bug nei numeri; ora entrambe rispettano la stessa `filtriPlayerDev.stagione` (restano indipendenti su Competizione/Casa-Trasferta/Vinte-Perse, per scelta). **Round 4 (v68)**: nuova metrica **"Indice di Forzatura"** (`cod: "forz"`) = `USG% × (1 − TS%giocatore/TS%squadra)` — formalizza in un numero la frase già nella def di USG% ("USG% alto con TS% basso spesso vuol dire tiri forzati"): 0 = rende come la squadra a qualsiasi volume, positivo e alto = tira/attacca molto con efficienza sotto la media (forza), negativo = usa molto ED è più efficiente della squadra. Riusa `usg`/`ts` già calcolati in `valoreBaseDaLinea_` + lo stesso rapporto TS/TS-squadra già usato in `serieAISGaraPerGara` — zero formule nuove inventate da zero. Essendo nel catalogo come le altre metriche "base", è automaticamente disponibile ovunque (form, tabella riferimenti Basso=5/Medio=0/Elite=-3 — indice interno, non da hackastat, dichiarato — glossario, grafico) senza altro lavoro: tutti quei pezzi leggono `CATALOGO_METRICHE`/`RIFERIMENTI_LIVELLO` in modo generico. **Round 5 (v69)**: Def. Rating ora mostra anche "Media squadra" (prima un trattino) — coincide col "Medio" per definizione (è una correzione rispetto alla Def. Rating di squadra, non ha un riferimento diverso), dichiarato esplicitamente invece di lasciare una cella vuota che sembrava un dato mancante. **Impaginazione PDF**: ogni blocco titolo+contenuto (`.pd-blocco-grafico` per i grafici trend, `.pd-blocco` per "Dove siamo oggi"/glossario/tabella riferimenti) ha `break-inside: avoid-page` e i titoli (`h2`/`.adv-tit`) hanno `break-after: avoid-page` — un titolo non resta più da solo a fine pagina col contenuto spinto su quella dopo; le righe delle tabelle (`tr`) non si spezzano più a metà tra due pagine. **Round 6 (v70)**: ⚠️ **Fix USG%** in `valoreBaseDaLinea_` — vedi nota completa nella riga `analisi.js`, stesso bug/fix in 3 file; cambia sia USG% sia l'Indice di Forzatura (che lo usa). **Round 7 (v71)**: ⚠️ **Fix perdita "Partenza"** — `mergeObiettiviCloud` sovrascriveva SEMPRE `baseline_tipo`/`baseline_partite` con la risposta cloud, azzerandoli quando il backend incollato è una versione senza quelle 2 colonne (`c.baseline_tipo === undefined`, non `""`): ogni apertura di Player Development (`apriPlayerDev` → `scaricaObiettivi()`) cancellava silenziosamente il punto di partenza appena impostato in locale. Ora un campo *assente* dalla risposta cloud preserva il valore locale; solo uno *presente ma esplicitamente vuoto* (backend aggiornato che sincronizza "nessuna baseline") lo svuota davvero. **Round 8 (v72)**: "Stampa scheda" e "Copia prompt AI" separate in 2 blocchi distinti (titolo + bottone + spiegazione ciascuno, non più una riga con 2 bottoni fianco a fianco) — etichetta del bottone stampa ripulita da "Stampa / Salva PDF" (un solo click, il "salva come PDF" è la destinazione scelta nella finestra di stampa del browser) a "Stampa scheda". Il bottone SALVA del form obiettivo ora dice "SALVA OBIETTIVO" con una nota sotto che chiarisce che salva solo quell'obiettivo, non stampa/esporta nulla — le due azioni (salvare un obiettivo vs stampare la scheda) sono sequenziali e indipendenti, mai la stessa cosa. |
+| `avversari.js` | **Avversari** (sperimentale, `#view-avversari` + `#view-squadra-avversaria`, riga "Avversari" in Altro, sezione indipendente) — scouting squadre/giocatori avversari del girone: 2 nuovi fogli `Avversari`/`AvversariGiocatori`, stesso stile cloud-sync di `player-dev.js` (`bsp_avversari`/`bsp_avversari_giocatori` + POST `SALVA_AVVERSARIO`/`SALVA_AVVERSARIO_GIOCATORE` + JSONP `getAvversari`/`getAvversariGiocatori`, backend V4.15), cancellazione = flag `eliminato` (mai un vero delete), stessa preservazione dei campi assenti nel merge cloud→locale (`mergeAvversariCloud`/`mergeAvversariGiocatoriCloud`, stesso fix già fatto per Obiettivi in `player-dev.js`). **5 campi nota identici** a livello squadra e a livello singolo giocatore avversario (si compilano/leggono in momenti diversi): `caratteristiche_attacco`/`caratteristiche_difesa` (come giocano) + `approccio_attacco`/`approccio_difesa` (come li affrontiamo — la nostra difesa sul loro attacco, e viceversa) + `note_andata` (libera, dopo il primo incontro). **Collegamento leggero col calendario** (sola lettura, nessuna FK): `<datalist>` di nomi suggeriti da `elencoPartite()` nel form "nuova squadra" (riduce typo, resta libero per le amichevoli fuori girone); scheda squadra mostra le gare programmate contro quel nome (match esatto case-insensitive su `avversario`). `apriAvversari`/`apriSquadraAvversaria` (nav), `renderAvversariLista`/`renderSchedaSquadraAvversaria` (render), form modali squadra/giocatore (`apriFormSquadraAvversaria`/`apriFormGiocatoreAvversario` + conferma/elimina). |
 | `ui.js` | `renderPartita` (HUD, roster, selezione), `mostraToast`, `aggiornaBadgeOffline`, modale CAMBI (`apriCambi`/`confermaCambi` + select tempo con vincolo), `apriRecap`, `navigaA` (router viste + hook render) |
 | `pin.js` | login gate (`inizializzaPinGate`, `tentaLogin`, fallback offline, `logout`, `aggiornaProfiloAttivo`) |
 | `app.js` | `DOMContentLoaded`: registra tutti i listener + avvio (`navigaA`, `renderCalendario`, `scaricaPartite`, `scaricaGiocatori`, `inizializzaPinGate`, `processaCoda`); registra il service worker |
 
 ### CSS (`css/`)
-`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell, nav) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`, **Analisi stagione** `#analisi-filtri`/`.an-*`) · `possessi.css` (**Debrief possessi** — selettori gara/quarto, griglie tap giocatore/esito/gioco, foto di riferimento; riusa `.adv-card`/`.st-box`/`.btn-conferma` esistenti) · `analisi-avanzata.css` (**Analisi avanzata** — bottoni di apertura, badge livelli AIS; riusa `.adv-card`/`.st-box`/`.an-tab` esistenti) · `rotazioni.css` (**Rotazioni** — griglia presenza/margine per minuto, solo `opacity` sui token esistenti, niente colori hardcoded) · `breakdown-possessi.css` (**Team Possession Breakdown** — tabella a doppia intestazione OFF/DEF, riusa `.st-box`) · `rating-net.css` (**Rating Net** — gauge SVG ad arco, trend Net Rating; riusa `.st-chart`/`.adv-tit`) · `player-dev.css` (**Player Development** — badge raggiunto/in corso, linea target `.pd-target`, `@media print` dedicato per la scheda; riusa `.riga-altro`/`.overlay`/`.modale`/`.ap-campo`/`.st-chart`)
+`tokens.css` (**palette PVL** + tema Arena — unica fonte colore) · `base.css` (reset, pin gate, toast) · `shell.css` (app-shell, nav) · `partita.css` (HUD, pannelli, azioni, modali, CAMBI, badge offline) · `altro.css` (hub "Altro" + switch Arena) · `calendario.css` (topbar, card gara) · `roster.css` (anagrafica, pre-partita) · `stats.css` (tabelle, grafici, barra punteggio, Segui Live, PBP `.pbp`, **Analisi stagione** `#analisi-filtri`/`.an-*`) · `possessi.css` (**Debrief possessi** — selettori gara/quarto, griglie tap giocatore/esito/gioco, foto di riferimento; riusa `.adv-card`/`.st-box`/`.btn-conferma` esistenti) · `analisi-avanzata.css` (**Analisi avanzata** — bottoni di apertura, badge livelli AIS; riusa `.adv-card`/`.st-box`/`.an-tab` esistenti) · `rotazioni.css` (**Rotazioni** — griglia presenza/margine per minuto, solo `opacity` sui token esistenti, niente colori hardcoded) · `breakdown-possessi.css` (**Team Possession Breakdown** — tabella a doppia intestazione OFF/DEF, riusa `.st-box`) · `rating-net.css` (**Rating Net** — gauge SVG ad arco, trend Net Rating; riusa `.st-chart`/`.adv-tit`) · `player-dev.css` (**Player Development** — badge raggiunto/in corso, linea target `.pd-target`, `@media print` dedicato per la scheda; riusa `.riga-altro`/`.overlay`/`.modale`/`.ap-campo`/`.st-chart`) · `avversari.css` (**Avversari** — blocchi nota sola-lettura `.avv-nota-*`, textarea form `.avv-textarea`; riusa `.riga-altro`/`.lista-altro`/`.overlay`/`.modale`/`.ap-campo`/`.btn-conferma`)
 
 ### Responsive (v41) — 3 modalità
 
@@ -164,6 +165,7 @@ punteggio nell'HUD; reso su mobile/desktop/tablet, nessun errore console.
 - **`view-breakdown`** — **Team Possession Breakdown** (sperimentale, da Altro → sezione "Analisi" → riga omonima): back (→ Altro) + barra filtri (copia) + tabella OFF/DEF per innesco di possesso. Vedi `js/breakdown-possessi.js`.
 - **`view-rating-net`** — **Rating Net** (sperimentale, da Altro → sezione "Analisi" → riga omonima): back (→ Altro) + barra filtri (copia) + 4 gauge (Off/Def/Net Rating, Pace) + trend Net Rating gara per gara. Vedi `js/rating-net.js`.
 - **`view-player-dev`** / **`view-scheda-giocatore`** — **Player Development** (sperimentale, da Altro → sezione "Analisi" → riga omonima): elenco giocatori (back → Altro) → scheda per giocatore (back → elenco) con tabella obiettivi (max 5, editabile via modale `#overlay-obiettivo`), grafico trend per obiettivo con linea target, "🖨️ Stampa/Salva PDF" e "📋 Copia prompt AI". Vedi `js/player-dev.js`.
+- **`view-avversari`** / **`view-squadra-avversaria`** — **Avversari** (sperimentale, da Altro → sezione omonima): elenco squadre (back → Altro, "+" per aggiungerne una dal `<datalist>` calendario) → scheda squadra (back → elenco) con le 5 note (raggruppate Attacco/Difesa/Note dall'andata), gare in programma contro quella squadra (sola lettura), elenco giocatori avversari con le loro stesse 5 note. Vedi `js/avversari.js`.
 - **`view-squadra`** (etichetta "Altro") — hub: accesso rapido, **Analisi** (Analisi stagione), Roster (anagrafica), **Aspetto** (switch Arena), Configurazione, **Manutenzione**: `#btn-aggiorna-app` (svuota tutte le `caches` + unregister del SW + reload — contro la cache PWA stantìa su mobile, per tutti); poi solo Admin (password + "SVUOTA"): `apriAzzeraGara` → `SVUOTA_EVENTI_GARA`; `apriResetDati` → `SVUOTA_EVENTI`. La riga "Profilo attivo" mostra `#app-versione` = `app vN` dai `?v=` degli asset caricati, + `cache vM ⚠` se il SW è su una versione diversa (diagnostica).
 - **`view-calendario`** — topbar (hamburger placeholder / select stagione / +) + lista 26 gare con stato e bottone contestuale.
 
@@ -324,7 +326,7 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 
 ---
 
-## 9. Backend — codice completo attuale (V4.14)
+## 9. Backend — codice completo attuale (V4.15)
 
 > Da incollare nell'editor Apps Script. Poi lanciare `setupSheet()` una volta (aggiunge la colonna `salt` a `Utenti` e ricalcola l'hash dell'admin se il foglio è nuovo) e **ripubblicare il deployment**. `setupSheet()` è idempotente.
 > Deploy Web App: eseguito come "me", accesso "chiunque".
@@ -341,14 +343,17 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 > **Lettura automatica foglio possessi (V4.13):** usa l'OCR di Google Drive, che richiede il servizio avanzato **Drive API** abilitato nel progetto — Apps Script → editor → **Servizi** (icona ➕ nel pannello sinistro) → cerca "Drive API" → **Aggiungi**. Una tantum, come il `WRITE_TOKEN`. Senza questo passaggio l'azione `LEGGI_FOGLIO_POSSESSI` carica comunque la foto ma risponde `tabella_rilevata:false` invece di leggerla davvero (fallisce in modo silenzioso e innocuo, non blocca nulla).
 >
 > **Player Development (V4.14):** nuovo foglio `Obiettivi`, azioni `SALVA_OBIETTIVO` (POST)/`getObiettivi` (JSONP) — stesso stile upsert-per-id di `salvaGiocatore_`, ma la cancellazione è un flag `eliminato:true` scritto sulla riga (mai un vero `deleteRow`, per poter "disfare" un'eliminazione senza perdere lo storico). Nessuna migrazione da fare su fogli esistenti: `setupSheet()` crea `Obiettivi` da zero al primo lancio dopo l'aggiornamento.
+>
+> **Avversari (V4.15):** nuova sezione indipendente "Altro → Avversari" (scouting squadre/giocatori avversari del girone). Due nuovi fogli, `Avversari` e `AvversariGiocatori`, stesso stile upsert-per-id + `eliminato:true` di `Obiettivi`. Azioni `SALVA_AVVERSARIO`/`SALVA_AVVERSARIO_GIOCATORE` (POST), `getAvversari`/`getAvversariGiocatori` (JSONP). Nessuna migrazione: `setupSheet()` crea entrambi i fogli da zero al primo lancio dopo l'aggiornamento.
 
 ```javascript
 /**
- * BASKET STATS PRO — Backend Google Apps Script (V4.14)
- * Eventi · Partite · Giocatori · Utenti · Possessi · Obiettivi — cloud-sync, JSONP, multiutente,
- * token scrittura (V4.7) + password con salt e login via POST (V4.8) + SVUOTA_EVENTI (V4.9)
- * + SVUOTA_EVENTI_GARA (V4.10) + getEventiStagione (V4.11) + Debrief possessi (V4.12)
- * + lettura automatica foglio possessi via OCR Drive (V4.13) + Player Development: Obiettivi (V4.14)
+ * BASKET STATS PRO — Backend Google Apps Script (V4.15)
+ * Eventi · Partite · Giocatori · Utenti · Possessi · Obiettivi · Avversari/AvversariGiocatori
+ * — cloud-sync, JSONP, multiutente, token scrittura (V4.7) + password con salt e login via
+ * POST (V4.8) + SVUOTA_EVENTI (V4.9) + SVUOTA_EVENTI_GARA (V4.10) + getEventiStagione (V4.11)
+ * + Debrief possessi (V4.12) + lettura automatica foglio possessi via OCR Drive (V4.13)
+ * + Player Development: Obiettivi (V4.14) + Avversari: scouting squadre/giocatori (V4.15)
  */
 const SHEET_EVENTI = "Eventi";
 const SHEET_PARTITE = "Partite";
@@ -356,6 +361,8 @@ const SHEET_GIOCATORI = "Giocatori";
 const SHEET_UTENTI = "Utenti";
 const SHEET_POSSESSI = "Possessi";
 const SHEET_OBIETTIVI = "Obiettivi";
+const SHEET_AVVERSARI = "Avversari";
+const SHEET_AVVERSARI_GIOCATORI = "AvversariGiocatori";
 
 const COLONNE_EVENTI = [
   "id_partita","id_evento","timestamp","quarto","tempo_partita",
@@ -380,6 +387,22 @@ const COLONNE_POSSESSI = [
 const COLONNE_OBIETTIVI = [
   "id","id_giocatore","metrica","target","direzione","orizzonte","creato_il","nota",
   "baseline_tipo","baseline_partite","eliminato"
+];
+/* Avversari (V4.15) — scouting squadre/giocatori avversari del girone.
+   Cancellazione = eliminato:true (mai un vero deleteRow, come Obiettivi).
+   Le 5 colonne nota sono identiche a livello squadra e a livello giocatore
+   (si compilano/leggono in momenti diversi, vedi js/avversari.js). */
+const COLONNE_AVVERSARI = [
+  "id","nome_squadra",
+  "caratteristiche_attacco","caratteristiche_difesa",
+  "approccio_attacco","approccio_difesa",
+  "note_andata","aggiornato_il","eliminato"
+];
+const COLONNE_AVVERSARI_GIOCATORI = [
+  "id","id_squadra","nome","cognome","numero_maglia","ruolo",
+  "caratteristiche_attacco","caratteristiche_difesa",
+  "approccio_attacco","approccio_difesa",
+  "note_andata","aggiornato_il","eliminato"
 ];
 
 function getWriteToken_() {
@@ -432,6 +455,8 @@ function setupSheet() {
   assicuraColonna_(u, "salt");                 // migrazione V4.8 su Utenti già popolato
   inizializzaFoglio_(ss, SHEET_POSSESSI, COLONNE_POSSESSI);   // V4.12
   inizializzaFoglio_(ss, SHEET_OBIETTIVI, COLONNE_OBIETTIVI); // V4.14
+  inizializzaFoglio_(ss, SHEET_AVVERSARI, COLONNE_AVVERSARI);                     // V4.15
+  inizializzaFoglio_(ss, SHEET_AVVERSARI_GIOCATORI, COLONNE_AVVERSARI_GIOCATORI); // V4.15
   if (u.getLastRow() <= 1) {
     const s = nuovoSalt_();
     u.appendRow(["usr_admin","admin","Admin",hashPassword_(s,"1234"),"SI",s]);
@@ -467,6 +492,8 @@ function doPost(e) {
     if (data.azione === "CARICA_FOTO_POSSESSI")   return caricaFotoPossessi_(data);
     if (data.azione === "LEGGI_FOGLIO_POSSESSI")  return leggiFoglioPossessi_(data);
     if (data.azione === "SALVA_OBIETTIVO")        return salvaObiettivo_(data);
+    if (data.azione === "SALVA_AVVERSARIO")           return salvaAvversario_(data);
+    if (data.azione === "SALVA_AVVERSARIO_GIOCATORE") return salvaAvversarioGiocatore_(data);
     if (data.tipo_evento === "ANNULLA")           return handleAnnulla_(data);
     appendEvento_(data, true);
     return jsonResponse_({ ok: true, azione: "evento_salvato" });
@@ -500,10 +527,16 @@ function doGet(e) {
   if (params.action === "getObiettivi") {   // V4.14: Player Development
     return rispostaDati_(params, "obiettivi", leggiFoglio_(ss, SHEET_OBIETTIVI, false));
   }
+  if (params.action === "getAvversari") {   // V4.15: scouting squadre avversarie
+    return rispostaDati_(params, "avversari", leggiFoglio_(ss, SHEET_AVVERSARI, false));
+  }
+  if (params.action === "getAvversariGiocatori") {   // V4.15: scouting giocatori avversari
+    return rispostaDati_(params, "avversari_giocatori", leggiFoglio_(ss, SHEET_AVVERSARI_GIOCATORI, false));
+  }
   if (params.action === "verificaLogin") {   // compat: vecchi client via JSONP GET
     return rispostaJsonp_(params, verificaLogin_(params.username, params.password));
   }
-  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.14", stato: "attivo" });
+  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.15", stato: "attivo" });
 }
 
 function leggiFoglio_(ss, nome, formatDate) {
@@ -763,6 +796,30 @@ function salvaObiettivo_(data) {
   if (riga > 0) sheet.getRange(riga, 1, 1, COLONNE_OBIETTIVI.length).setValues([val]);
   else sheet.appendRow(val);
   return jsonResponse_({ ok: true, azione: riga > 0 ? "obiettivo_aggiornato" : "obiettivo_creato" });
+}
+/* Avversari (V4.15) — upsert per "id", identico stile di salvaObiettivo_
+   (mai un vero deleteRow: l'eliminazione è solo il flag "eliminato"). */
+function salvaAvversario_(data) {
+  const sheet = inizializzaFoglio_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_AVVERSARI, COLONNE_AVVERSARI);
+  const v = sheet.getDataRange().getValues(), idI = COLONNE_AVVERSARI.indexOf("id");
+  let riga = -1;
+  for (let r = 1; r < v.length; r++) if (String(v[r][idI]) === String(data.id)) { riga = r + 1; break; }
+  const rec = Object.assign({}, data, { eliminato: !!(data.elimina || data.eliminato) });
+  const val = COLONNE_AVVERSARI.map(c => (rec[c] !== undefined && rec[c] !== null) ? rec[c] : "");
+  if (riga > 0) sheet.getRange(riga, 1, 1, COLONNE_AVVERSARI.length).setValues([val]);
+  else sheet.appendRow(val);
+  return jsonResponse_({ ok: true, azione: riga > 0 ? "avversario_aggiornato" : "avversario_creato" });
+}
+function salvaAvversarioGiocatore_(data) {
+  const sheet = inizializzaFoglio_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_AVVERSARI_GIOCATORI, COLONNE_AVVERSARI_GIOCATORI);
+  const v = sheet.getDataRange().getValues(), idI = COLONNE_AVVERSARI_GIOCATORI.indexOf("id");
+  let riga = -1;
+  for (let r = 1; r < v.length; r++) if (String(v[r][idI]) === String(data.id)) { riga = r + 1; break; }
+  const rec = Object.assign({}, data, { eliminato: !!(data.elimina || data.eliminato) });
+  const val = COLONNE_AVVERSARI_GIOCATORI.map(c => (rec[c] !== undefined && rec[c] !== null) ? rec[c] : "");
+  if (riga > 0) sheet.getRange(riga, 1, 1, COLONNE_AVVERSARI_GIOCATORI.length).setValues([val]);
+  else sheet.appendRow(val);
+  return jsonResponse_({ ok: true, azione: riga > 0 ? "avversario_giocatore_aggiornato" : "avversario_giocatore_creato" });
 }
 function jsonResponse_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
 ```

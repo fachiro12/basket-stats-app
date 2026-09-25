@@ -234,6 +234,39 @@ document.addEventListener("DOMContentLoaded", () => {
   const obBaselineTipo = document.getElementById("ob-baseline-tipo");
   if (obBaselineTipo && typeof aggiornaVisibilitaBaselineForm === "function") obBaselineTipo.addEventListener("change", aggiornaVisibilitaBaselineForm);
 
+  /* -------- AVVERSARI (sperimentale) -------- */
+  const apriAvv = document.getElementById("apri-avversari");
+  if (apriAvv && typeof apriAvversari === "function") apriAvv.addEventListener("click", apriAvversari);
+  const avvIndietro = document.getElementById("avv-indietro");
+  if (avvIndietro) avvIndietro.addEventListener("click", () => navigaA("squadra"));
+  const avvBody = document.getElementById("avv-body");
+  if (avvBody) avvBody.addEventListener("click", e => {
+    const riga = e.target.closest("[data-apri-squadra]");
+    if (riga && typeof apriSquadraAvversaria === "function") { apriSquadraAvversaria(riga.dataset.apriSquadra); return; }
+    if (e.target.closest("#avv-aggiungi-squadra")) { if (typeof apriFormSquadraAvversaria === "function") apriFormSquadraAvversaria(); return; }
+  });
+  const avvsqIndietro = document.getElementById("avvsq-indietro");
+  if (avvsqIndietro) avvsqIndietro.addEventListener("click", () => { if (typeof apriAvversari === "function") apriAvversari(); });
+  const avvsqBody = document.getElementById("avvsq-body");
+  if (avvsqBody) avvsqBody.addEventListener("click", e => {
+    if (e.target.closest("#avvsq-modifica")) { if (typeof apriFormSquadraAvversaria === "function") apriFormSquadraAvversaria(avvSquadraSel); return; }
+    if (e.target.closest("#avv-aggiungi-giocatore")) { if (typeof apriFormGiocatoreAvversario === "function") apriFormGiocatoreAvversario(); return; }
+    const rigaG = e.target.closest("[data-apri-giocatore]");
+    if (rigaG && typeof apriFormGiocatoreAvversario === "function") { apriFormGiocatoreAvversario(rigaG.dataset.apriGiocatore); return; }
+  });
+  const avvSqSalva = document.getElementById("avv-sq-salva");
+  if (avvSqSalva && typeof confermaFormSquadraAvversaria === "function") avvSqSalva.addEventListener("click", confermaFormSquadraAvversaria);
+  const avvSqElimina = document.getElementById("avv-sq-elimina");
+  if (avvSqElimina && typeof eliminaSquadraAvversariaCorrente === "function") avvSqElimina.addEventListener("click", eliminaSquadraAvversariaCorrente);
+  const avvSqChiudi = document.getElementById("avv-sq-chiudi");
+  if (avvSqChiudi && typeof chiudiFormSquadraAvversaria === "function") avvSqChiudi.addEventListener("click", chiudiFormSquadraAvversaria);
+  const avvGcSalva = document.getElementById("avv-gc-salva");
+  if (avvGcSalva && typeof confermaFormGiocatoreAvversario === "function") avvGcSalva.addEventListener("click", confermaFormGiocatoreAvversario);
+  const avvGcElimina = document.getElementById("avv-gc-elimina");
+  if (avvGcElimina && typeof eliminaGiocatoreAvversarioCorrente === "function") avvGcElimina.addEventListener("click", eliminaGiocatoreAvversarioCorrente);
+  const avvGcChiudi = document.getElementById("avv-gc-chiudi");
+  if (avvGcChiudi && typeof chiudiFormGiocatoreAvversario === "function") avvGcChiudi.addEventListener("click", chiudiFormGiocatoreAvversario);
+
   /* -------- DEBRIEF POSSESSI (sperimentale) -------- */
   const apriDeb = document.getElementById("apri-debrief");
   if (apriDeb && typeof apriDebrief === "function") apriDeb.addEventListener("click", apriDebrief);
