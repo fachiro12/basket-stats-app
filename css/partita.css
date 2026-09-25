@@ -687,18 +687,11 @@ main.corpo-partita {
   border-radius: var(--radius-sm);
 }
 #cambi-quarto.cc-select { min-width: 96px; }
-.cc-num {
-  width: 58px;
-  min-height: 44px;
-  text-align: center;
-  font-weight: 800;
-  font-size: 16px;
-  padding: 4px;
-  color: var(--color-text-primary);
-  background: var(--color-surface-raised);
-  border: 1.5px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
-}
+/* Punteggio: select a scorrimento (come minuti/secondi) invece di un input
+   numerico — niente tastiera, scomoda da aprire su tablet. Larghezza fissa
+   (a differenza degli altri .cc-select) così non "salta" quando il valore
+   passa da una a tre cifre. */
+.cc-num-select { width: 64px; padding: 6px 4px; }
 .cc-hint {
   font-size: 11px;
   color: var(--color-text-muted);

@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=75` · SW `bsp-v75` · backend V4.14.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=76` · SW `bsp-v76` · backend V4.14.
 
 ---
 
@@ -130,6 +130,22 @@ gli spazi verticali tra checkpoint/slot/panchina/bottoni (mai i target touch
 — select/input restano a 44px). Verificato con Playwright: bounding box di
 `#cambi-conferma`/`#cambi-chiudi` dentro il viewport su tutti e 3 i tablet
 testati; mobile/desktop ancora identici byte per byte.
+
+**Punteggio nella modale CAMBI a scorrimento, non più tastiera (v76)** — i due
+campi punteggio (`#cambi-punti-mia`/`#cambi-punti-opp`) erano `<input
+type="tel" inputmode="numeric">`: su tablet aprivano la tastiera, scomoda e
+controintuitiva per un valore che si corregge di rado. Ora sono `<select>`
+(stesso stile/pattern di `#cambi-min`/`#cambi-sec`, popolati con `opzioni()`
+già esistente in `ui.js`) — nuova `opzioniPunteggio(sel, valore)`: range
+0..130 di default, allungato per includere sempre il valore attuale se già
+fuori range (mai un punteggio "silenziosamente" non rappresentabile). Cambio
+**universale** (non scoped a tablet: la tastiera è scomoda ovunque, non solo
+lì) — tocca `index.html` (`<select>` al posto di `<input>`), `js/ui.js`
+(popolamento; `confermaCambi()` non cambia, `.value` funziona identico su un
+select), `css/partita.css` (`.cc-num` rimossa, sostituita da `.cc-num-select`
+larga fissa 64px così non "salta" passando da 1 a 3 cifre). Verificato con
+Playwright: 131 opzioni generate, selezione+conferma aggiorna davvero il
+punteggio nell'HUD; reso su mobile/desktop/tablet, nessun errore console.
 
 ### Altro
 `index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `mockup-src.jpg` + i 5 PNG icona · `scripts/bump.mjs` (cache-busting) · `scripts/ritaglia-icona.mjs` (crop mockup → PNG via Chrome headless)

@@ -152,6 +152,17 @@ function popolaTempoCambi() {
   popolaSecondiCambi();
 }
 
+/* Punteggio a scorrimento (come minuti/secondi): niente tastiera, scomoda da
+   tablet. 0..130 copre praticamente ogni gara; se il punteggio attuale è già
+   oltre, il range si allunga per includerlo comunque (mai un valore "fuori
+   lista" che risulterebbe silenziosamente non selezionato). */
+function opzioniPunteggio(sel, valore) {
+  const max = Math.max(130, (Number(valore) || 0) + 10);
+  const vals = [];
+  for (let v = 0; v <= max; v++) vals.push(v);
+  opzioni(sel, vals, valore, v => String(v));
+}
+
 /* Chi è disponibile per un cambio: i convocati non in campo.
    Fallback (partita ripresa senza lista convocati): l'anagrafica. */
 function panchinaCambi() {
@@ -220,8 +231,8 @@ function apriCambi() {
   document.getElementById("cambi-min").onchange = popolaSecondiCambi;
   document.getElementById("cambi-punti-label").textContent =
     "Punteggio (" + CONFIG.NOME_SQUADRA_MIA + " − " + (state.avversarioBreve || "AVV") + ")";
-  document.getElementById("cambi-punti-mia").value = state.punteggio.MIA;
-  document.getElementById("cambi-punti-opp").value = state.punteggio.OPP;
+  opzioniPunteggio(document.getElementById("cambi-punti-mia"), state.punteggio.MIA);
+  opzioniPunteggio(document.getElementById("cambi-punti-opp"), state.punteggio.OPP);
   renderSlotCambi();
   document.getElementById("overlay-cambi").classList.add("visibile");
 }
