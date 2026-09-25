@@ -846,6 +846,27 @@ main.corpo-partita {
     padding: 6px 14px;
     box-shadow: var(--shadow-card);
   }
+
+  /* Modale CAMBI: la più "piena" di contenuto (checkpoint + fino a 5 slot +
+     panchina + 3 bottoni) — il cap ereditato (88vh + margine 5vh sotto,
+     riga ~779) costringeva a scrollare per arrivare a CONFERMA/Annulla.
+     Solo qui: le altre modali sono più corte, non serve toccarle. */
+  #overlay-cambi .modale {
+    max-width: 640px;
+    max-height: 97vh;
+    max-height: 97dvh;
+    margin-bottom: 0;
+  }
+  /* Respiro verticale ridotto (non i target touch, restano 44px sui
+     select/input) per far stare tutto il contenuto senza scroll anche nel
+     landscape più basso testato (1180×820, dove 97vh non basta da solo —
+     misurato: mancavano ~70px). */
+  #overlay-cambi .cambi-checkpoint { padding: 6px 10px; gap: 4px; margin-bottom: 8px; }
+  #overlay-cambi .slot-cambio { padding: 7px 12px; margin-bottom: 5px; }
+  #overlay-cambi .cambi-panchina { margin: 5px 0; }
+  #overlay-cambi #cambi-convocati { margin-top: 6px; }
+  #overlay-cambi #cambi-conferma { margin-top: 8px; }
+  #overlay-cambi #cambi-chiudi { margin-top: 6px; }
 }
 
 @media (pointer: coarse) and (min-width: 768px) and (min-height: 600px) and (orientation: landscape) {

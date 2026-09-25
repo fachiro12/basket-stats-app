@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=74` · SW `bsp-v74` · backend V4.14.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=75` · SW `bsp-v75` · backend V4.14.
 
 ---
 
@@ -118,6 +118,18 @@ Partita — restava una colonna stretta anche lì. Verificato con screenshot
 Playwright (`playwright-core`, browser Chrome locale) prima/dopo su mobile
 390×844 e desktop 1440×900: **identici byte per byte** (nessuna regressione,
 le regole nuove sono scoped rigidamente su `pointer:coarse`).
+
+**Modale CAMBI su tablet (v75)**: stesso scoping tablet di sopra — max-height
+88vh (+ margine 5vh sotto, ereditato dal breakpoint 560px) non bastava a
+mostrare CONFERMA/Annulla senza scroll con fino a 5 slot + checkpoint +
+panchina. Alzata a 97vh, `margin-bottom:0`, `max-width:640px` **solo per
+`#overlay-cambi .modale`** (le altre modali restano come sono, sono più
+corte). Anche così non bastava nel landscape più basso testato (1180×820,
+mancavano ~70px misurati con `scrollHeight`/`clientHeight`): ridotti un po'
+gli spazi verticali tra checkpoint/slot/panchina/bottoni (mai i target touch
+— select/input restano a 44px). Verificato con Playwright: bounding box di
+`#cambi-conferma`/`#cambi-chiudi` dentro il viewport su tutti e 3 i tablet
+testati; mobile/desktop ancora identici byte per byte.
 
 ### Altro
 `index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `mockup-src.jpg` + i 5 PNG icona · `scripts/bump.mjs` (cache-busting) · `scripts/ritaglia-icona.mjs` (crop mockup → PNG via Chrome headless)
