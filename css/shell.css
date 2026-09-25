@@ -145,6 +145,19 @@ a,
   #view-partita > * { max-width: 760px; margin-inline: auto; width: 100%; }
 }
 
+/* ============ TABLET VERTICALE (touch): lo shell non deve restare a 430px ============
+   In landscape+coarse lo shell va già a piena larghezza (regola sopra). In
+   portrait+coarse invece non scatta né questa né la regola desktop (pointer:fine),
+   quindi restava fissato al max-width "da telefono" anche su un tablet largo
+   800px+ in verticale — tutta l'app, non solo Partita, appariva una colonna
+   stretta con margini enormi. `min-height` esclude un telefono grande ruotato
+   (qui però siamo in orientation:portrait, quindi la guardia serve più che
+   altro per coerenza con partita.css). Vedi css/partita.css per il resto del
+   lavoro (layout a due bordi della vista Partita). */
+@media (pointer: coarse) and (min-width: 768px) and (min-height: 600px) and (orientation: portrait) {
+  #app-shell { max-width: 900px; box-shadow: none; }
+}
+
 .tab-btn {
   flex: 1;
   min-width: 0;

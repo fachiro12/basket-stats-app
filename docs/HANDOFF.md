@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=72` · SW `bsp-v72` · backend V4.14.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=74` · SW `bsp-v74` · backend V4.14.
 
 ---
 
@@ -94,6 +94,30 @@ Lo shell è 430px di default (mobile). Due media query aggiuntive, **discriminat
 | **Desktop/laptop** | `(min-width: 900px) and (pointer: fine)` | shell full-width, **sidebar sinistra 200px** con label (`.tab-bar` restilizzata); contenuto centrato per tipo: Stats/Adv/Analisi ~1120px, Calendario ~1040px, Altro/Partita ~760px (`#view-* > * { max-width; margin-inline: auto }` in `shell.css`) |
 
 Le **tab interne** (`.stats-tabs` ecc.) restano sempre. `.sm-hide` (colonne estese tabelle): nascoste solo su `(orientation: portrait) and (pointer: coarse)` e su desktop stretto `(pointer: fine) and (max-width: 720px)` → sul monitor tutte le colonne sono sempre visibili. Nessun wrapper HTML nuovo, nessun cambio ai render JS.
+
+**Vista Partita su tablet (v74)** — la vista Partita ha un ulteriore livello di
+adattamento, indipendente dalle 3 modalità sopra: su tablet (`pointer:coarse`
++ `min-width:768px` + `min-height:600px`, quest'ultima per escludere un
+telefono grande ruotato in landscape, che supererebbe 768px di larghezza pur
+restando un telefono) il roster (`.pannello-sinistro`) e i pulsanti azione
+(`.pannello-destro`) vanno ai due **bordi** dello schermo invece di restare
+compressi in una colonna centrata a 640px (il cap normale, `css/partita.css`,
+si applicherebbe anche lì) — pensato per l'uso a due mani/pollici: sinistra
+sceglie il giocatore, destra sceglie l'azione. Il contenuto di ogni pannello
+si ancora in **basso** (`.pannello { justify-content: flex-end }`, il pannello
+resta a tutta altezza per via di `#action-overlay`/`#end-game-panel` assoluti
+al suo interno — cambia solo dove si impila il contenuto, non l'altezza del
+box), target touch a 60px, `#btn-undo` (stesso elemento/id, nessun cambio
+JS) diventa `position:fixed` e si sposta dall'header (raro da toccare lì) al
+vuoto centrale tra i due pannelli appena sopra la barra CAMBI — il centro di
+quel vuoto **non** è il centro del viewport (i pannelli hanno larghezze
+diverse in landscape/portrait), calcolato con `left: calc(50vw ± Npx)` per
+ciascun orientamento. In portrait anche `#app-shell` si allarga (900px invece
+di 430px, nuova regola in `shell.css`), altrimenti tutta l'app — non solo
+Partita — restava una colonna stretta anche lì. Verificato con screenshot
+Playwright (`playwright-core`, browser Chrome locale) prima/dopo su mobile
+390×844 e desktop 1440×900: **identici byte per byte** (nessuna regressione,
+le regole nuove sono scoped rigidamente su `pointer:coarse`).
 
 ### Altro
 `index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `mockup-src.jpg` + i 5 PNG icona · `scripts/bump.mjs` (cache-busting) · `scripts/ritaglia-icona.mjs` (crop mockup → PNG via Chrome headless)

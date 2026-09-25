@@ -792,3 +792,91 @@ main.corpo-partita {
   .btn-azione { padding: 10px 6px; }
   .modale { max-height: 94vh; }
 }
+
+/* ==========================================================================
+   TABLET (touch): layout a due bordi, ancorato in basso, pensato per i pollici
+   ("scegli giocatore con la sinistra → azione con la destra" — vedi anche lo
+   shell allargato in shell.css per il portrait). Scoped rigidamente su
+   pointer:coarse + min-width:768px + min-height:600px: uno smartphone (anche
+   grande, anche ruotato in landscape — lì l'altezza scende sotto 500px) e un
+   desktop (pointer:fine, mai "coarse") non entrano MAI in questi blocchi —
+   restano pixel-identici a oggi. Nessun cambio a HTML/JS.
+   ========================================================================== */
+@media (pointer: coarse) and (min-width: 768px) and (min-height: 600px) {
+  /* Sovrascrive il cap "colonna stretta 640px centrata" di riga ~778 (si
+     applicherebbe anche qui, min-width:560px): i due pannelli vanno ai bordi,
+     il centro resta vuoto per davvero invece di essere riempito da un blocco
+     compresso. */
+  main.corpo-partita {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    justify-content: space-between;
+    padding: 0 var(--space-4);
+  }
+  /* I pannelli restano a tutta altezza (servono per coprire #action-overlay/
+     #end-game-panel, assoluti con inset:0 al loro interno) — è il CONTENUTO
+     interno che si ancora in basso, lasciando vuota la fascia alta "difficile". */
+  .pannello { justify-content: flex-end; gap: 10px; }
+
+  /* Target touch 56–64px (era 40–44px) + più respiro tra un bottone e l'altro,
+     per non forzare a mirare con l'indice. */
+  .btn-giocatore,
+  .btn-opp { min-height: 60px; }
+  .griglia-azioni { gap: 12px; }
+  .btn-azione { min-height: 60px; font-size: 16px; }
+
+  /* UNDO: si usa spesso durante la partita, ma stava nell'header (fascia alta,
+     difficile) — resta lo STESSO elemento/id (l'handler in app.js non cambia),
+     solo spostato visivamente in basso, appena sopra la barra CAMBI. Q+1/RECAP
+     restano in header: si usano di rado, la riga a 2 si riequilibra da sola
+     (erano già flex:1 1 0). Centrato nel vuoto TRA i due pannelli (non a
+     ridosso di un bordo): lì non c'è mai nulla sotto — a destra, contro il
+     bordo, finiva invece sopra "FALLO fatto" (verificato con le bounding box
+     reali via screenshot, non solo a occhio). `left` è calcolato per-orientamento
+     qui sotto (il centro del vuoto NON è il centro del viewport, perché i due
+     pannelli hanno larghezze diverse — vedi commento lì). */
+  #btn-undo {
+    position: fixed;
+    transform: translateX(-50%);
+    z-index: 20;
+    flex: none;
+    min-width: 100px;
+    min-height: 60px;
+    padding: 6px 14px;
+    box-shadow: var(--shadow-card);
+  }
+}
+
+@media (pointer: coarse) and (min-width: 768px) and (min-height: 600px) and (orientation: landscape) {
+  /* Bordi larghi: c'è tutta la larghezza dello schermo (lo shell qui è già a
+     piena larghezza, regola esistente in shell.css). */
+  .pannello-sinistro { flex: 0 0 360px; max-width: 360px; }
+  .pannello-destro { flex: 0 0 460px; max-width: 460px; }
+  /* Centro del vuoto tra i pannelli = 50vw + (largh.sinistro − largh.destro)/2
+     = 50vw + (360−460)/2 = 50vw − 50px (il centro del VIEWPORT non basta: i
+     due pannelli non sono larghi uguale, quindi il vuoto non è centrato lì). */
+  #btn-undo {
+    left: calc(50vw - 50px);
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (pointer: coarse) and (min-width: 768px) and (min-height: 600px) and (orientation: portrait) {
+  /* Stessi due bordi, più stretti per stare nella larghezza minore (lo shell
+     qui è allargato a 900px da shell.css, non più i 430px "da telefono"). */
+  .pannello-sinistro { flex: 0 0 300px; max-width: 300px; }
+  .pannello-destro { flex: 0 0 380px; max-width: 380px; }
+  /* Stesso calcolo di sopra con le larghezze qui: 50vw + (300−380)/2 = 50vw − 40px.
+     Il vuoto qui è più stretto (108px): bottone un po' più snello per starci
+     con margine, non solo a filo (misurato via bounding box: 9px per lato). */
+  #btn-undo {
+    left: calc(50vw - 40px);
+    min-width: 90px;
+    padding: 6px 10px;
+  }
+  /* In portrait la capsula nav resta visibile (solo il landscape la nasconde
+     oggi): l'offset scavalca sia lei sia la barra CAMBI sopra di lei (misurato
+     con le bounding box reali, non a occhio). */
+  #btn-undo { bottom: calc(var(--tabbar-height) + 85px + env(safe-area-inset-bottom, 0px)); }
+}
