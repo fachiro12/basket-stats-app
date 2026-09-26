@@ -320,6 +320,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (rmLeg) { if (typeof rimuoviCodiceLegenda === "function") rimuoviCodiceLegenda(rmLeg.dataset.rm); return; }
   });
 
+  /* -------- REPORT GARA — AI (sperimentale) -------- */
+  const apriRepGara = document.getElementById("apri-report-gara");
+  if (apriRepGara && typeof apriReportGara === "function") apriRepGara.addEventListener("click", apriReportGara);
+  const repIndietro = document.getElementById("report-gara-indietro");
+  if (repIndietro) repIndietro.addEventListener("click", () => navigaA("squadra"));
+  const repGaraSel = document.getElementById("report-gara-sel");
+  if (repGaraSel && typeof cambiaGaraReport === "function")
+    repGaraSel.addEventListener("change", e => cambiaGaraReport(e.target.value));
+  const repBody = document.getElementById("report-gara-body");
+  if (repBody) repBody.addEventListener("click", e => {
+    if (e.target.closest("#report-gara-copia") && typeof copiaReportGara === "function") copiaReportGara();
+  });
+
   /* -------- ROSTER / ANAGRAFICA GIOCATORI -------- */
   document.querySelectorAll('[data-apri="roster"]').forEach(el =>
     el.addEventListener("click", apriRoster));

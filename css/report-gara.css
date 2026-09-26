@@ -1,0 +1,27 @@
+/* ==========================================================================
+   REPORT GARA (AI) — Altro → Debrief, sperimentale. Riuso quasi totale di
+   classi esistenti (.riga-altro/.lista-altro/.btn-annulla-modale/.cc-select/
+   .st-hint) — solo la textarea di anteprima del testo generato è nuova.
+   ========================================================================== */
+
+.rg-info {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 8px 0 4px;
+}
+
+.rg-testo {
+  width: 100%;
+  min-height: 50vh;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-num, monospace);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  resize: vertical;
+}

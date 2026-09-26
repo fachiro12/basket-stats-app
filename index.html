@@ -11,24 +11,25 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Basket Stats">
-<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=79">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=79">
-<link rel="apple-touch-icon" href="icon-180.png?v=79">
-<link rel="stylesheet" href="css/tokens.css?v=79">
-<link rel="stylesheet" href="css/base.css?v=79">
-<link rel="stylesheet" href="css/shell.css?v=79">
-<link rel="stylesheet" href="css/partita.css?v=79">
-<link rel="stylesheet" href="css/altro.css?v=79">
-<link rel="stylesheet" href="css/calendario.css?v=79">
-<link rel="stylesheet" href="css/roster.css?v=79">
-<link rel="stylesheet" href="css/stats.css?v=79">
-<link rel="stylesheet" href="css/possessi.css?v=79">
-<link rel="stylesheet" href="css/analisi-avanzata.css?v=79">
-<link rel="stylesheet" href="css/rotazioni.css?v=79">
-<link rel="stylesheet" href="css/breakdown-possessi.css?v=79">
-<link rel="stylesheet" href="css/rating-net.css?v=79">
-<link rel="stylesheet" href="css/player-dev.css?v=79">
-<link rel="stylesheet" href="css/avversari.css?v=79">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png?v=80">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=80">
+<link rel="apple-touch-icon" href="icon-180.png?v=80">
+<link rel="stylesheet" href="css/tokens.css?v=80">
+<link rel="stylesheet" href="css/base.css?v=80">
+<link rel="stylesheet" href="css/shell.css?v=80">
+<link rel="stylesheet" href="css/partita.css?v=80">
+<link rel="stylesheet" href="css/altro.css?v=80">
+<link rel="stylesheet" href="css/calendario.css?v=80">
+<link rel="stylesheet" href="css/roster.css?v=80">
+<link rel="stylesheet" href="css/stats.css?v=80">
+<link rel="stylesheet" href="css/possessi.css?v=80">
+<link rel="stylesheet" href="css/analisi-avanzata.css?v=80">
+<link rel="stylesheet" href="css/rotazioni.css?v=80">
+<link rel="stylesheet" href="css/breakdown-possessi.css?v=80">
+<link rel="stylesheet" href="css/rating-net.css?v=80">
+<link rel="stylesheet" href="css/player-dev.css?v=80">
+<link rel="stylesheet" href="css/avversari.css?v=80">
+<link rel="stylesheet" href="css/report-gara.css?v=80">
 </head>
 <body>
 
@@ -272,6 +273,20 @@
       <input type="file" accept="image/*" id="debrief-foto-input" class="hidden">
     </div><!-- /view-debrief -->
 
+    <!-- ============ VIEW: REPORT GARA — AI (sperimentale) ============ -->
+    <div class="view" id="view-report-gara">
+      <header class="cal-topbar">
+        <button class="cal-tb-btn" id="report-gara-indietro" aria-label="Torna ad Altro">
+          <svg class="ico" aria-hidden="true"><use href="#i-undo"></use></svg>
+        </button>
+        <span class="st-titolo">Report gara (AI)</span>
+      </header>
+      <div class="contenuto-pagina">
+        <select id="report-gara-sel" class="cc-select" aria-label="Gara"></select>
+        <div id="report-gara-body"></div>
+      </div>
+    </div><!-- /view-report-gara -->
+
     <!-- ============ VIEW: ANALISI AVANZATA (sperimentale) ============ -->
     <div class="view" id="view-analisi-avanzata">
       <header class="cal-topbar">
@@ -457,6 +472,14 @@
             <span class="col-testo">
               <span class="titolo-altro">Debrief possessi <span class="beta-badge">beta</span></span>
               <span class="sotto-altro">Tracker parallelo per il coaching — possesso per possesso, con foto del foglio</span>
+            </span>
+            <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
+          </div>
+          <div class="riga-altro" id="apri-report-gara">
+            <svg class="ico ico-riga" aria-hidden="true"><use href="#i-clipboard"></use></svg>
+            <span class="col-testo">
+              <span class="titolo-altro">Report gara (AI) <span class="beta-badge">beta</span></span>
+              <span class="sotto-altro">Dati completi di una gara conclusa, pronti da incollare in un assistente AI</span>
             </span>
             <svg class="ico freccia-riga" aria-hidden="true"><use href="#i-chevron"></use></svg>
           </div>
@@ -872,26 +895,27 @@
 <div id="toast"></div>
 
 <!-- ===================== SCRIPTS ===================== -->
-<script src="js/state.js?v=79"></script>
-<script src="js/tema.js?v=79"></script>
-<script src="js/api.js?v=79"></script>
-<script src="js/timer.js?v=79"></script>
-<script src="js/azioni.js?v=79"></script>
-<script src="js/fallo-subito.js?v=79"></script>
-<script src="js/calendario.js?v=79"></script>
-<script src="js/giocatori.js?v=79"></script>
-<script src="js/stats.js?v=79"></script>
-<script src="js/analisi.js?v=79"></script>
-<script src="js/analisi-avanzata.js?v=79"></script>
-<script src="js/rotazioni.js?v=79"></script>
-<script src="js/breakdown-possessi.js?v=79"></script>
-<script src="js/rating-net.js?v=79"></script>
-<script src="js/player-dev.js?v=79"></script>
-<script src="js/avversari.js?v=79"></script>
-<script src="js/possessi.js?v=79"></script>
-<script src="js/ui.js?v=79"></script>
-<script src="js/pin.js?v=79"></script>
-<script src="js/app.js?v=79"></script>
+<script src="js/state.js?v=80"></script>
+<script src="js/tema.js?v=80"></script>
+<script src="js/api.js?v=80"></script>
+<script src="js/timer.js?v=80"></script>
+<script src="js/azioni.js?v=80"></script>
+<script src="js/fallo-subito.js?v=80"></script>
+<script src="js/calendario.js?v=80"></script>
+<script src="js/giocatori.js?v=80"></script>
+<script src="js/stats.js?v=80"></script>
+<script src="js/analisi.js?v=80"></script>
+<script src="js/analisi-avanzata.js?v=80"></script>
+<script src="js/rotazioni.js?v=80"></script>
+<script src="js/breakdown-possessi.js?v=80"></script>
+<script src="js/rating-net.js?v=80"></script>
+<script src="js/player-dev.js?v=80"></script>
+<script src="js/avversari.js?v=80"></script>
+<script src="js/possessi.js?v=80"></script>
+<script src="js/report-gara.js?v=80"></script>
+<script src="js/ui.js?v=80"></script>
+<script src="js/pin.js?v=80"></script>
+<script src="js/app.js?v=80"></script>
 
 </body>
 </html>
