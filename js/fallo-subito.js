@@ -194,26 +194,57 @@ function apriTlAvversari(num) {
   ffNum = num;
   ffModifica = false;
   mostraActionOverlay("Fallo " + etichettaNum(num) + " — TL avversari?", [
-    aoBottone("Nessun TL", () => finalizzaFalloFatto("PERSONALE", []), true),
-    aoBottone("1 TL", () => faseEsitiTlAvv(1, [])),
-    aoBottone("2 TL", () => faseEsitiTlAvv(2, [])),
-    aoBottone("3 TL", () => faseEsitiTlAvv(3, []))
+    aoBottone("Nessun TL", () => finalizzaFalloFatto("PERSONALE", [], "NESSUNO"), true),
+    aoBottone("1 TL", () => faseEsitiTlAvv(1, [], "NESSUNO")),
+    aoBottone("2 TL", () => faseEsitiTlAvv(2, [], "NESSUNO")),
+    aoBottone("3 TL", () => faseEsitiTlAvv(3, [], "NESSUNO")),
+    aoBottone("Tecnico / Antisportivo →", () => faseSpecialeFalloFatto(num)),
+    aoBottone("Panchina / coach (fallo di squadra) →", () => faseEsitoTecnicoNostro())
   ], 0);
 }
 
-function faseEsitiTlAvv(n, esitiPre) {
-  schermataEsitiTL(n, esitiPre,
-    "TL avversari · fallo " + etichettaNum(ffNum) + " — segna gli esiti",
-    esiti => finalizzaFalloFatto(n + "TL", esiti),
-    () => (ffModifica ? chiudiActionOverlay() : apriTlAvversari(ffNum)));
+/* Tecnico/Antisportivo attribuito a UN NOSTRO giocatore che ha commesso il
+   fallo (non alla panchina — per quella vedi "Panchina" sopra, che riusa
+   faseEsitoTecnicoNostro/registraTecnicoPanchinaNostra senza passare da qui).
+   Mirror esatto di faseSpecialeFalloSubito/faseCountFalloSubito ma per il
+   verso opposto: qui siamo NOI a commettere il fallo, quindi i TL vanno agli
+   avversari (finalizzaFalloFatto, non finalizzaFalloSubito). Niente "nessun
+   TL": un tecnico/antisportivo assegna sempre almeno un tiro libero. */
+function faseSpecialeFalloFatto(num) {
+  mostraActionOverlay("Fallo speciale di " + etichettaNum(num), [
+    aoBottone("Tecnico", () => faseCountFalloFattoSpeciale(num, "TECNICO")),
+    aoBottone("Antisportivo", () => faseCountFalloFattoSpeciale(num, "ANTISPORTIVO")),
+    aoBottone("Tecnico + Antisportivo", () => faseCountFalloFattoSpeciale(num, "TECNICO+ANTISPORTIVO")),
+    aoBottone("← indietro", () => apriTlAvversari(num), true)
+  ], 0);
+}
+function faseCountFalloFattoSpeciale(num, fs) {
+  ffNum = num;
+  const et = " · " + fs.replace("+", " + ").toLowerCase();
+  mostraActionOverlay("Fallo di " + etichettaNum(num) + et + " — quanti TL?", [
+    aoBottone("1 TL", () => faseEsitiTlAvv(1, [], fs)),
+    aoBottone("2 TL", () => faseEsitiTlAvv(2, [], fs)),
+    aoBottone("3 TL", () => faseEsitiTlAvv(3, [], fs)),
+    aoBottone("← indietro", () => faseSpecialeFalloFatto(num), true)
+  ], 0);
 }
 
-function finalizzaFalloFatto(opzione, esiti) {
+function faseEsitiTlAvv(n, esitiPre, fs) {
+  const speciale = fs && fs !== "NESSUNO";
+  const et = speciale ? " · " + fs.replace("+", " + ").toLowerCase() : "";
+  schermataEsitiTL(n, esitiPre,
+    "TL avversari · fallo " + etichettaNum(ffNum) + et + " — segna gli esiti",
+    esiti => finalizzaFalloFatto(n + "TL", esiti, fs),
+    () => (ffModifica ? chiudiActionOverlay() : (speciale ? faseCountFalloFattoSpeciale(ffNum, fs) : apriTlAvversari(ffNum))));
+}
+
+function finalizzaFalloFatto(opzione, esiti, fs) {
   const eraModifica = ffModifica;
   if (ffModifica) { ffModifica = false; annullaUltimoEvento(); }
   const num = ffNum;
   const qi = indiceFalli();
   const puntiOpp = esiti.filter(v => v === "SI").length;
+  const speciale = fs || "NESSUNO";
 
   state.falliSquadraPerQuarto.MIA[qi] += 1;
   if (numValido(num)) state.falliGiocatori[num] = (state.falliGiocatori[num] || 0) + 1;
@@ -228,8 +259,10 @@ function finalizzaFalloFatto(opzione, esiti) {
   registraEvento({
     squadra: "MIA", giocatore_num: numValido(num) ? String(num) : "",
     tipo_evento: "FALLO_FATTO", dettaglio: opzione,
-    punti_segnati: puntiOpp, esito_tl: esiti.slice()
+    punti_segnati: puntiOpp, esito_tl: esiti.slice(),
+    fallo_speciale: speciale
   }, inverti, CONFIG.NOME_SQUADRA_MIA + " " + etichettaNum(num) + " · fallo fatto" +
+     (speciale !== "NESSUNO" ? " · " + speciale.replace("+", " + ").toLowerCase() : "") +
      (esiti.length ? " (" + puntiOpp + "/" + esiti.length + " TL avv.)" : ""));
 
   chiudiActionOverlay();
@@ -347,6 +380,11 @@ function ultimoFalloCorreggibile() {
   const ev = last && (last.evento || last);
   if (!ev || state.partitaFinita) return null;
   if (ev.tipo_evento !== "FALLO_SUBITO" && ev.tipo_evento !== "FALLO_FATTO") return null;
+  // Tecnico panchina (registraTecnicoPanchinaNostra): niente giocatore
+  // attribuito (giocatore_num vuoto) — riaprirlo qui sotto come "fallo
+  // personale da correggere" lo confonderebbe con un fallo di un giocatore
+  // specifico (ffNum diventerebbe "").
+  if (ev.dettaglio === "TECNICO_PANCHINA") return null;
   const esiti = String(ev.esito_tl || "").split(",").map(s => s.trim()).filter(Boolean);
   return esiti.length ? { ev: ev, esiti: esiti } : null;
 }
@@ -364,7 +402,8 @@ function modificaUltimoFallo() {
     faseEsitiFalloSubito(c.esiti.length, c.esiti, fs);
   } else {
     ffNum = c.ev.giocatore_num;
-    faseEsitiTlAvv(c.esiti.length, c.esiti);
+    const fs = c.ev.fallo_speciale && c.ev.fallo_speciale !== "NESSUNO" ? c.ev.fallo_speciale : "NESSUNO";
+    faseEsitiTlAvv(c.esiti.length, c.esiti, fs);
   }
   mostraToast("Cambia gli esiti sbagliati, poi Conferma");
 }
