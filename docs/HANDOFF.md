@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=77` · SW `bsp-v77` · backend V4.14.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=78` · SW `bsp-v78` · backend V4.14.
 
 ---
 
@@ -108,12 +108,8 @@ sceglie il giocatore, destra sceglie l'azione. Il contenuto di ogni pannello
 si ancora in **basso** (`.pannello { justify-content: flex-end }`, il pannello
 resta a tutta altezza per via di `#action-overlay`/`#end-game-panel` assoluti
 al suo interno — cambia solo dove si impila il contenuto, non l'altezza del
-box), target touch a 60px, `#btn-undo` (stesso elemento/id, nessun cambio
-JS) diventa `position:fixed` e si sposta dall'header (raro da toccare lì) al
-vuoto centrale tra i due pannelli appena sopra la barra CAMBI — il centro di
-quel vuoto **non** è il centro del viewport (i pannelli hanno larghezze
-diverse in landscape/portrait), calcolato con `left: calc(50vw ± Npx)` per
-ciascun orientamento. In portrait anche `#app-shell` si allarga (900px invece
+box), target touch a 60px. **UNDO resta nell'header** (v78, vedi sotto) —
+in portrait anche `#app-shell` si allarga (900px invece
 di 430px, nuova regola in `shell.css`), altrimenti tutta l'app — non solo
 Partita — restava una colonna stretta anche lì. Verificato con screenshot
 Playwright (`playwright-core`, browser Chrome locale) prima/dopo su mobile
@@ -147,6 +143,14 @@ select), `css/partita.css` (`.cc-num` rimossa, sostituita da `.cc-num-select`
 larga fissa 64px così non "salta" passando da 1 a 3 cifre). Verificato con
 Playwright: 131 opzioni generate, selezione+conferma aggiorna davvero il
 punteggio nell'HUD; reso su mobile/desktop/tablet, nessun errore console.
+
+**UNDO tolto dal flottante, tornato in header su tablet (v78)** — feedback
+d'uso reale: il pulsante flottante nel vuoto centrale (v74) veniva toccato
+per sbaglio troppo spesso, proprio perché vicino ai pannelli TIRI/PALLA/FALLI.
+Rimosse le 3 regole `#btn-undo` scoped a tablet (`position:fixed` + i due
+offset per-orientamento) in `css/partita.css` — su tablet UNDO torna nella
+stessa posizione di mobile/desktop (header, fuori dalla zona di tocco delle
+azioni). Nessun cambio a HTML/JS. Resto del layout tablet invariato.
 
 ### Altro
 `index.html` (unica pagina, tutte le viste + sprite SVG icone `#i-*` + modali) · `manifest.webmanifest` · `sw.js` · `mockup-src.jpg` + i 5 PNG icona · `scripts/bump.mjs` (cache-busting) · `scripts/ritaglia-icona.mjs` (crop mockup → PNG via Chrome headless)

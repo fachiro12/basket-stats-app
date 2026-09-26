@@ -819,28 +819,14 @@ main.corpo-partita {
   .griglia-azioni { gap: 12px; }
   .btn-azione { min-height: 60px; font-size: 16px; }
 
-  /* UNDO: si usa spesso durante la partita, ma stava nell'header (fascia alta,
-     difficile) — resta lo STESSO elemento/id (l'handler in app.js non cambia),
-     solo spostato visivamente in basso, appena sopra la barra CAMBI. Q+1/RECAP
-     restano in header: si usano di rado, la riga a 2 si riequilibra da sola
-     (erano già flex:1 1 0). Centrato nel vuoto TRA i due pannelli (non a
-     ridosso di un bordo): lì non c'è mai nulla sotto — a destra, contro il
-     bordo, finiva invece sopra "FALLO fatto" (verificato con le bounding box
-     reali via screenshot, non solo a occhio). `left` è calcolato per-orientamento
-     qui sotto (il centro del vuoto NON è il centro del viewport, perché i due
-     pannelli hanno larghezze diverse — vedi commento lì). */
-  #btn-undo {
-    position: fixed;
-    transform: translateX(-50%);
-    z-index: 20;
-    flex: none;
-    min-width: 100px;
-    min-height: 60px;
-    padding: 6px 14px;
-    box-shadow: var(--shadow-card);
-  }
+  /* UNDO (v76.1): era stato spostato qui flottante nel vuoto centrale (v74,
+     "in header è difficile da raggiungere") ma in uso reale si toccava per
+     sbaglio troppo spesso, proprio perché finiva vicino ai pannelli di
+     inserimento (TIRI/PALLA/FALLI). Tolto l'override: resta nell'header come
+     su mobile/desktop, fuori dalla zona di tocco delle azioni — nessuna
+     regola qui sotto, nessun cambio a HTML/JS (stesso elemento/id di sempre).
 
-  /* Modale CAMBI: la più "piena" di contenuto (checkpoint + fino a 5 slot +
+     Modale CAMBI: la più "piena" di contenuto (checkpoint + fino a 5 slot +
      panchina + 3 bottoni) — il cap ereditato (88vh + margine 5vh sotto,
      riga ~779) costringeva a scrollare per arrivare a CONFERMA/Annulla.
      Solo qui: le altre modali sono più corte, non serve toccarle. */
@@ -867,13 +853,6 @@ main.corpo-partita {
      piena larghezza, regola esistente in shell.css). */
   .pannello-sinistro { flex: 0 0 360px; max-width: 360px; }
   .pannello-destro { flex: 0 0 460px; max-width: 460px; }
-  /* Centro del vuoto tra i pannelli = 50vw + (largh.sinistro − largh.destro)/2
-     = 50vw + (360−460)/2 = 50vw − 50px (il centro del VIEWPORT non basta: i
-     due pannelli non sono larghi uguale, quindi il vuoto non è centrato lì). */
-  #btn-undo {
-    left: calc(50vw - 50px);
-    bottom: calc(64px + env(safe-area-inset-bottom, 0px));
-  }
 }
 
 @media (pointer: coarse) and (min-width: 768px) and (min-height: 600px) and (orientation: portrait) {
@@ -881,16 +860,4 @@ main.corpo-partita {
      qui è allargato a 900px da shell.css, non più i 430px "da telefono"). */
   .pannello-sinistro { flex: 0 0 300px; max-width: 300px; }
   .pannello-destro { flex: 0 0 380px; max-width: 380px; }
-  /* Stesso calcolo di sopra con le larghezze qui: 50vw + (300−380)/2 = 50vw − 40px.
-     Il vuoto qui è più stretto (108px): bottone un po' più snello per starci
-     con margine, non solo a filo (misurato via bounding box: 9px per lato). */
-  #btn-undo {
-    left: calc(50vw - 40px);
-    min-width: 90px;
-    padding: 6px 10px;
-  }
-  /* In portrait la capsula nav resta visibile (solo il landscape la nasconde
-     oggi): l'offset scavalca sia lei sia la barra CAMBI sopra di lei (misurato
-     con le bounding box reali, non a occhio). */
-  #btn-undo { bottom: calc(var(--tabbar-height) + 85px + env(safe-area-inset-bottom, 0px)); }
 }
