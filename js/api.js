@@ -10,12 +10,18 @@ function tokenScrittura() {
 }
 
 function inviaEvento(evento) {
+  // Difesa in profondità (oltre alla guardia già in registraEvento()): se un
+  // futuro punto di scrittura dimenticasse la guardia a monte, qui l'evento
+  // non arriva comunque alla rete. Silenziosa: il toast l'ha già dato chi
+  // ha chiamato registraEvento().
+  if (typeof soloLettura === "function" && soloLettura()) return;
   codaInvio.push(evento);
   salvaCoda();
   processaCoda();
 }
 
 function inviaAzione(payload) {
+  if (typeof soloLettura === "function" && soloLettura()) return;   // difesa in profondità, vedi inviaEvento
   if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.indexOf("INCOLLA_QUI") === 0) return;
   fetch(CONFIG.APPS_SCRIPT_URL, {
     method: "POST",
@@ -26,6 +32,7 @@ function inviaAzione(payload) {
 }
 
 function processaCoda() {
+  if (typeof soloLettura === "function" && soloLettura()) return;   // difesa in profondità, vedi inviaEvento
   if (codaInvio.length === 0) { aggiornaBadgeOffline(); return; }
   if (!CONFIG.APPS_SCRIPT_URL || CONFIG.APPS_SCRIPT_URL.indexOf("INCOLLA_QUI") === 0) {
     aggiornaBadgeOffline(); return;

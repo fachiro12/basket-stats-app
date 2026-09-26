@@ -153,6 +153,7 @@ function obiettiviDiGiocatore(idGiocatore) {
 }
 
 function upsertObiettivo(rec) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return rec;
   const lista = caricaObiettivi();
   if (rec.id) {
     const i = lista.findIndex(o => o.id === rec.id);
@@ -168,6 +169,7 @@ function upsertObiettivo(rec) {
   return rec;
 }
 function rimuoviObiettivo(id) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return;
   const lista = caricaObiettivi();
   const i = lista.findIndex(o => o.id === id);
   if (i === -1) return;

@@ -238,6 +238,7 @@ function apriCambi() {
 }
 
 function confermaCambi() {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return;
   if (state.partitaFinita) { mostraToast("Partita terminata"); return; }
   const quintettoPrec = state.roster.slice();
 
@@ -418,6 +419,11 @@ function navigaA(viewId) {
   // In "Segui live" la vista Partita è bloccata (stato non nostro)
   if (viewId === "partita" && typeof seguiLive !== "undefined" && seguiLive) {
     mostraToast("Sei in Segui live · esci per usare la Partita");
+    viewId = "stats";
+  }
+  // Account di sola lettura: niente refertazione live
+  if (viewId === "partita" && typeof soloLettura === "function" && soloLettura()) {
+    mostraToast("Account di sola lettura · usa Stats o Analisi per consultare i dati");
     viewId = "stats";
   }
   document.querySelectorAll(".view").forEach(v => v.classList.remove("attiva"));

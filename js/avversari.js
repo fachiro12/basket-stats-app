@@ -39,6 +39,7 @@ function caricaAvversari() {
 function salvaAvversariLocali(lista) { localStorage.setItem(KEY_AVVERSARI, JSON.stringify(lista)); }
 
 function upsertAvversario(rec) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return rec;
   rec.aggiornato_il = new Date().toISOString().slice(0, 10);
   const lista = caricaAvversari();
   if (rec.id) {
@@ -54,6 +55,7 @@ function upsertAvversario(rec) {
   return rec;
 }
 function rimuoviAvversario(id) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return;
   const lista = caricaAvversari();
   const i = lista.findIndex(a => a.id === id);
   if (i === -1) return;
@@ -125,6 +127,7 @@ function caricaAvversariGiocatori() {
 function salvaAvversariGiocatoriLocali(lista) { localStorage.setItem(KEY_AVVERSARI_GIOCATORI, JSON.stringify(lista)); }
 
 function upsertAvversarioGiocatore(rec) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return rec;
   rec.aggiornato_il = new Date().toISOString().slice(0, 10);
   const lista = caricaAvversariGiocatori();
   if (rec.id) {
@@ -140,6 +143,7 @@ function upsertAvversarioGiocatore(rec) {
   return rec;
 }
 function rimuoviAvversarioGiocatore(id) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return;
   const lista = caricaAvversariGiocatori();
   const i = lista.findIndex(g => g.id === id);
   if (i === -1) return;

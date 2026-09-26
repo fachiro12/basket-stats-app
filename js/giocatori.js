@@ -25,6 +25,7 @@ function giocatoriDelTeam(team) {
 }
 
 function upsertGiocatore(rec) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return rec;
   const lista = caricaGiocatori();
   if (rec.id) {
     const i = lista.findIndex(g => g.id === rec.id);
@@ -39,6 +40,7 @@ function upsertGiocatore(rec) {
   return rec;
 }
 function rimuoviGiocatore(id) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return;
   salvaGiocatori(caricaGiocatori().filter(g => g.id !== id));
   sincronizzaGiocatore({ id: id }, true);
 }

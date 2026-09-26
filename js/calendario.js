@@ -115,6 +115,7 @@ function applicaPartiteCloud(cloud) {
 
 /* Upsert di una partita: applica subito in locale + invia al foglio */
 function salvaPartitaCloud(partita) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return;
   const p = normalizzaPartita(partita);
   const pend = pendingPartite().filter(x => String(x.id_partita) !== p.id_partita);
   pend.push(p);

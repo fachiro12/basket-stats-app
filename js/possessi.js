@@ -171,6 +171,7 @@ function gestisciFotoSelezionata(file) {
    Backend — risposta leggibile (come verificaLoginServer), non no-cors
    ========================================================================== */
 function caricaFotoPossessi(base64, cb) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) { cb(null); return; }
   const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
   if (!base || base.indexOf("INCOLLA_QUI") === 0) { cb(null); return; }
   fetch(base, {
@@ -200,6 +201,7 @@ function salvaPossessiQuarto(righe, fotoUrl, cb) {
    Non salva mai nulla da sola: al massimo aggiunge righe PROPOSTE (fonte:"ocr")
    a possRigheQuarto, da confermare/correggere come una riga scritta a mano. */
 function leggiFoglioPossessi() {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return;
   const fotoLocale = possFotoQuarto[possQuartoSel];
   if (!fotoLocale) { mostraToast("Allega prima una foto del foglio"); return; }
   const base = (typeof CONFIG !== "undefined" && CONFIG.APPS_SCRIPT_URL) || "";
@@ -275,6 +277,7 @@ function modificaRigaDebrief(i) {
   renderDebrief();
 }
 function salvaQuartoDebrief() {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return;
   if (!possRigheQuarto.length) { mostraToast("Nessuna riga da salvare"); return; }
   mostraToast("Salvo…");
   const righe = possRigheQuarto.map((r, i) => Object.assign({}, r, {

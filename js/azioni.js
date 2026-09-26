@@ -3,6 +3,7 @@
    ========================================================================== */
 
 function registraEvento(campi, delta, testoFeed) {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return;
   const inCampo = state.inCampo || state.roster;
   const evento = Object.assign({
     id_partita: state.id_partita,
@@ -252,6 +253,7 @@ function registraFalloFatto() {
 }
 
 function annullaUltimoEvento() {
+  if (typeof bloccaScrittura === "function" && bloccaScrittura()) return;
   if (state.eventLog.length === 0) { mostraToast("Nessun evento da annullare"); return; }
   const ultimo = state.eventLog.pop();
   if (typeof ultimo.delta === "function") ultimo.delta();

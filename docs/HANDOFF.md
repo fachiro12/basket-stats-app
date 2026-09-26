@@ -1,7 +1,7 @@
 # Basket Stats Pro — Documento di handoff / specifica
 
 > Serve a **riprendere il progetto da zero in una nuova chat**. Da fornire insieme a `CLAUDE.md` e ai file sorgente (o al link del repo).
-> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=80` · SW `bsp-v80` · backend V4.14.
+> Ultimo aggiornamento: settembre 2026 · deploy asset `?v=81` · SW `bsp-v81` · backend V4.14.
 
 ---
 
@@ -62,6 +62,7 @@ Sorgente: **`mockup-src.jpg`** (1024², tasso del miele dentro un pallone, illus
 |---|---|
 | `state.js` | `CONFIG`, `STORAGE_KEYS`, `state` globale, `statoIniziale()`, `salvaStato/caricaStato`, `nomeQuarto()`, `indiceFalli()` (OT⇒Q4), `numValido()`, `formatTempo()`, `uuid()`, `esc()` |
 | `tema.js` | tema Chiaro/Arena: `temaCorrente`, `applicaTema`, `inizializzaTema` (switch in "Altro", `localStorage: bsp_tema`) |
+| `permessi.js` | **Ruolo "Lettura" (V4.16)** — `soloLettura()` (`utenteCorrente().ruolo === "Lettura"`) e `bloccaScrittura()` (toast + `true` se sola lettura, stesso stile del gate Admin già esistente in `calendario.js`). Chiamata in testa al funnel di scrittura più basso di ogni dominio: `registraEvento`/`annullaUltimoEvento` (azioni.js), `confermaCambi` (ui.js), `navigaA` verso "partita" (ui.js, redirect), `upsertGiocatore`/`rimuoviGiocatore` (giocatori.js), `salvaPartitaCloud` (calendario.js), `upsertAvversario`/`rimuoviAvversario`/`upsertAvversarioGiocatore`/`rimuoviAvversarioGiocatore` (avversari.js), `upsertObiettivo`/`rimuoviObiettivo` (player-dev.js), `salvaQuartoDebrief`/`caricaFotoPossessi`/`leggiFoglioPossessi` (possessi.js); guardia silenziosa aggiuntiva (difesa in profondità) in `inviaEvento`/`inviaAzione`/`processaCoda` (api.js). Difesa reale lato server: backend V4.16, `verificaLogin_` restituisce token vuoto a questo ruolo. |
 | `api.js` | invio eventi (`inviaEvento` → coda `codaInvio` → `processaCoda` POST `no-cors`), `inviaAzione` (POST generico), `verificaLoginServer` (POST `azione:"VERIFICA_LOGIN"`, risposta JSON), `riconciliaCoda` (pull `getEventi` + re-invio mancanti), `svuotaEventiServer` / `svuotaEventiGaraServer` (POST `SVUOTA_EVENTI` / `SVUOTA_EVENTI_GARA`) |
 | `timer.js` | gestione periodi (**non c'è cronometro**): `avanzaQuarto`, `passaAlPeriodo`, OT, `terminaPartita` (emette evento `FINE`), `nuovaPartita` |
 | `azioni.js` | `registraEvento` (costruisce il payload evento + feed banner), tiri, recupero, palla persa, fallo fatto; macchina a stati overlay Assist/Rimbalzo; helper `etichettaSquadra/etichettaSquadraEstesa/etichettaNum/feed` |
@@ -332,7 +333,7 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 
 ---
 
-## 9. Backend — codice completo attuale (V4.15)
+## 9. Backend — codice completo attuale (V4.16)
 
 > Da incollare nell'editor Apps Script. Poi lanciare `setupSheet()` una volta (aggiunge la colonna `salt` a `Utenti` e ricalcola l'hash dell'admin se il foglio è nuovo) e **ripubblicare il deployment**. `setupSheet()` è idempotente.
 > Deploy Web App: eseguito come "me", accesso "chiunque".
@@ -351,15 +352,18 @@ Palette **"PVL"** costruita dal logo: blu profondo `#1E3C8C` (identità + primar
 > **Player Development (V4.14):** nuovo foglio `Obiettivi`, azioni `SALVA_OBIETTIVO` (POST)/`getObiettivi` (JSONP) — stesso stile upsert-per-id di `salvaGiocatore_`, ma la cancellazione è un flag `eliminato:true` scritto sulla riga (mai un vero `deleteRow`, per poter "disfare" un'eliminazione senza perdere lo storico). Nessuna migrazione da fare su fogli esistenti: `setupSheet()` crea `Obiettivi` da zero al primo lancio dopo l'aggiornamento.
 >
 > **Avversari (V4.15):** nuova sezione indipendente "Altro → Avversari" (scouting squadre/giocatori avversari del girone). Due nuovi fogli, `Avversari` e `AvversariGiocatori`, stesso stile upsert-per-id + `eliminato:true` di `Obiettivi`. Azioni `SALVA_AVVERSARIO`/`SALVA_AVVERSARIO_GIOCATORE` (POST), `getAvversari`/`getAvversariGiocatori` (JSONP). Nessuna migrazione: `setupSheet()` crea entrambi i fogli da zero al primo lancio dopo l'aggiornamento.
+>
+> **Ruolo "Lettura" (V4.16):** un utente con `Utenti.ruolo === "Lettura"` riceve dal login un `token` **vuoto** invece del `WRITE_TOKEN` — una riga sola in `verificaLogin_`, riusa il controllo già esistente in `doPost` (nessun'altra funzione toccata). **Perché funzioni davvero serve che `WRITE_TOKEN` sia impostato** (vedi nota V4.7 sopra): se la Script Property non è impostata, tutte le scritture passano per chiunque, `"Lettura"` incluso — comportamento preesistente, non una novità di V4.16. Lato client (`js/permessi.js` + guardie sparse nei file di dominio) le azioni di scrittura sono già bloccate PRIMA di arrivare qui — questo è il secondo livello di difesa, non il primo. Per creare l'account: aggiungi una riga a `Utenti` con `ruolo` = `Lettura` (username/password come per ogni altro utente).
 
 ```javascript
 /**
- * BASKET STATS PRO — Backend Google Apps Script (V4.15)
+ * BASKET STATS PRO — Backend Google Apps Script (V4.16)
  * Eventi · Partite · Giocatori · Utenti · Possessi · Obiettivi · Avversari/AvversariGiocatori
  * — cloud-sync, JSONP, multiutente, token scrittura (V4.7) + password con salt e login via
  * POST (V4.8) + SVUOTA_EVENTI (V4.9) + SVUOTA_EVENTI_GARA (V4.10) + getEventiStagione (V4.11)
  * + Debrief possessi (V4.12) + lettura automatica foglio possessi via OCR Drive (V4.13)
  * + Player Development: Obiettivi (V4.14) + Avversari: scouting squadre/giocatori (V4.15)
+ * + Ruolo "Lettura": token di scrittura vuoto per chi ha questo ruolo (V4.16)
  */
 const SHEET_EVENTI = "Eventi";
 const SHEET_PARTITE = "Partite";
@@ -445,8 +449,12 @@ function verificaLogin_(username, password) {
       sheet.getRange(r + 1, iSalt + 1).setValue(salt);
       sheet.getRange(r + 1, iHash + 1).setValue(hashPassword_(salt, pwd));
     }
+    // Ruolo "Lettura" (V4.16): token vuoto invece del WRITE_TOKEN — il controllo
+    // già esistente in doPost (if (atteso && data.token !== atteso)) rifiuta ogni
+    // suo POST. Nessun'altra funzione toccata.
     return ok
-      ? { ok: true, utente: { id: u.id_utente, username: u.username, ruolo: u.ruolo, token: getWriteToken_() } }
+      ? { ok: true, utente: { id: u.id_utente, username: u.username, ruolo: u.ruolo,
+          token: String(u.ruolo) === "Lettura" ? "" : getWriteToken_() } }
       : { ok: false, error: "Password errata" };
   }
   return { ok: false, error: "Utente non trovato" };
@@ -542,7 +550,7 @@ function doGet(e) {
   if (params.action === "verificaLogin") {   // compat: vecchi client via JSONP GET
     return rispostaJsonp_(params, verificaLogin_(params.username, params.password));
   }
-  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.15", stato: "attivo" });
+  return jsonResponse_({ ok: true, servizio: "Basket Stats Pro backend V4.16", stato: "attivo" });
 }
 
 function leggiFoglio_(ss, nome, formatDate) {

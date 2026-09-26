@@ -68,7 +68,9 @@ function _entra(gate, app) {
 function aggiornaProfiloAttivo() {
   const u = utenteCorrente();
   const el = document.getElementById("profilo-attivo");
-  if (el) el.textContent = u ? (u.username + (u.ruolo ? " · " + u.ruolo : "")) : "—";
+  if (el) el.textContent = u
+    ? (u.username + (u.ruolo ? " · " + u.ruolo : "") + (u.ruolo === "Lettura" ? " 👁️" : ""))
+    : "—";
 }
 
 function logout() {
