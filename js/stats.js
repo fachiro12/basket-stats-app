@@ -293,6 +293,17 @@ function calcolaBox(ctx) {
   // minuti + plus/minus: ricostruiti dagli eventi (coerenti su ogni device)
   const stints = stintsDaEventi(ctx.eventi, ctx.tempoOra, ctx.quartoOra);
   const mp = minutiDaStints(stints);
+  // FIX: un giocatore può essere stato in campo (quintetto_mia) senza mai
+  // generare un evento individuale (tiro/rimbalzo/assist/fallo/recupero/palla
+  // persa) — raro ma possibile (es. pochi secondi di garbage time). Senza
+  // questa riga restava fuori da `pg` per le gare storiche (dove
+  // ctx.convocati è sempre [], a differenza del live) e spariva del tutto
+  // dal box invece di comparire con 0 a referto. Stesso identico problema
+  // era già stato risolto ad-hoc altrove (aggregaStagione in analisi.js,
+  // calcolaAIS in analisi-avanzata.js) senza toccare la fonte: risolto qui
+  // una volta sola, per ogni chiamante di calcolaBox (live: nessun effetto,
+  // ctx.convocati aveva già aggiunto tutti).
+  Object.keys(mp).forEach(n => { P(n); });
   Object.keys(pg).forEach(n => {
     pg[n].min = mp[n] ? mp[n].min : 0;
     pg[n].pm = mp[n] ? mp[n].pm : 0;
